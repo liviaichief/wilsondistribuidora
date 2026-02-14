@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { Query } from 'appwrite';
+import { backfillSKUs } from '../services/dataService';
 import {
     Users,
     ShoppingBag,
@@ -108,6 +109,19 @@ const AdminDashboard = () => {
         </div>
     );
 
+    const handleBackfill = async () => {
+        if (window.confirm('Deseja iniciar o backfill de SKUs? Isso irá atualizar produtos sem SKU ou com padrão antigo.')) {
+            setLoading(true);
+            const result = await backfillSKUs();
+            setLoading(false);
+            if (result.success) {
+                alert(`Backfill concluído! ${result.updatedCount} produtos atualizados.`);
+            } else {
+                alert(`Erro no backfill: ${result.error}`);
+            }
+        }
+    };
+
     if (loading) {
         return <div className="admin-container"><p style={{ padding: '2rem' }}>Carregando dashboard...</p></div>;
     }
@@ -115,9 +129,24 @@ const AdminDashboard = () => {
     return (
         <div className="admin-container">
             <div className="admin-content">
-                <div className="header-title" style={{ marginBottom: '30px' }}>
-                    <h2>Dashboard</h2>
-                    <p style={{ color: '#888' }}>Visão geral da performance da loja.</p>
+                <div className="header-title" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h2>Dashboard</h2>
+                        <p style={{ color: '#888' }}>Visão geral da performance da loja.</p>
+                    </div>
+                    <button
+                        onClick={handleBackfill}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#333',
+                            color: '#fff',
+                            border: '1px solid #444',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Atualizar SKUs (Backfill)
+                    </button>
                 </div>
 
                 <div className="stats-grid" style={{

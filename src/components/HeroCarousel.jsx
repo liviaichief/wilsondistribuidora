@@ -108,13 +108,15 @@ const HeroCarousel = () => {
                     transition={{ duration: 0.8 }}
                     className="carousel-slide"
                     onClick={() => handleSlideClick(slides[currentIndex])}
-                    style={{ cursor: slides[currentIndex].product_id ? 'pointer' : 'default' }}
+                    style={{ cursor: slides[currentIndex].product_id ? 'pointer' : 'default', backgroundColor: '#121212' }}
                 >
                     <img
                         src={getImageUrl(slides[currentIndex].image_url || slides[currentIndex].image)} // Handle both db (image_url) and legacy (image)
                         alt={slides[currentIndex].title}
                         className="carousel-image"
+                        style={{ objectFit: 'contain' }}
                     />
+
                     <div className="carousel-overlay">
                         <motion.h2
                             initial={{ y: 20, opacity: 0 }}

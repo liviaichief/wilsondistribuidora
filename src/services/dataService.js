@@ -40,7 +40,7 @@ export const saveProduct = async (product) => {
             price: parseFloat(product.price),
             category: product.category,
             image: product.image,
-            product_sku: product.product_sku || `SKU-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
+            product_sku: product.product_sku || `3RG-${Math.floor(10000 + Math.random() * 90000)}`
         };
 
         let response;
@@ -153,6 +153,44 @@ export const createOrder = async (orderData) => {
         return { success: true, ...processDoc(response) };
     } catch (error) {
         console.error("Error creating order:", error);
+        return { success: false, error: error.message };
+    }
+};
+
+export const backfillSKUs = async () => {
+    try {
+        console.log('Starting SKU backfill...');
+        // 1. Fetch all products (limit 100 for now, or loop if needed)
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.PRODUCTS,
+            [Query.limit(100)]
+        );
+
+        const products = response.documents;
+        let updatedCount = 0;
+
+        for (const doc of products) {
+            // Check if SKU is missing or improperly formatted (optional, but user asked to update those without numbers)
+            // We'll check if it's missing or doesn't start with '3RG-'
+            if (!doc.product_sku || !doc.product_sku.startsWith('3RG-')) {
+                const newSku = `3RG-${Math.floor(10000 + Math.random() * 90000)}`;
+
+                await databases.updateDocument(
+                    DATABASE_ID,
+                    COLLECTIONS.PRODUCTS,
+                    doc.$id,
+                    { product_sku: newSku }
+                );
+                console.log(`Updated product ${doc.title} with SKU: ${newSku}`);
+                updatedCount++;
+            }
+        }
+
+        console.log(`Backfill complete. Updated ${updatedCount} products.`);
+        return { success: true, updatedCount };
+    } catch (error) {
+        console.error('Error during backfill:', error);
         return { success: false, error: error.message };
     }
 };

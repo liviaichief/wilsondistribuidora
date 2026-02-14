@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
+import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
 import { ID, Query } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import './Admin.css'; // Reuse admin styles
@@ -25,6 +25,7 @@ const AdminBanners = () => {
         display_order: 0,
         duration: 5
     });
+    const [imageFile, setImageFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -72,6 +73,7 @@ const AdminBanners = () => {
     };
 
     const handleOpenModal = (banner = null) => {
+        setImageFile(null); // Reset file input
         if (banner) {
             setEditingBanner(banner);
             setFormData({
@@ -98,14 +100,36 @@ const AdminBanners = () => {
         setIsModalOpen(true);
     };
 
+    const handleImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setImageFile(e.target.files[0]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
 
         try {
+            let finalImageUrl = formData.image_url;
+
+            // Upload image if selected
+            if (imageFile) {
+                const fileUpload = await storage.createFile(
+                    BUCKET_ID,
+                    ID.unique(),
+                    imageFile
+                );
+                // We'll save the File ID, similar to how we handled products if we refactored,
+                // or use the view URL. Let's use the ID and let getImageUrl handle it, 
+                // OR construct the URL manually if getImageUrl expects a full URL for some cases.
+                // Given previous code uses getImageUrl which handles IDs, saving the ID is safer/cleaner.
+                finalImageUrl = fileUpload.$id;
+            }
+
             const payload = {
                 title: formData.title,
-                image_url: formData.image_url,
+                image_url: finalImageUrl,
                 link: formData.link || null,
                 product: formData.product_id || null, // Appwrite relationship expects ID
                 active: formData.active,
@@ -200,8 +224,12 @@ const AdminBanners = () => {
                     <div className="banners-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                         {banners.map((banner) => (
                             <div key={banner.id} className="banner-card" style={{ background: '#1e1e1e', borderRadius: '8px', overflow: 'hidden', border: '1px solid #333' }}>
-                                <div className="banner-image" style={{ height: '150px', position: 'relative' }}>
-                                    <img src={getImageUrl(banner.image_url)} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div className="banner-image" style={{ height: '150px', position: 'relative', backgroundColor: '#000' }}>
+                                    <img
+                                        src={getImageUrl(banner.image_url)}
+                                        alt={banner.title}
+                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                    />
                                     <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}>
                                         <div style={{ background: 'rgba(0,0,0,0.7)', borderRadius: '4px', padding: '4px 8px' }}>
                                             <span style={{ color: banner.active ? '#4CAF50' : '#888', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
@@ -261,6 +289,19 @@ const AdminBanners = () => {
                                     <X size={24} />
                                 </button>
                             </div>
+
+                            <div className="info-banner" style={{
+                                backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                                border: '1px solid var(--primary-color)',
+                                borderRadius: '4px',
+                                padding: '10px',
+                                marginBottom: '15px',
+                                fontSize: '0.9rem',
+                                color: '#e0e0e0'
+                            }}>
+                                <p><strong>Dica de Imagem:</strong> A proporção ideal para banners é <strong>16:9</strong> (ex: 1920x1080). Caso a imagem seja menor ou tenha outra proporção, o fundo será preenchido automaticamente com a cor do site.</p>
+                            </div>
+
                             <form onSubmit={handleSubmit} className="product-form">
                                 <div className="form-group">
                                     <label>Título</label>
@@ -272,16 +313,55 @@ const AdminBanners = () => {
                                         placeholder="Ex: Promoção de Picanha"
                                     />
                                 </div>
+
                                 <div className="form-group">
-                                    <label>URL da Imagem</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.image_url}
-                                        onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                                        placeholder="https://..."
-                                    />
+                                    <label>Imagem do Banner</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                style={{
+                                                    padding: '10px',
+                                                    background: '#333',
+                                                    border: '1px solid #444',
+                                                    borderRadius: '4px',
+                                                    width: '100%',
+                                                    color: '#fff'
+                                                }}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span style={{ fontSize: '0.9rem', color: '#888' }}>OU URL Externa (Opcional):</span>
+                                            <input
+                                                type="text"
+                                                value={formData.image_url}
+                                                onChange={e => setFormData({ ...formData, image_url: e.target.value })}
+                                                placeholder="https://..."
+                                                style={{ flex: 1 }}
+                                            />
+                                        </div>
+                                        {(imageFile || formData.image_url) && (
+                                            <div style={{
+                                                marginTop: '10px',
+                                                height: '100px',
+                                                background: '#000',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                border: '1px solid #444'
+                                            }}>
+                                                <img
+                                                    src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)}
+                                                    alt="Preview"
+                                                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+
                                 <div className="form-group">
                                     <label>Link (Opcional)</label>
                                     <input

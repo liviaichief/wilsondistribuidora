@@ -14,8 +14,9 @@
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2.5rem;
+    /* Reduzido de 300px para 220px para permitir 4 colunas em telas menores (~1000px+) */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
 }
 
 .loading-indicator {
@@ -43,7 +44,8 @@
 
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 2.0rem;
+        /* Menor título no mobile */
     }
 
     .main-content {
@@ -54,7 +56,12 @@
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
         /* Force 2 columns */
-        gap: 0.8rem;
-        /* Smaller gap */
+        gap: 0.5rem;
+        /* Gap mínimo para maximizar espaço do card */
+    }
+
+    /* Garantir que containers não transbordem */
+    .home-container {
+        overflow-x: hidden;
     }
 }
