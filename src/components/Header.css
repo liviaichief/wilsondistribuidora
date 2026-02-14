@@ -255,22 +255,24 @@
 
 .category-nav-inline .category-list {
     display: flex;
-    gap: 4px;
+    gap: 8px;
     flex-wrap: nowrap;
     /* Prevent wrapping */
-    justify-content: space-between;
+    justify-content: flex-start;
+    /* Align start to allow scrolling from left */
     width: 100%;
-    overflow-x: hidden;
-    /* Prevent scrollbar if not needed, or use auto if robust scrolling is desired, but user asked for "single line" specifically */
+    overflow-x: auto;
+    /* Allow horizontal scrolling */
     padding-bottom: 5px;
     /* Space for scrollbar if visible */
-    width: auto;
-    /* Changed from 100% to auto to hug content */
+    width: 100%;
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;
     /* Firefox */
-    margin-top: 15px;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+    margin-top: 5px;
     padding-top: 5px;
     margin-left: 0px;
 }
