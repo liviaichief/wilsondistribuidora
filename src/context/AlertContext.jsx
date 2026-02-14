@@ -1,7 +1,5 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle, HelpCircle } from 'lucide-react';
-import '../components/CustomAlert.css';
 
 const AlertContext = createContext();
 
@@ -10,7 +8,7 @@ export const useAlert = () => useContext(AlertContext);
 export const AlertProvider = ({ children }) => {
     const [alertConfig, setAlertConfig] = useState(null);
 
-    // alertConfig structure: { type: 'success'|'error'|'info'|'confirm', title, message, onConfirm, onCancel, confirmText, cancelText }
+    // alertConfig: { type: 'success'|'error'|'info'|'confirm', title, message, onConfirm, onCancel, confirmText, cancelText }
 
     const showAlert = (message, type = 'info', title = null) => {
         let msgTitle = title;
@@ -31,7 +29,7 @@ export const AlertProvider = ({ children }) => {
             message,
             title,
             onConfirm: () => {
-                onConfirm();
+                if (onConfirm) onConfirm();
                 closeAlert();
             },
             onCancel: closeAlert,
@@ -46,11 +44,21 @@ export const AlertProvider = ({ children }) => {
 
     const getIcon = (type) => {
         switch (type) {
-            case 'success': return <CheckCircle size={32} color="#4CAF50" />;
-            case 'error': return <XCircle size={32} color="#f44336" />;
-            case 'warning': return <AlertCircle size={32} color="#ff9800" />;
-            case 'confirm': return <HelpCircle size={32} color="#D4AF37" />;
-            default: return <Info size={32} color="#2196f3" />;
+            case 'success': return <CheckCircle className="text-emerald-500" size={64} />;
+            case 'error': return <XCircle className="text-red-500" size={64} />;
+            case 'warning': return <AlertCircle className="text-amber-500" size={64} />;
+            case 'confirm': return <HelpCircle className="text-amber-500" size={64} />;
+            default: return <Info className="text-blue-500" size={64} />;
+        }
+    };
+
+    const getTitleColor = (type) => {
+        switch (type) {
+            case 'success': return 'text-emerald-500';
+            case 'error': return 'text-red-500';
+            case 'warning': return 'text-amber-500';
+            case 'confirm': return 'text-amber-500';
+            default: return 'text-blue-500';
         }
     };
 
@@ -58,31 +66,56 @@ export const AlertProvider = ({ children }) => {
         <AlertContext.Provider value={{ showAlert, showConfirm, closeAlert }}>
             {children}
             {alertConfig && (
-                <div className="custom-alert-overlay" onClick={alertConfig.type !== 'confirm' ? closeAlert : undefined}>
-                    <div className="custom-alert-box" onClick={e => e.stopPropagation()}>
-                        <div className="custom-alert-icon">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 max-w-sm w-full mx-4 p-8 text-center animate-fade-in-up relative">
+                        <div className="flex justify-center mb-6">
                             {getIcon(alertConfig.type)}
                         </div>
-                        <h3 className="custom-alert-title">{alertConfig.title}</h3>
-                        <p className="custom-alert-message">{alertConfig.message}</p>
+                        <h2 className={`text-2xl font-bold mb-3 ${getTitleColor(alertConfig.type)}`}>
+                            {alertConfig.title}
+                        </h2>
+                        <p className="text-gray-300 mb-8">
+                            {alertConfig.message}
+                        </p>
 
-                        <div className="custom-alert-actions">
+                        <div className="flex justify-center gap-4">
                             {alertConfig.type === 'confirm' ? (
                                 <>
-                                    <button className="custom-alert-btn secondary" onClick={alertConfig.onCancel}>
+                                    <button
+                                        onClick={alertConfig.onCancel}
+                                        className="px-6 py-2 rounded bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors font-medium"
+                                    >
                                         {alertConfig.cancelText}
                                     </button>
-                                    <button className="custom-alert-btn primary" onClick={alertConfig.onConfirm}>
+                                    <button
+                                        onClick={alertConfig.onConfirm}
+                                        className="px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-lg hover:shadow-emerald-500/20"
+                                    >
                                         {alertConfig.confirmText}
                                     </button>
                                 </>
                             ) : (
-                                <button className="custom-alert-btn primary" onClick={closeAlert}>
+                                <button
+                                    onClick={closeAlert}
+                                    className={`px-8 py-2 rounded text-white font-medium transition-colors shadow-lg ${alertConfig.type === 'error' ? 'bg-red-600 hover:bg-red-700 hover:shadow-red-500/20' :
+                                            alertConfig.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/20' :
+                                                'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/20'
+                                        }`}
+                                >
                                     OK
                                 </button>
                             )}
                         </div>
                     </div>
+                    <style>{`
+                        @keyframes fadeInUp {
+                            from { opacity: 0; transform: translateY(20px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .animate-fade-in-up {
+                            animation: fadeInUp 0.3s ease-out forwards;
+                        }
+                    `}</style>
                 </div>
             )}
         </AlertContext.Provider>

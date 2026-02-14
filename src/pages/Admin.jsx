@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, saveProduct, deleteProduct } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter } from 'lucide-react'; // Added icons
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
-import NotificationModal from '../components/NotificationModal'; // Import Notification
+import { useAlert } from '../context/AlertContext'; // Import useAlert
 import './Admin.css';
 
 const Admin = () => {
@@ -14,31 +14,11 @@ const Admin = () => {
     const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
 
-    // Notification State
-    const [notification, setNotification] = useState({
-        isOpen: false,
-        type: 'success',
-        title: '',
-        message: ''
-    });
-
-    const showNotification = (type, title, message) => {
-        setNotification({
-            isOpen: true,
-            type,
-            title,
-            message
-        });
-    };
-
-    const closeNotification = () => {
-        setNotification(prev => ({ ...prev, isOpen: false }));
-    };
+    const { showAlert, showConfirm } = useAlert(); // Hook usage
 
     // Filter State
     const [filterTitle, setFilterTitle] = useState('');
-    const [filterCategory, setFilterCategory] = useState({ value: 'all', label: 'Todas' }); // distinct from string to safely handle dropdown if needed, but string 'all' is fine. Let's stick to string 'all'
-    // Actually simplicity:
+    const [filterCategory, setFilterCategory] = useState({ value: 'all', label: 'Todas' });
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [skuFilter, setSkuFilter] = useState('');
     const [titleFilter, setTitleFilter] = useState('');
@@ -64,7 +44,7 @@ const Admin = () => {
         setError(null);
 
         try {
-            const data = await getProducts(); // Assuming getProducts handles Appwrite fetch
+            const data = await getProducts();
 
             if (data) {
                 setProducts(data);
@@ -74,7 +54,7 @@ const Admin = () => {
         } catch (err) {
             console.error('Admin: Load error:', err);
             setError(err.message);
-            showNotification('error', 'Erro ao carregar', 'Não foi possível carregar os produtos.');
+            showAlert('Não foi possível carregar os produtos.', 'error', 'Erro ao carregar');
         } finally {
             setLoading(false);
         }
@@ -86,15 +66,21 @@ const Admin = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-            try {
-                await deleteProduct(id);
-                loadProducts();
-                showNotification('success', 'Produto excluído', 'O produto foi removido com sucesso.');
-            } catch (err) {
-                showNotification('error', 'Erro ao excluir', err.message);
-            }
-        }
+        showConfirm(
+            'Tem certeza que deseja excluir este produto?',
+            async () => {
+                try {
+                    await deleteProduct(id);
+                    loadProducts();
+                    showAlert('O produto foi removido com sucesso.', 'success', 'Produto excluído');
+                } catch (err) {
+                    showAlert(err.message, 'error', 'Erro ao excluir');
+                }
+            },
+            'Excluir Produto',
+            'Sim, Excluir',
+            'Cancelar'
+        );
     };
 
     const handleSave = async (e) => {
@@ -103,9 +89,9 @@ const Admin = () => {
             await saveProduct(currentProduct);
             setIsModalOpen(false);
             loadProducts();
-            showNotification('success', 'Sucesso!', 'Produto salvo com sucesso.');
+            showAlert('Produto salvo com sucesso.', 'success', 'Sucesso!');
         } catch (err) {
-            showNotification('error', 'Erro ao salvar', err.message);
+            showAlert(err.message, 'error', 'Erro ao salvar');
         }
     };
 
@@ -125,13 +111,7 @@ const Admin = () => {
 
     return (
         <div className="admin-container">
-            <NotificationModal
-                isOpen={notification.isOpen}
-                onClose={closeNotification}
-                type={notification.type}
-                title={notification.title}
-                message={notification.message}
-            />
+            {/* Removed NotificationModal component */}
 
             <div className="admin-sidebar-tabs" style={{ marginBottom: '20px', display: 'flex', gap: '10px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
                 <button

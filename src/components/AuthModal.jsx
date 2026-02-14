@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { X, Mail, Lock, User, Phone, Calendar, LogIn, ArrowRight } from 'lucide-react';
 import './AuthModal.css';
 
@@ -15,6 +16,8 @@ const AuthModal = () => {
         continueAsGuest,
         resetPassword
     } = useAuth();
+
+    const { showAlert } = useAlert();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -59,13 +62,23 @@ const AuthModal = () => {
         e.preventDefault();
         setError('');
         setSuccessMsg('');
+
+        // Validation - Campo Obrigatório Modals
+        if (!email) { showAlert('O campo E-mail é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+        if (authModalView !== 'forgot' && !password) { showAlert('O campo Senha é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+        if (authModalView === 'register') {
+            if (!fullName) { showAlert('O campo Nome Completo é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+            if (!phone) { showAlert('O campo Celular é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+        }
+
         setLoading(true);
 
         try {
             if (authModalView === 'login') {
                 const { error } = await signIn(email, password);
                 if (error) throw error;
-                closeAuthModal(); // Fechar modal imediatamente após sucesso
+                showAlert('Login realizado com sucesso!', 'success', 'Bem-vindo!');
+                setTimeout(() => closeAuthModal(), 1500);
             } else if (authModalView === 'register') {
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
                 let isoDate = null;
@@ -82,19 +95,21 @@ const AuthModal = () => {
 
                 if (error) throw error;
                 if (data?.user?.identities?.length === 0) {
-                    setError('Este e-mail já está cadastrado.');
+                    showAlert('Este e-mail já está cadastrado.', 'error', 'Erro no Cadastro');
                 } else {
-                    setSuccessMsg('Cadastro realizado! Faça login para continuar.');
+                    showAlert('Cadastro realizado! Faça login para continuar.', 'success', 'Cadastro com Sucesso');
                     setTimeout(() => setAuthModalView('login'), 1500);
                 }
             } else if (authModalView === 'forgot') {
                 const { error } = await resetPassword(email);
                 if (error) throw error;
-                setSuccessMsg('E-mail de recuperação enviado.');
+                showAlert('E-mail de recuperação enviado.', 'success', 'Recuperação de Senha');
             }
         } catch (err) {
             console.error(err);
-            setError(err.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : err.message);
+            const msg = err.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : err.message;
+            showAlert(msg, 'error', 'Erro');
+            // Keep inline error for persistent visibility if needed, but we used modal as requested.
         } finally {
             setLoading(false);
         }
@@ -133,10 +148,10 @@ const AuthModal = () => {
                     )}
 
                     <div className="auth-content">
-                        {error && <div className="error-message" style={{ color: '#ff4444', marginBottom: '1rem', padding: '10px', background: 'rgba(255,0,0,0.1)', borderRadius: '4px' }}>{error}</div>}
-                        {successMsg && <div className="success-message" style={{ color: '#4CAF50', marginBottom: '1rem', padding: '10px', background: 'rgba(76,175,80,0.1)', borderRadius: '4px' }}>{successMsg}</div>}
+                        {/* {error && <div className="error-message" style={{ color: '#ff4444', marginBottom: '1rem', padding: '10px', background: 'rgba(255,0,0,0.1)', borderRadius: '4px' }}>{error}</div>} */}
+                        {/* {successMsg && <div className="success-message" style={{ color: '#4CAF50', marginBottom: '1rem', padding: '10px', background: 'rgba(76,175,80,0.1)', borderRadius: '4px' }}>{successMsg}</div>} */}
 
-                        <form className="auth-form" onSubmit={handleSubmit}>
+                        <form className="auth-form" onSubmit={handleSubmit} noValidate>
                             {authModalView === 'register' && (
                                 <div className="form-group">
                                     <label>Nome Completo</label>
@@ -147,7 +162,7 @@ const AuthModal = () => {
                                             placeholder="Seu nome"
                                             value={fullName}
                                             onChange={e => setFullName(e.target.value)}
-                                            required
+                                            // required - Manual validation
                                             style={{ width: '100%' }}
                                         />
                                     </div>
@@ -162,7 +177,7 @@ const AuthModal = () => {
                                     placeholder="seu@email.com"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    required
+                                // required
                                 />
                             </div>
 
@@ -175,8 +190,8 @@ const AuthModal = () => {
                                         placeholder="******"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        required
-                                        minLength={6}
+                                    // required
+                                    // minLength={6}
                                     />
                                 </div>
                             )}
@@ -191,7 +206,7 @@ const AuthModal = () => {
                                             placeholder="(11) 99999-9999"
                                             value={phone}
                                             onChange={handlePhoneChange}
-                                            required
+                                        // required
                                         />
                                     </div>
                                     <div className="form-group">

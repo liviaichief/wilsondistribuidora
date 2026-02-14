@@ -2,11 +2,13 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import '../pages/Admin.css';
 
 const AdminLayout = () => {
     const { signOut } = useAuth();
     const location = useLocation();
+    const { showConfirm, showAlert } = useAlert();
 
     return (
         <div className="admin-container">
@@ -42,12 +44,21 @@ const AdminLayout = () => {
                         <ArrowLeft size={18} /> Loja
                     </Link>
                     <button
-                        onClick={async () => {
-                            if (window.confirm('Tem certeza que deseja sair do sistema?')) {
-                                await signOut();
-                                alert("Sessão finalizada com sucesso! 👋");
-                                window.location.href = '/login';
-                            }
+                        onClick={() => {
+                            showConfirm(
+                                'Tem certeza que deseja sair do sistema?',
+                                async () => {
+                                    await signOut();
+                                    showAlert('Sessão finalizada com sucesso! 👋', 'success');
+                                    // Use navigate or window.location - signOut might handle redirect, usually
+                                    // But typically we want to redirect to login.
+                                    // Let's use standard redirect
+                                    setTimeout(() => window.location.href = '/login', 1500);
+                                },
+                                'Sair do Sistema',
+                                'Sair',
+                                'Cancelar'
+                            );
                         }}
                         className="icon-btn"
                         title="Sair"
