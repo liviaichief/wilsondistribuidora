@@ -54,28 +54,29 @@ const AdminUsers = () => {
         try {
             let queries = [];
 
+            // Base queries
             if (activeTab === 'admins') {
-                // Fetch Admins and Owners
-                // Note: Appwrite 'equal' with array acts as OR in newer versions. 
-                // If this fails, we might need nested queries or client-side filtering separately? 
-                // Let's try the array approach.
                 queries = [
                     Query.equal('role', ['admin', 'owner']),
                     Query.orderDesc('$createdAt')
                 ];
             } else {
-                // Fetch Customers
                 queries = [
                     Query.equal('role', 'client'),
-                    Query.limit(ITEMS_PER_PAGE),
-                    Query.offset((page - 1) * ITEMS_PER_PAGE),
                     Query.orderDesc('$createdAt')
                 ];
+            }
 
-                if (debouncedSearch) {
-                    // Try search on name or email. Appwrite Query.search needs FullText index.
-                    // If no index, this might error. We'll try search on full_name first.
-                    queries.push(Query.search('full_name', debouncedSearch));
+            // If searching, we fetch MORE items (up to a limit) and filter client-side
+            // to avoid "missing index" errors from Appwrite.
+            if (activeTab === 'customers' && debouncedSearch) {
+                queries.push(Query.limit(100)); // Fetch up to 100 customers to search
+            } else {
+                // Determine pagination only if NOT searching (or if we trust DB pagination)
+                // Actually, if we are NOT searching, we use efficient DB pagination
+                if (activeTab === 'customers') {
+                    queries.push(Query.limit(ITEMS_PER_PAGE));
+                    queries.push(Query.offset((page - 1) * ITEMS_PER_PAGE));
                 }
             }
 
@@ -86,24 +87,33 @@ const AdminUsers = () => {
             );
 
             // Map Appwrite docs to flat structure
-            const mappedUsers = response.documents.map(doc => ({
+            let mappedUsers = response.documents.map(doc => ({
                 ...doc,
                 id: doc.$id
             }));
 
-            setUsers(mappedUsers);
+            // Client-side filtering if searching
+            if (activeTab === 'customers' && debouncedSearch) {
+                const term = debouncedSearch.toLowerCase();
+                mappedUsers = mappedUsers.filter(u =>
+                    (u.full_name && u.full_name.toLowerCase().includes(term)) ||
+                    (u.email && u.email.toLowerCase().includes(term))
+                );
 
-            if (activeTab === 'customers') {
+                // Client-side Pagination for search results
+                setTotalPages(Math.ceil(mappedUsers.length / ITEMS_PER_PAGE));
+                const start = (page - 1) * ITEMS_PER_PAGE;
+                mappedUsers = mappedUsers.slice(start, start + ITEMS_PER_PAGE);
+            } else if (activeTab === 'customers') {
+                // Server-side pagination total
                 setTotalPages(Math.ceil(response.total / ITEMS_PER_PAGE));
             }
+
+            setUsers(mappedUsers);
+
         } catch (error) {
             console.error('Error fetching users:', error);
-            // Verify if error is due to missing index
-            if (error.message.includes('Index not found')) {
-                showAlert('Erro: Índice de busca não encontrado no Appwrite.', 'error');
-            } else {
-                showAlert('Erro ao carregar usuários: ' + error.message, 'error');
-            }
+            showAlert('Erro ao carregar usuários: ' + error.message, 'error');
         } finally {
             setLoading(false);
         }
