@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, saveProduct, deleteProduct } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
+import NotificationModal from '../components/NotificationModal'; // Import Notification
 import './Admin.css';
 
 const Admin = () => {
@@ -12,6 +13,34 @@ const Admin = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
+
+    // Notification State
+    const [notification, setNotification] = useState({
+        isOpen: false,
+        type: 'success',
+        title: '',
+        message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+        setNotification({
+            isOpen: true,
+            type,
+            title,
+            message
+        });
+    };
+
+    const closeNotification = () => {
+        setNotification(prev => ({ ...prev, isOpen: false }));
+    };
+
+    // Filter State
+    const [filters, setFilters] = useState({
+        sku: '',
+        title: '',
+        category: ''
+    });
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +73,7 @@ const Admin = () => {
         } catch (err) {
             console.error('Admin: Load error:', err);
             setError(err.message);
+            showNotification('error', 'Erro ao carregar', 'Não foi possível carregar os produtos.');
         } finally {
             setLoading(false);
         }
@@ -59,8 +89,9 @@ const Admin = () => {
             try {
                 await deleteProduct(id);
                 loadProducts();
+                showNotification('success', 'Produto excluído', 'O produto foi removido com sucesso.');
             } catch (err) {
-                alert('Erro ao excluir: ' + err.message);
+                showNotification('error', 'Erro ao excluir', err.message);
             }
         }
     };
@@ -71,8 +102,9 @@ const Admin = () => {
             await saveProduct(currentProduct);
             setIsModalOpen(false);
             loadProducts();
+            showNotification('success', 'Sucesso!', 'Produto salvo com sucesso.');
         } catch (err) {
-            alert('Erro ao salvar: ' + err.message);
+            showNotification('error', 'Erro ao salvar', err.message);
         }
     };
 
@@ -81,8 +113,29 @@ const Admin = () => {
         setIsModalOpen(true);
     };
 
+    // Filter Logic
+    const filteredProducts = products.filter(product => {
+        const matchSku = (product.product_sku || '').toLowerCase().includes(filters.sku.toLowerCase());
+        const matchTitle = (product.title || '').toLowerCase().includes(filters.title.toLowerCase());
+        // Handle category being a string (most likely)
+        const matchCategory = filters.category === '' || (product.category || '').toLowerCase() === filters.category.toLowerCase();
+
+        return matchSku && matchTitle && matchCategory;
+    });
+
+    // Unique categories for filter dropdown
+    const categories = ['carne', 'frango', 'embutidos', 'acompanhamentos', 'acessorios', 'insumos'];
+
     return (
         <div className="admin-container">
+            <NotificationModal
+                isOpen={notification.isOpen}
+                onClose={closeNotification}
+                type={notification.type}
+                title={notification.title}
+                message={notification.message}
+            />
+
             <div className="admin-sidebar-tabs" style={{ marginBottom: '20px', display: 'flex', gap: '10px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
                 <button
                     className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`}
@@ -140,54 +193,108 @@ const Admin = () => {
                             <p>{error}</p>
                             <button onClick={loadProducts} className="icon-btn" style={{ width: 'auto', padding: '0 20px', margin: '10px auto' }}>Tentar Novamente</button>
                         </div>
-                    ) : products.length === 0 ? (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                            <h3>Nenhum produto encontrado.</h3>
-                            <p>Comece adicionando itens ao seu cardápio.</p>
-                            <button onClick={openNewModal} className="add-btn" style={{ margin: '20px auto' }}>
-                                <Plus size={20} /> Adicionar Primeiro Produto
-                            </button>
-                        </div>
                     ) : (
-                        <table className="products-table">
-                            <thead>
-                                <tr>
-                                    <th>Imagem</th>
-                                    <th>SKU</th>
-                                    <th>Título</th>
-                                    <th>Categoria</th>
-                                    <th>Preço</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {products.map((item) => (
-                                    <tr key={item.id}>
-                                        <td>
-                                            {item.image ? (
-                                                <img src={getImageUrl(item.image)} alt={item.title} className="thumb-img" />
-                                            ) : (
-                                                <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
-                                            )}
-                                        </td>
-                                        <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
-                                        <td>{item.title}</td>
-                                        <td><span className="badge">{item.category}</span></td>
-                                        <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
-                                        <td>
-                                            <div className="actions">
-                                                <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <>
+                            {/* Filter Bar (Integrated into Table Headers roughly, but nicer above) - Let's do inside headers as per plan */}
+
+                            {products.length === 0 ? (
+                                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                                    <h3>Nenhum produto encontrado.</h3>
+                                    <p>Comece adicionando itens ao seu cardápio.</p>
+                                    <button onClick={openNewModal} className="add-btn" style={{ margin: '20px auto' }}>
+                                        <Plus size={20} /> Adicionar Primeiro Produto
+                                    </button>
+                                </div>
+                            ) : (
+                                <table className="products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Imagem</th>
+                                            <th>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    <span>SKU</span>
+                                                    <div className="filter-input-wrapper">
+                                                        <Search size={12} className="filter-icon" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Filtrar SKU"
+                                                            value={filters.sku}
+                                                            onChange={e => setFilters({ ...filters, sku: e.target.value })}
+                                                            className="filter-input"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    <span>Título</span>
+                                                    <div className="filter-input-wrapper">
+                                                        <Search size={12} className="filter-icon" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Filtrar Nome"
+                                                            value={filters.title}
+                                                            onChange={e => setFilters({ ...filters, title: e.target.value })}
+                                                            className="filter-input"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    <span>Categoria</span>
+                                                    <select
+                                                        value={filters.category}
+                                                        onChange={e => setFilters({ ...filters, category: e.target.value })}
+                                                        className="filter-select"
+                                                    >
+                                                        <option value="">Todas</option>
+                                                        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                                    </select>
+                                                </div>
+                                            </th>
+                                            <th>Preço</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredProducts.length > 0 ? (
+                                            filteredProducts.map((item) => (
+                                                <tr key={item.id}>
+                                                    <td>
+                                                        {item.image ? (
+                                                            <img src={getImageUrl(item.image)} alt={item.title} className="thumb-img" />
+                                                        ) : (
+                                                            <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
+                                                    <td>{item.title}</td>
+                                                    <td><span className="badge">{item.category}</span></td>
+                                                    <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
+                                                    <td>
+                                                        <div className="actions">
+                                                            <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
+                                                                <Edit2 size={18} />
+                                                            </button>
+                                                            <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                                                    Nenhum produto encontrado com os filtros atuais.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            )}
+                        </>
                     )}
                 </div>
             )}
