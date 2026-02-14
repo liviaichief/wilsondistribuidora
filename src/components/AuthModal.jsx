@@ -65,7 +65,7 @@ const AuthModal = () => {
             if (authModalView === 'login') {
                 const { error } = await signIn(email, password);
                 if (error) throw error;
-                // Success handled by auth state change closing modal
+                closeAuthModal(); // Fechar modal imediatamente após sucesso
             } else if (authModalView === 'register') {
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
                 let isoDate = null;

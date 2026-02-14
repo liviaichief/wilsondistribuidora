@@ -32,15 +32,49 @@ export const getProducts = async (category) => {
     }
 };
 
+// Helper to get next SKU number
+const getNextSKU = async () => {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.PRODUCTS,
+            [
+                Query.orderDesc('product_sku'), // Assuming lexical sort works for fixed format
+                Query.limit(1)
+            ]
+        );
+
+        if (response.documents.length === 0) return '3RG-00110';
+
+        const lastSku = response.documents[0].product_sku;
+        if (!lastSku || !lastSku.startsWith('3RG-')) return '3RG-00110';
+
+        const lastNumberPart = lastSku.split('-')[1];
+        const lastNumber = parseInt(lastNumberPart, 10);
+
+        if (isNaN(lastNumber)) return '3RG-00110';
+
+        return `3RG-${String(lastNumber + 1).padStart(5, '0')}`;
+    } catch (error) {
+        console.error("Error getting next SKU:", error);
+        return `3RG-${Math.floor(10000 + Math.random() * 90000)}`; // Fallback
+    }
+};
+
 export const saveProduct = async (product) => {
     try {
+        let sku = product.product_sku;
+        if (!sku) {
+            sku = await getNextSKU();
+        }
+
         const payload = {
             title: product.title,
             description: product.description,
             price: parseFloat(product.price),
             category: product.category,
             image: product.image,
-            product_sku: product.product_sku || `3RG-${Math.floor(10000 + Math.random() * 90000)}`
+            product_sku: sku
         };
 
         let response;
@@ -159,32 +193,41 @@ export const createOrder = async (orderData) => {
 
 export const backfillSKUs = async () => {
     try {
-        console.log('Starting SKU backfill...');
-        // 1. Fetch all products (limit 100 for now, or loop if needed)
+        console.log('Starting SKU backfill (Sequential 3RG-00110+)...');
+        // 1. Fetch all products, ordered by creation date to maintain historical sequence
+        // Note: If > 100 products, pagination is needed. For now assuming < 100 or increasing limit if feasible.
         const response = await databases.listDocuments(
             DATABASE_ID,
             COLLECTIONS.PRODUCTS,
-            [Query.limit(100)]
+            [
+                Query.limit(100),
+                Query.orderAsc('$createdAt')
+            ]
         );
 
         const products = response.documents;
         let updatedCount = 0;
+        let nextSkuNumber = 110;
 
         for (const doc of products) {
-            // Check if SKU is missing or improperly formatted (optional, but user asked to update those without numbers)
-            // We'll check if it's missing or doesn't start with '3RG-'
-            if (!doc.product_sku || !doc.product_sku.startsWith('3RG-')) {
-                const newSku = `3RG-${Math.floor(10000 + Math.random() * 90000)}`;
+            // We will re-assign ALL SKUs to ensure the sequence is clean and continuous
+            // or we could only assign missing ones. 
+            // Request said "o SKU deve seguir uma sequencia". A clean slate is best for "sequence".
 
+            const newSku = `3RG-${String(nextSkuNumber).padStart(5, '0')}`;
+
+            // Only update if different to save calls
+            if (doc.product_sku !== newSku) {
                 await databases.updateDocument(
                     DATABASE_ID,
                     COLLECTIONS.PRODUCTS,
                     doc.$id,
                     { product_sku: newSku }
                 );
-                console.log(`Updated product ${doc.title} with SKU: ${newSku}`);
+                console.log(`Updated product ${doc.title} (${doc.$id}) to SKU: ${newSku}`);
                 updatedCount++;
             }
+            nextSkuNumber++;
         }
 
         console.log(`Backfill complete. Updated ${updatedCount} products.`);

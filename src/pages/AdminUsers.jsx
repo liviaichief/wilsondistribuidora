@@ -2,13 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useAlert } from '../context/AlertContext';
 import { databases, DATABASE_ID, COLLECTIONS, client } from '../lib/appwrite';
 import { ID, Query } from 'appwrite';
-import { UserPlus, X, Trash2, Edit2 } from 'lucide-react';
+import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User } from 'lucide-react';
 import './Admin.css';
 
 const AdminUsers = () => {
     const { showAlert, showConfirm } = useAlert();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Tab State: 'admins' | 'customers'
+    const [activeTab, setActiveTab] = useState('admins');
+
+    // Pagination & Filter State (Only for Customers)
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const ITEMS_PER_PAGE = 30;
 
     // Create User Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -26,27 +36,74 @@ const AdminUsers = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
 
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1); // Reset to page 1 on search change
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
     useEffect(() => {
         loadUsers();
-    }, []);
+    }, [activeTab, page, debouncedSearch]);
 
     const loadUsers = async () => {
         setLoading(true);
         try {
+            let queries = [];
+
+            if (activeTab === 'admins') {
+                // Fetch Admins and Owners
+                // Note: Appwrite 'equal' with array acts as OR in newer versions. 
+                // If this fails, we might need nested queries or client-side filtering separately? 
+                // Let's try the array approach.
+                queries = [
+                    Query.equal('role', ['admin', 'owner']),
+                    Query.orderDesc('$createdAt')
+                ];
+            } else {
+                // Fetch Customers
+                queries = [
+                    Query.equal('role', 'client'),
+                    Query.limit(ITEMS_PER_PAGE),
+                    Query.offset((page - 1) * ITEMS_PER_PAGE),
+                    Query.orderDesc('$createdAt')
+                ];
+
+                if (debouncedSearch) {
+                    // Try search on name or email. Appwrite Query.search needs FullText index.
+                    // If no index, this might error. We'll try search on full_name first.
+                    queries.push(Query.search('full_name', debouncedSearch));
+                }
+            }
+
             const response = await databases.listDocuments(
                 DATABASE_ID,
                 COLLECTIONS.PROFILES,
-                [Query.orderDesc('$createdAt')]
+                queries
             );
+
             // Map Appwrite docs to flat structure
             const mappedUsers = response.documents.map(doc => ({
                 ...doc,
                 id: doc.$id
             }));
+
             setUsers(mappedUsers);
+
+            if (activeTab === 'customers') {
+                setTotalPages(Math.ceil(response.total / ITEMS_PER_PAGE));
+            }
         } catch (error) {
             console.error('Error fetching users:', error);
-            showAlert('Erro ao carregar usuários.', 'error');
+            // Verify if error is due to missing index
+            if (error.message.includes('Index not found')) {
+                showAlert('Erro: Índice de busca não encontrado no Appwrite.', 'error');
+            } else {
+                showAlert('Erro ao carregar usuários: ' + error.message, 'error');
+            }
         } finally {
             setLoading(false);
         }
@@ -55,11 +112,6 @@ const AdminUsers = () => {
     const handleCreateUser = async (e) => {
         e.preventDefault();
         setIsCreating(true);
-
-        // NOTE: Creating a user in Authentication from Client SDK requires 'account.create' 
-        // which usually logs the current user out if done in same context, OR it's just 'signup'.
-        // For this local migration, we focus on the Profile document creation.
-        // Warn user that Auth account must be created separately or via Sign Up if no API key.
 
         try {
             // Check for API Key for "Admin Mode"
@@ -93,7 +145,7 @@ const AdminUsers = () => {
                     throw apiErr;
                 }
             } else {
-                showAlert("⚠️ Sem API Key configurada (VITE_APPWRITE_API_KEY). O perfil será criado, mas o usuário não poderá fazer login até se registrar com este email.", "warning");
+                showAlert("⚠️ Sem API Key configurada. O usuário não poderá fazer login até se registrar manualmente.", "warning");
             }
 
             // Create Profile
@@ -126,18 +178,20 @@ const AdminUsers = () => {
 
     const handleDeleteUser = async (userId) => {
         showConfirm(
-            "Tem certeza? Isso excluirá o PERFIL. A conta Auth deve ser excluída manualmente ou via API Key.",
+            "Tem certeza? Isso excluirá o PERFIL permanentemente.",
             async () => {
                 try {
                     const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
                     if (apiKey) {
-                        await fetch(`${client.config.endpoint}/users/${userId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-Appwrite-Project': client.config.project,
-                                'X-Appwrite-Key': apiKey
-                            }
-                        });
+                        try {
+                            await fetch(`${client.config.endpoint}/users/${userId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-Appwrite-Project': client.config.project,
+                                    'X-Appwrite-Key': apiKey
+                                }
+                            });
+                        } catch (e) { console.warn("Could not delete from auth", e); }
                     }
 
                     await databases.deleteDocument(
@@ -206,62 +260,168 @@ const AdminUsers = () => {
                     </button>
                 </div>
 
+                {/* Tabs */}
+                <div className="tabs-container" style={{ display: 'flex', gap: '20px', marginBottom: '20px', borderBottom: '1px solid #333' }}>
+                    <button
+                        onClick={() => setActiveTab('admins')}
+                        className={`tab-btn ${activeTab === 'admins' ? 'active' : ''}`}
+                        style={{
+                            padding: '10px 20px',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'admins' ? '2px solid #D4AF37' : '2px solid transparent',
+                            color: activeTab === 'admins' ? '#D4AF37' : '#888',
+                            fontSize: '1rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: '8px',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <Shield size={18} /> Administração
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('customers')}
+                        className={`tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
+                        style={{
+                            padding: '10px 20px',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'customers' ? '2px solid #D4AF37' : '2px solid transparent',
+                            color: activeTab === 'customers' ? '#D4AF37' : '#888',
+                            fontSize: '1rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: '8px',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <User size={18} /> Clientes
+                    </button>
+                </div>
+
+                {/* Filters (Only for Customers) */}
+                {activeTab === 'customers' && (
+                    <div className="filters-bar" style={{ marginBottom: '20px', display: 'flex', gap: '15px' }}>
+                        <div className="search-input" style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+                            <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por nome..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 10px 10px 35px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #333',
+                                    background: '#121212',
+                                    color: '#fff'
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {loading ? (
-                    <p style={{ textAlign: 'center', padding: '20px' }}>Carregando usuários...</p>
+                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando usuários...</p>
                 ) : users.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-                        <p>Nenhum usuário encontrado.</p>
+                        <p>{activeTab === 'admins' ? 'Nenhum administrador encontrado.' : 'Nenhum cliente encontrado.'}</p>
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="products-table">
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>Role</th>
-                                    <th>Criado em</th>
-                                    <th style={{ textAlign: 'right' }}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user) => (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{user.full_name || 'Sem nome'}</div>
-                                            <div style={{ fontSize: '0.9rem', color: '#888' }}>{user.email}</div>
-                                            {user.phone && <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.phone}</div>}
-                                        </td>
-                                        <td>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: '4px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: '600',
-                                                backgroundColor: user.role === 'admin' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                                color: user.role === 'admin' ? '#D4AF37' : '#aaa',
-                                                border: user.role === 'admin' ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid #444'
-                                            }}>
-                                                {user.role.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td style={{ color: '#888' }}>
-                                            {new Date(user.$createdAt).toLocaleDateString()}
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <div className="actions" style={{ justifyContent: 'flex-end' }}>
-                                                <button onClick={() => openEditModal(user)} className="icon-btn" title="Editar">
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button onClick={() => handleDeleteUser(user.id)} className="icon-btn delete" title="Excluir">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Role</th>
+                                        <th>Criado em</th>
+                                        <th style={{ textAlign: 'right' }}>Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {users.map((user) => (
+                                        <tr key={user.id}>
+                                            <td>
+                                                <div style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{user.full_name || 'Sem nome'}</div>
+                                                <div style={{ fontSize: '0.9rem', color: '#888' }}>{user.email}</div>
+                                                {user.phone && <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.phone}</div>}
+                                            </td>
+                                            <td>
+                                                <span style={{
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '600',
+                                                    backgroundColor: ['admin', 'owner'].includes(user.role) ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                                    color: ['admin', 'owner'].includes(user.role) ? '#D4AF37' : '#aaa',
+                                                    border: ['admin', 'owner'].includes(user.role) ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid #444'
+                                                }}>
+                                                    {user.role ? user.role.toUpperCase() : 'CLIENT'}
+                                                </span>
+                                            </td>
+                                            <td style={{ color: '#888' }}>
+                                                {new Date(user.$createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div className="actions" style={{ justifyContent: 'flex-end' }}>
+                                                    <button onClick={() => openEditModal(user)} className="icon-btn" title="Editar">
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteUser(user.id)} className="icon-btn delete" title="Excluir">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination (Only for Customers) */}
+                        {activeTab === 'customers' && totalPages > 1 && (
+                            <div className="pagination" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    style={{
+                                        padding: '8px 12px',
+                                        background: page === 1 ? '#222' : '#333',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        color: page === 1 ? '#555' : '#fff',
+                                        cursor: page === 1 ? 'not-allowed' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <ChevronLeft size={16} /> Anterior
+                                </button>
+                                <span style={{ display: 'flex', alignItems: 'center', color: '#888' }}>
+                                    Página {page} de {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    style={{
+                                        padding: '8px 12px',
+                                        background: page === totalPages ? '#222' : '#333',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        color: page === totalPages ? '#555' : '#fff',
+                                        cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    Próxima <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Create Modal */}
