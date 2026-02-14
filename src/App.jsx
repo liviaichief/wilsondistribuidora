@@ -6,6 +6,7 @@ import AdminUsers from './pages/AdminUsers.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import Login from './components/Login.jsx';
 import Logout from './components/Logout.jsx';
+import TestConnection from './pages/TestConnection.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfileModal from './components/ProfileModal'; // Global Modal
 
@@ -47,6 +48,7 @@ function App() {
                   } />
                   <Route path="/login" element={<Login />} />
                   <Route path="/logout" element={<Logout />} />
+                  <Route path="/test" element={<TestConnection />} />
                 </Route>
 
                 {/* Admin Layout */}
