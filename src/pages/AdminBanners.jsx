@@ -120,12 +120,15 @@ const AdminBanners = () => {
                     ID.unique(),
                     imageFile
                 );
-                // We'll save the File ID, similar to how we handled products if we refactored,
-                // or use the view URL. Let's use the ID and let getImageUrl handle it, 
-                // OR construct the URL manually if getImageUrl expects a full URL for some cases.
-                // Given previous code uses getImageUrl which handles IDs, saving the ID is safer/cleaner.
-                finalImageUrl = fileUpload.$id;
+
+                // Construct URL manually to match the Product behavior and satisfy the URL format requirement
+                const url = storage.getFileView(BUCKET_ID, fileUpload.$id);
+                finalImageUrl = url.href || url; // Handle if it returns object or string
             }
+
+            // Ensure we don't send an empty string if it's required as URL, but if it's optional it should be null?
+            // If the schema says URL and it's required, we must have one.
+            // If logic relies on either file or external URL, we should have one by now.
 
             const payload = {
                 title: formData.title,
