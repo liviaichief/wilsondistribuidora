@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import Login from './components/Login.jsx';
 import Logout from './components/Logout.jsx';
@@ -56,6 +57,7 @@ function App() {
                   </ProtectedRoute>
                 }>
                   <Route index element={<Admin />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="users" element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <AdminUsers />

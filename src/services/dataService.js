@@ -39,7 +39,8 @@ export const saveProduct = async (product) => {
             description: product.description,
             price: parseFloat(product.price),
             category: product.category,
-            image: product.image
+            image: product.image,
+            product_sku: product.product_sku || `SKU-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
         };
 
         let response;

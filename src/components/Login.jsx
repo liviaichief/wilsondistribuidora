@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
+import { CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
-    const { signIn, user, loading: authLoading } = useAuth();
+    const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
+    const [loginSuccess, setLoginSuccess] = useState(false);
     const navigate = useNavigate();
 
     // Redirect if already logged in
     React.useEffect(() => {
-        if (!authLoading && user) {
-            navigate('/admin');
+        if (!authLoading && user && !loginSuccess && !loading) {
+            navigate('/');
         }
-    }, [user, authLoading, navigate]);
+    }, [user, authLoading, navigate, loginSuccess, loading]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -33,9 +36,16 @@ const Login = () => {
             const { error } = await signIn(username, password);
             if (error) throw error;
 
-            // Note: AuthContext now sets the user state, 
-            // the redirect will be handled by the useEffect above
-            // as soon as the session is detected.
+            console.log("Login successful, showing success message");
+            setLoginSuccess(true);
+            // Keep loading true to maintain spinner/disabled state
+            setSuccessMsg('Login realizado com sucesso!');
+
+            setTimeout(() => {
+                console.log("Redirecting to /");
+                navigate('/');
+            }, 1500);
+
         } catch (error) {
             console.error("Login Error:", error);
             setError(error.message === 'Invalid login credentials'
@@ -98,16 +108,39 @@ const Login = () => {
                         />
                     </div>
                     {error && <p className="error-msg">{error}</p>}
+                    {successMsg && (
+                        <div className="flex items-center justify-center gap-2 text-emerald-500 bg-emerald-500/10 p-3 rounded mb-4 border border-emerald-500/20" style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)', backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                            <CheckCircle size={20} />
+                            <span className="font-medium">{successMsg}</span>
+                        </div>
+                    )}
                     <button
                         type="submit"
-                        className={`login-btn ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        disabled={loading}
+                        className={`login-btn ${loading || loginSuccess ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        disabled={loading || loginSuccess}
                     >
                         {loading ? (
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                 <span className="spinner-small"></span> Entrando...
                             </span>
                         ) : 'Entrar'}
+                    </button>
+
+                    <div className="or-divider">ou</div>
+
+                    <button
+                        type="button"
+                        className="google-btn"
+                        onClick={() => signInWithGoogle()}
+                        disabled={loading || loginSuccess}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4" />
+                            <path d="M9 18c2.43 0 4.4673-.806 5.9564-2.18l-2.9087-2.2582c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853" />
+                            <path d="M3.964 10.7105c-.18-.54-.2823-1.1168-.2823-1.7105s.1023-1.1705.2823-1.7105V4.9577H.9573C.3477 6.1705 0 7.5477 0 9s.3477 2.8295.9573 4.0423l3.0067-2.3318z" fill="#FBBC05" />
+                            <path d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.8918 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9577L3.964 7.2896c.7078-2.1273 2.692-3.7101 5.036-3.7101z" fill="#EA4335" />
+                        </svg>
+                        Entrar com Google
                     </button>
                 </form>
             </div>

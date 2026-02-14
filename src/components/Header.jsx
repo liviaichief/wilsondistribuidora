@@ -178,13 +178,9 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                             <Link to="/orders" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
                                                 <ClipboardList size={16} /> <span>Meus Pedidos</span>
                                             </Link>
-                                            <button className="user-menu-item" onClick={async () => {
-                                                await signOut();
+                                            <button className="user-menu-item" onClick={() => {
                                                 setIsUserMenuOpen(false);
-                                                setLogoutMessage("Sessão finalizada com sucesso! 👋");
-                                                setTimeout(() => {
-                                                    window.location.href = '/login';
-                                                }, 2000);
+                                                navigate('/logout');
                                             }}>
                                                 <LogOut size={16} /> Sair
                                             </button>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ArrowLeft, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import '../pages/Admin.css';
 
@@ -15,11 +15,18 @@ const AdminLayout = () => {
 
                 <nav className="admin-nav" style={{ flex: 1, marginLeft: '40px' }}>
                     <Link
+                        to="/admin/dashboard"
+                        className={`nav-link ${location.pathname === '/admin/dashboard' ? 'active' : ''}`}
+                        style={{ color: location.pathname === '/admin/dashboard' ? '#fff' : 'var(--text-muted)' }}
+                    >
+                        <LayoutDashboard size={20} /> Dashboard
+                    </Link>
+                    <Link
                         to="/admin"
                         className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}
                         style={{ color: location.pathname === '/admin' ? '#fff' : 'var(--text-muted)' }}
                     >
-                        <LayoutDashboard size={20} /> Produtos
+                        <ShoppingBag size={20} /> Produtos
                     </Link>
                     <Link
                         to="/admin/users"
