@@ -36,11 +36,12 @@ const Admin = () => {
     };
 
     // Filter State
-    const [filters, setFilters] = useState({
-        sku: '',
-        title: '',
-        category: ''
-    });
+    const [filterTitle, setFilterTitle] = useState('');
+    const [filterCategory, setFilterCategory] = useState({ value: 'all', label: 'Todas' }); // distinct from string to safely handle dropdown if needed, but string 'all' is fine. Let's stick to string 'all'
+    // Actually simplicity:
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [skuFilter, setSkuFilter] = useState('');
+    const [titleFilter, setTitleFilter] = useState('');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -115,16 +116,12 @@ const Admin = () => {
 
     // Filter Logic
     const filteredProducts = products.filter(product => {
-        const matchSku = (product.product_sku || '').toLowerCase().includes(filters.sku.toLowerCase());
-        const matchTitle = (product.title || '').toLowerCase().includes(filters.title.toLowerCase());
-        // Handle category being a string (most likely)
-        const matchCategory = filters.category === '' || (product.category || '').toLowerCase() === filters.category.toLowerCase();
+        const matchSku = (product.product_sku || '').toLowerCase().includes(skuFilter.toLowerCase());
+        const matchTitle = (product.title || '').toLowerCase().includes(titleFilter.toLowerCase());
+        const matchCategory = categoryFilter === 'all' || (product.category || '').toLowerCase() === categoryFilter.toLowerCase();
 
         return matchSku && matchTitle && matchCategory;
     });
-
-    // Unique categories for filter dropdown
-    const categories = ['carne', 'frango', 'embutidos', 'acompanhamentos', 'acessorios', 'insumos'];
 
     return (
         <div className="admin-container">
@@ -183,6 +180,77 @@ const Admin = () => {
                             <Plus size={20} /> Novo Produto
                         </button>
                     </div>
+
+                    {/* Filters Bar */}
+                    <div className="filters-bar" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                        <input
+                            type="text"
+                            placeholder="Filtrar por Título..."
+                            value={titleFilter}
+                            onChange={(e) => setTitleFilter(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #333',
+                                background: '#121212',
+                                color: '#fff',
+                                flex: 1,
+                                minWidth: '200px'
+                            }}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Filtrar por SKU..."
+                            value={skuFilter}
+                            onChange={(e) => setSkuFilter(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #333',
+                                background: '#121212',
+                                color: '#fff',
+                                flex: 1,
+                                minWidth: '150px'
+                            }}
+                        />
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #333',
+                                background: '#121212',
+                                color: '#fff',
+                                minWidth: '150px'
+                            }}
+                        >
+                            <option value="all">Todas as Categorias</option>
+                            <option value="carne">Carne</option>
+                            <option value="frango">Frango</option>
+                            <option value="embutidos">Embutidos</option>
+                            <option value="acompanhamentos">Acompanhamentos</option>
+                            <option value="acessorios">Acessórios</option>
+                            <option value="insumos">Insumos</option>
+                        </select>
+                        {/* Clear Filters Button */}
+                        {(titleFilter || skuFilter || categoryFilter !== 'all') && (
+                            <button
+                                onClick={() => { setTitleFilter(''); setSkuFilter(''); setCategoryFilter('all'); }}
+                                style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ff4444',
+                                    background: 'transparent',
+                                    color: '#ff4444',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Limpar
+                            </button>
+                        )}
+                    </div>
+
                     {loading ? (
                         <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
                             Carregando produtos...
@@ -193,108 +261,64 @@ const Admin = () => {
                             <p>{error}</p>
                             <button onClick={loadProducts} className="icon-btn" style={{ width: 'auto', padding: '0 20px', margin: '10px auto' }}>Tentar Novamente</button>
                         </div>
+                    ) : products.length === 0 ? (
+                        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                            <h3>Nenhum produto encontrado.</h3>
+                            <p>Comece adicionando itens ao seu cardápio.</p>
+                            <button onClick={openNewModal} className="add-btn" style={{ margin: '20px auto' }}>
+                                <Plus size={20} /> Adicionar Primeiro Produto
+                            </button>
+                        </div>
                     ) : (
-                        <>
-                            {/* Filter Bar (Integrated into Table Headers roughly, but nicer above) - Let's do inside headers as per plan */}
-
-                            {products.length === 0 ? (
-                                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                                    <h3>Nenhum produto encontrado.</h3>
-                                    <p>Comece adicionando itens ao seu cardápio.</p>
-                                    <button onClick={openNewModal} className="add-btn" style={{ margin: '20px auto' }}>
-                                        <Plus size={20} /> Adicionar Primeiro Produto
-                                    </button>
-                                </div>
-                            ) : (
-                                <table className="products-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Imagem</th>
-                                            <th>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                    <span>SKU</span>
-                                                    <div className="filter-input-wrapper">
-                                                        <Search size={12} className="filter-icon" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Filtrar SKU"
-                                                            value={filters.sku}
-                                                            onChange={e => setFilters({ ...filters, sku: e.target.value })}
-                                                            className="filter-input"
-                                                        />
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="products-table">
+                                <thead>
+                                    <tr>
+                                        <th>Imagem</th>
+                                        <th>SKU</th>
+                                        <th>Título</th>
+                                        <th>Categoria</th>
+                                        <th>Preço</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredProducts.length > 0 ? (
+                                        filteredProducts.map((item) => (
+                                            <tr key={item.id}>
+                                                <td>
+                                                    {item.image ? (
+                                                        <img src={getImageUrl(item.image)} alt={item.title} className="thumb-img" />
+                                                    ) : (
+                                                        <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                                                    )}
+                                                </td>
+                                                <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
+                                                <td>{item.title}</td>
+                                                <td><span className="badge">{item.category}</span></td>
+                                                <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
+                                                <td>
+                                                    <div className="actions">
+                                                        <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
+                                                            <Edit2 size={18} />
+                                                        </button>
+                                                        <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
+                                                            <Trash2 size={18} />
+                                                        </button>
                                                     </div>
-                                                </div>
-                                            </th>
-                                            <th>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                    <span>Título</span>
-                                                    <div className="filter-input-wrapper">
-                                                        <Search size={12} className="filter-icon" />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Filtrar Nome"
-                                                            value={filters.title}
-                                                            onChange={e => setFilters({ ...filters, title: e.target.value })}
-                                                            className="filter-input"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            <th>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                    <span>Categoria</span>
-                                                    <select
-                                                        value={filters.category}
-                                                        onChange={e => setFilters({ ...filters, category: e.target.value })}
-                                                        className="filter-select"
-                                                    >
-                                                        <option value="">Todas</option>
-                                                        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                                    </select>
-                                                </div>
-                                            </th>
-                                            <th>Preço</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredProducts.length > 0 ? (
-                                            filteredProducts.map((item) => (
-                                                <tr key={item.id}>
-                                                    <td>
-                                                        {item.image ? (
-                                                            <img src={getImageUrl(item.image)} alt={item.title} className="thumb-img" />
-                                                        ) : (
-                                                            <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
-                                                        )}
-                                                    </td>
-                                                    <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
-                                                    <td>{item.title}</td>
-                                                    <td><span className="badge">{item.category}</span></td>
-                                                    <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
-                                                    <td>
-                                                        <div className="actions">
-                                                            <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
-                                                                <Edit2 size={18} />
-                                                            </button>
-                                                            <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                                                    Nenhum produto encontrado com os filtros atuais.
                                                 </td>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            )}
-                        </>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                                                Nenhum produto encontrado com os filtros atuais.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             )}
@@ -356,16 +380,8 @@ const Admin = () => {
                                                     file
                                                 );
 
-                                                // Get View URL (public)
-                                                // Using project/bucket/files/id/view
-                                                // Or use storage.getFileView(BUCKET_ID, result.$id)
-
-                                                // Construct URL manually to be safe or use getFileView if it returns URL object
-                                                // storage.getFileView returns URL string in new SDK versions? or just the path?
-                                                // Let's use getFileView
                                                 const url = storage.getFileView(BUCKET_ID, result.$id);
-
-                                                setCurrentProduct({ ...currentProduct, image: url.href || url }); // SDK might return URL object
+                                                setCurrentProduct({ ...currentProduct, image: url.href || url });
                                             } catch (err) {
                                                 alert('Erro no upload: ' + err.message);
                                                 console.error(err);
