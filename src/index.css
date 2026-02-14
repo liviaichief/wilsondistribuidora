@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+    /* Premium Dark Palette */
+    --primary-color: #D4AF37;
+    /* Metallic Gold */
+    --primary-hover: #FFE57C;
+    /* Lighter Gold for hover */
+    --secondary-color: #121212;
+    /* Deep Black Background */
+    --surface-color: #1E1E1E;
+    /* Dark Grey for Cards/Headers */
+    --text-color: #E0E0E0;
+    /* Off-white for readability */
+    --text-muted: #A0A0A0;
+    --accent-color: #FFFFFF;
+
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.3s ease;
+}
+
+ul {
+    list-style: none;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--secondary-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}

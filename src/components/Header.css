@@ -1,0 +1,484 @@
+.site-header {
+    background-color: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    /* Subtle Gold Border */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.header-container {
+    display: flex;
+    align-items: flex-end;
+    /* Align bottom for tabs and actions logic */
+    padding: 0.5rem 2rem;
+    gap: 1rem;
+    max-width: 100%;
+    justify-content: space-between;
+    height: 145px;
+    /* Increased height by ~20% */
+    position: relative;
+    /* Context for absolute positioning */
+}
+
+/* 1. Logo Section */
+.header-logo-section {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    height: 100%;
+    padding-bottom: 0px;
+}
+
+/* 2. Nav Section */
+.header-nav-section {
+    flex: 1;
+    /* Takes available space */
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 0px;
+    min-width: 0;
+    /* Allow shrinking/scroll */
+}
+
+/* 3. Actions Section */
+.header-actions-section {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+    height: auto;
+    z-index: 10;
+}
+
+.header-logo-section {
+    flex: 0 0 200px;
+    /* Fixed width for logo section */
+    display: flex;
+    align-items: center;
+    cursor: default;
+    /* Prevent text cursor */
+}
+
+/* header-main-content removed */
+
+.header-logo {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    width: auto;
+    object-fit: contain;
+    max-height: 120px;
+    /* Increased size by ~20% */
+}
+
+/* header-logo-placeholder style removed */
+
+.admin-link {
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s;
+    white-space: nowrap;
+    /* Prevent breaking into two lines */
+    position: relative;
+    /* Changed from absolute */
+    top: auto;
+    right: auto;
+    margin-right: 15px;
+}
+
+/* Scoped rule removed as it's no longer needed */
+
+.admin-link:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* 10px spacing as requested */
+    justify-content: flex-end;
+    /* Push content to the right edge */
+    align-self: flex-end;
+    /* Align to bottom */
+    padding-bottom: 2px;
+    /* Fine adjustment to match tabs */
+    margin-bottom: 0px;
+}
+
+.home-header .header-actions {
+    margin-bottom: 0px;
+    transform: none;
+}
+
+.cart-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.cart-btn:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--primary-color);
+    color: #121212;
+    font-size: 0.7rem;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.category-nav {
+    padding: 1rem 0;
+    overflow-x: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.category-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    /* Three columns for perfect centering */
+    align-items: center;
+    padding: 0 2.5rem;
+    max-width: 100%;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ... existing styles ... */
+
+.cart-summary-container {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.nav-checkout-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+}
+
+.nav-checkout-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cart-totalizer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
+    min-width: 80px;
+    /* margin-left removed */
+}
+
+.cart-total-value {
+    color: var(--primary-color);
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.cart-total-count {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+@media (max-width: 768px) {
+    .category-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0 1rem;
+    }
+
+    .category-list {
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 5px;
+    }
+
+    .cart-summary-container {
+        width: 100%;
+        justify-content: space-between;
+        padding-bottom: 0.5rem;
+    }
+
+    .nav-checkout-btn {
+        flex-grow: 1;
+    }
+}
+
+.category-nav-inline .category-list {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    /* Prevent wrapping */
+    justify-content: space-between;
+    width: 100%;
+    overflow-x: hidden;
+    /* Prevent scrollbar if not needed, or use auto if robust scrolling is desired, but user asked for "single line" specifically */
+    padding-bottom: 5px;
+    /* Space for scrollbar if visible */
+    width: auto;
+    /* Changed from 100% to auto to hug content */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+    margin-top: 15px;
+    padding-top: 5px;
+    margin-left: 0px;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.category-nav-inline .category-list::-webkit-scrollbar {
+    display: none;
+}
+
+/* Inline Cart Summary */
+.cart-summary-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* margin-right removed */
+    animation: fadeIn 0.3s ease;
+}
+
+.category-item {
+    display: flex;
+    flex: 1;
+    /* Grow to fill space */
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+}
+
+.category-item:hover {
+    border-color: var(--primary-color);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+}
+
+.category-item.active {
+    background: var(--gold-gradient);
+    color: #121212;
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.category-icon {
+    opacity: 0.8;
+}
+
+.category-item.active .category-icon {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .header-nav-section {
+        overflow-x: auto;
+        order: 3;
+        /* Nav below on mobile if needed, or adjust */
+        width: 100%;
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .header-actions-section {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        padding-bottom: 0;
+    }
+}
+
+/* Inline Category Nav */
+.category-nav-inline {
+    width: 100%;
+}
+
+/* User Menu Dropdown */
+.user-menu-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 15px;
+    background-color: #1e1e1e;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.2s ease;
+}
+
+.user-menu-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85rem;
+    color: #888;
+    background-color: rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.user-menu-header small {
+    font-size: 0.7rem;
+    color: #666;
+}
+
+.user-menu-header span {
+    display: block;
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.8rem 1rem;
+    color: #e0e0e0;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.user-menu-item:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+    color: var(--primary-color);
+}
+
+.user-menu-item svg {
+    opacity: 0.8;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .user-menu-dropdown {
+        position: fixed;
+        top: 60px;
+        /* Adjust based on header height */
+        right: 10px;
+        width: 250px;
+        margin-top: 0;
+    }
+}
+
+/* Toast Notification */
+.logout-toast {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideDownToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideDownToast {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

@@ -1,0 +1,154 @@
+.order-history-container {
+    min-height: 100vh;
+    background: #121212;
+    color: #fff;
+    padding-bottom: 2rem;
+}
+
+.history-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 1rem;
+}
+
+.history-header h1 {
+    color: var(--primary-color);
+    font-size: 2rem;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #aaa;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.back-link:hover {
+    color: #fff;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 4rem;
+    color: #666;
+}
+
+.empty-history svg {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.cta-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.8rem 1.5rem;
+    background: var(--primary-color);
+    color: #000;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.order-card {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-id {
+    font-weight: bold;
+    color: #fff;
+}
+
+.order-date {
+    font-size: 0.85rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.order-status {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.order-status.completed {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+.order-items {
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+}
+
+.order-item-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    color: #ccc;
+}
+
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-value {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-left: 0.5rem;
+}
+
+.repeat-btn {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.repeat-btn:hover {
+    background: var(--primary-color);
+    color: #000;
+}

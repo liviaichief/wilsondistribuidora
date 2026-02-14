@@ -1,0 +1,216 @@
+.product-card {
+    background: var(--surface-color);
+    border: 1px solid #333;
+    border-radius: 8px;
+    /* Slightly sharper */
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    border-color: var(--primary-color);
+}
+
+.image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+    filter: brightness(0.9);
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.08);
+    filter: brightness(1.1);
+}
+
+.price-tag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(18, 18, 18, 0.9);
+    color: var(--primary-color);
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--primary-color);
+    font-weight: 700;
+    font-size: 1rem;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+
+.product-info {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.product-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.product-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    line-height: 1.3;
+    font-family: 'Playfair Display', serif;
+    /* Optional: if available, otherwise fallback */
+}
+
+.product-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+    line-height: 1.5;
+}
+
+.product-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.qty-selector {
+    display: flex;
+    align-items: center;
+    background: #121212;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.qty-selector button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 2px;
+}
+
+.qty-selector button:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.qty-selector span {
+    width: 30px;
+    text-align: center;
+    font-weight: 600;
+    color: #fff;
+}
+
+.btn-add {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add:hover {
+    background: var(--primary-color);
+    color: #121212;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.qty-selector.full-width {
+    flex-grow: 1;
+    justify-content: space-between;
+    padding: 4px 10px;
+    background: rgba(212, 175, 55, 0.1);
+    /* Gold tint */
+    border-color: var(--primary-color);
+}
+
+.qty-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .product-info {
+        padding: 0.8rem;
+    }
+
+    .product-title {
+        font-size: 1rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .product-desc {
+        font-size: 0.8rem;
+        line-height: 1.2;
+        margin-bottom: 0.8rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .price-tag {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
+        top: 5px;
+        right: 5px;
+    }
+
+    .btn-add {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .qty-selector {
+        padding: 2px 5px;
+    }
+
+    .qty-selector button {
+        width: 25px;
+        height: 25px;
+    }
+
+    .qty-selector span {
+        width: 20px;
+        font-size: 0.9rem;
+    }
+}

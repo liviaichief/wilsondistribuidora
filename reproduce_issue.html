@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="output">Loading...</div>
+<script>
+const supabaseUrl = "https://ofpqtmiyuffmfgeoocml.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcHF0bWl5dWZmbWZnZW9vY21sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1MDUxMTYsImV4cCI6MjA4NjA4MTExNn0.Xru6uVIpRwVGp3nNIJyt3vNHyAJFf0tC8IdzRrlQthw";
+
+async function fetchProducts() {
+    try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/products?select=title,image`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
+        const data = await response.json();
+        let html = '';
+        if (data.length === 0) {
+             html = 'No products found.';
+        } else {
+            console.log("Products found:", data.length);
+            data.forEach(p => {
+                const imgUrl = p.image;
+                const isSupabase = imgUrl && imgUrl.includes('supabase.co');
+                const optimizedUrl = isSupabase ? `${imgUrl}?width=300` : imgUrl;
+                html += `
+                    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+                        <h3>${p.title}</h3>
+                        <p>Raw URL: ${imgUrl}</p>
+                        <p>Optimized URL: ${optimizedUrl}</p>
+                        <img src="${optimizedUrl}" width="100" onerror="this.style.border='3px solid red'" onload="this.style.border='3px solid green'" />
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('output').innerHTML = html;
+    } catch (e) {
+        document.getElementById('output').innerText = "Error: " + e.toString();
+    }
+}
+fetchProducts();
+</script>
+</body>
+</html>
