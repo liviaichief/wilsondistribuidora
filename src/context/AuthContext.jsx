@@ -13,28 +13,30 @@ export const AuthProvider = ({ children }) => {
     const [authModalView, setAuthModalView] = useState('login');
 
     const [role, setRole] = useState(null);
+    const [profile, setProfile] = useState(null); // [NEW]
 
     // Helper: Map Appwrite User to our App context user shape
-    // Appwrite user has $id, email, name, etc.
     const mapUser = (acc) => ({
         id: acc.$id,
-        $id: acc.$id, // Keep $id for Appwrite SDK compatibility
+        $id: acc.$id,
         email: acc.email,
         full_name: acc.name,
-        user_metadata: { full_name: acc.name } // Keep compatibility
+        user_metadata: { full_name: acc.name }
     });
 
-    const fetchProfileRole = async (userId) => {
+    const fetchProfile = async (userId) => {
         try {
             const doc = await databases.getDocument(
                 DATABASE_ID,
                 COLLECTIONS.PROFILES,
                 userId
             );
-            return doc.role || 'client';
+            setProfile(doc);
+            setRole(doc.role || 'client');
         } catch (error) {
-            console.error("Error fetching profile role:", error);
-            return 'client';
+            console.error("Error fetching profile:", error);
+            setProfile(null);
+            setRole('client');
         }
     };
 
@@ -43,12 +45,12 @@ export const AuthProvider = ({ children }) => {
             try {
                 const session = await account.get();
                 setUser(mapUser(session));
-                const userRole = await fetchProfileRole(session.$id);
-                setRole(userRole);
+                await fetchProfile(session.$id);
             } catch (error) {
                 // Not logged in
                 setUser(null);
                 setRole(null);
+                setProfile(null);
             } finally {
                 setLoading(false);
             }
@@ -70,9 +72,8 @@ export const AuthProvider = ({ children }) => {
             await account.createEmailPasswordSession(email, password);
             const acc = await account.get();
             setUser(mapUser(acc));
-            const userRole = await fetchProfileRole(acc.$id);
-            setRole(userRole);
-            return { data: { user: mapUser(acc), role: userRole } };
+            await fetchProfile(acc.$id);
+            return { data: { user: mapUser(acc) } }; // Role is set in state
         } catch (error) {
             console.error("Login error:", error);
             return { error };
@@ -109,17 +110,18 @@ export const AuthProvider = ({ children }) => {
                     {
                         email: email,
                         full_name: additionalData?.full_name || '',
+                        first_name: (additionalData?.full_name || '').split(' ')[0] || '',
+                        last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
                         phone: additionalData?.phone || '',
                         role: defaultRole
                     }
                 );
             } catch (dbError) {
                 console.error("Error creating profile document:", dbError);
-                // Continue even if profile creation fails? Or rollback? 
-                // For now, log it. The user is created in Auth.
             }
 
             setRole(defaultRole);
+            await fetchProfile(acc.$id);
 
             return { data: { user: mapUser(acc), role: defaultRole } };
         } catch (error) {
@@ -135,6 +137,7 @@ export const AuthProvider = ({ children }) => {
             await account.deleteSession('current');
             setUser(null);
             setRole(null);
+            setProfile(null);
             return true;
         } catch (error) {
             console.error("Logout error:", error);
@@ -175,6 +178,26 @@ export const AuthProvider = ({ children }) => {
         setIsProfileModalOpen(false);
     };
 
+    const updateProfile = async (data) => {
+        if (!user || !user.$id) return;
+        try {
+            console.log("Updating profile with:", data);
+            await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTIONS.PROFILES,
+                user.$id,
+                data
+            );
+            // Refresh local user state/profile
+            const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, user.$id);
+            setProfile(doc);
+            return { success: true };
+        } catch (error) {
+            console.error("Failed to update profile:", error);
+            return { error };
+        }
+    };
+
     const authValue = React.useMemo(() => {
         // Appwrite Labels/Teams handles roles differently. 
         // For simplicity in this port, we can check email or label.
@@ -185,6 +208,7 @@ export const AuthProvider = ({ children }) => {
 
         return {
             user,
+            profile,
             role,
             isAdmin,
             isOwner: role === 'owner' || isAdmin, // Map owner to admin for simplicity
@@ -202,9 +226,14 @@ export const AuthProvider = ({ children }) => {
             signOut,
             resetPassword,
             signInWithGoogle,
-            updateProfile: async () => { }
+            updateProfile,
+            refreshProfile: async () => {
+                if (user && user.$id) {
+                    await fetchProfile(user.$id);
+                }
+            }
         };
-    }, [user, loading, isAuthModalOpen, authModalView, isProfileModalOpen, role]);
+    }, [user, profile, role, loading, isAuthModalOpen, authModalView, isProfileModalOpen]);
 
     return (
         <AuthContext.Provider value={authValue}>

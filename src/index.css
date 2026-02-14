@@ -1,22 +1,52 @@
 @import "tailwindcss";
 
 :root {
-    /* Premium Dark Palette */
+    /* Existing Colors */
     --primary-color: #D4AF37;
-    /* Metallic Gold */
     --primary-hover: #FFE57C;
-    /* Lighter Gold for hover */
     --secondary-color: #121212;
-    /* Deep Black Background */
     --surface-color: #1E1E1E;
-    /* Dark Grey for Cards/Headers */
     --text-color: #E0E0E0;
-    /* Off-white for readability */
     --text-muted: #A0A0A0;
     --accent-color: #FFFFFF;
 
+    /* New Redesign Colors */
+    --color-primary: #d4af35;
+    --color-background-light: #f8f7f6;
+    --color-background-dark: #0a0a0a;
+    --color-surface-dark: #1a1a1a;
+    --color-border-dark: #2d2a1e;
+    --color-security-green: #10b981;
+
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
     --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+}
+
+@theme {
+    --color-primary: var(--color-primary);
+    --color-background-light: var(--color-background-light);
+    --color-background-dark: var(--color-background-dark);
+    --color-surface-dark: var(--color-surface-dark);
+    --color-border-dark: var(--color-border-dark);
+    --color-security-green: var(--color-security-green);
+}
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+    user-select: none;
 }
 
 * {

@@ -153,6 +153,7 @@ const Admin = () => {
                             <thead>
                                 <tr>
                                     <th>Imagem</th>
+                                    <th>SKU</th>
                                     <th>Título</th>
                                     <th>Categoria</th>
                                     <th>Preço</th>
@@ -169,6 +170,7 @@ const Admin = () => {
                                                 <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                                             )}
                                         </td>
+                                        <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
                                         <td>{item.title}</td>
                                         <td><span className="badge">{item.category}</span></td>
                                         <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>

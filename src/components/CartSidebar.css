@@ -284,7 +284,10 @@
 
 .checkout-btn {
     flex-grow: 1;
-    padding: 1rem;
+    padding: 0.7rem;
+    /* Reduced by 30% */
+    font-size: 0.9rem;
+    /* Slightly smaller font */
     background: var(--gold-gradient);
     border: none;
     color: #121212;

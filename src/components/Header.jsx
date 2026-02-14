@@ -9,25 +9,25 @@ import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle,
 import './Header.css';
 
 // Custom Icons - Doodle Style
-const TomahawkIcon = ({ size = 20, className }) => (
+const OssobucoIcon = ({ size = 20, className }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        {/* Doodle style Tomahawk: simplified, slightly irregular */}
-        <path d="M9 11L4 21" /> {/* Bone handle */}
-        <path d="M9 11C8 9 7 5 11 3C15 1 21 3 22 7C23 11 20 16 16 18C13 19 10 16 9 11Z" /> {/* Meat */}
-        <path d="M12 7c0.5 0.5 1 0.5 1 0.5" strokeLinecap="round" opacity="0.6" /> {/* Texture dot/line */}
-        <path d="M15 10c0.5 0.5 0.5 1 0.5 1" strokeLinecap="round" opacity="0.6" /> {/* Texture dot/line */}
+        {/* Ossobuco: Round steak with central bone and marrow */}
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /> {/* Outer Meat */}
+        <circle cx="12" cy="12" r="3" /> {/* Central Bone */}
+        <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.6" /> {/* Marrow */}
+        <path d="M12 21v-3" opacity="0.5" /> {/* Texture/muscle line */}
+        <path d="M12 3v3" opacity="0.5" /> {/* Texture/muscle line */}
+        <path d="M3 12h3" opacity="0.5" /> {/* Texture/muscle line */}
+        <path d="M21 12h-3" opacity="0.5" /> {/* Texture/muscle line */}
     </svg>
 );
 
 const DrumstickIcon = ({ size = 20, className }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        {/* Matches the 'Doodle Icons' drumstick: bulbous top, boney bottom, dots for texture */}
-        <path d="M14 12l4 6" /> {/* Bone */}
-        <path d="M17 21l2-2" /> {/* Bone end */}
-        <path d="M7 5C3 8 3 14 7 17C9 19 14 12 14 12C14 12 13 4 7 5Z" /> {/* Meat */}
-        <circle cx="8" cy="10" r="0.5" fill="currentColor" opacity="0.6" /> {/* Texture dot */}
-        <circle cx="10" cy="8" r="0.5" fill="currentColor" opacity="0.6" /> {/* Texture dot */}
-        <circle cx="9" cy="13" r="0.5" fill="currentColor" opacity="0.6" /> {/* Texture dot */}
+        {/* Chicken Leg (Coxa): Bone at top-right, meat at bottom-left */}
+        <path d="M17.5 17.5c2.5 2.5 4.5 0.5 4.5 0.5l-6-6" /> {/* Bone end / Knuckle */}
+        <path d="M16 12l5 5" /> {/* Bone shaft extends */}
+        <path d="M7 3C4 6 3 11 6 14c3 3 8 2 11-1s4-8 1-11c-3-3-8-4-11 1z" /> {/* Meat Bulb */}
     </svg>
 );
 
@@ -92,7 +92,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
 
     const categories = [
         { id: 'all', label: 'TODOS', icon: Sparkles },
-        { id: 'carne', label: 'CARNE', icon: TomahawkIcon },
+        { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
         { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
         { id: 'embutidos', label: 'EMBUTIDOS', icon: SausageIcon },
         { id: 'acompanhamentos', label: 'ACOMPANHAMENTOS', icon: GarlicBreadIcon },
@@ -104,7 +104,10 @@ const Header = ({ activeCategory, onCategoryChange }) => {
         <header className={`site-header ${isHome ? 'home-header' : ''}`}>
             <div className="header-container">
                 {/* 1. Logo Section */}
-                <div className="header-logo-section">
+                <div className="header-logo-section" onClick={() => {
+                    // Navigate to home and force a reload (without query params)
+                    window.location.href = '/';
+                }} style={{ cursor: 'pointer' }}>
                     <img src="/logo-3r.jpeg" alt="3R Grill Boutique de Carnes" className="header-logo" />
                 </div>
 
@@ -209,7 +212,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 <div className="cart-totalizer">
                                     <span className="cart-total-value" style={{ fontSize: '0.9rem' }}>{cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
                                 </div>
-                                <button className="nav-checkout-btn" onClick={toggleCart}>
+                                <button className="nav-checkout-btn text-xs py-1 px-3" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={toggleCart}>
                                     Finalizar
                                 </button>
                             </div>

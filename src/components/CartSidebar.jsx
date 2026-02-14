@@ -20,7 +20,7 @@ const CartSidebar = () => {
         clearCart
     } = useCart();
 
-    const { user, profile, guestMode, openAuthModal } = useAuth();
+    const { user, profile, guestMode, openAuthModal, updateProfile, refreshProfile } = useAuth();
     const navigate = useNavigate();
 
     const [customerName, setCustomerName] = useState('');
@@ -41,10 +41,17 @@ const CartSidebar = () => {
 
     // Auto-fill form if user is logged in
     React.useEffect(() => {
+        if (isCartOpen && user) {
+            // Reload profile to get latest data
+            refreshProfile();
+        }
+    }, [isCartOpen, user]);
+
+    React.useEffect(() => {
         if (user) {
             // Priority: Profile (DB) > Metadata (Auth)
-            const nameToUse = profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || '';
-            const rawPhone = profile?.phone || user.user_metadata?.phone || '';
+            const nameToUse = profile?.full_name || user.name || user.user_metadata?.full_name || user.user_metadata?.name || '';
+            const rawPhone = profile?.whatsapp || profile?.phone || user.phone || user.user_metadata?.phone || '';
 
             if (nameToUse) setCustomerName(nameToUse);
             if (rawPhone) setCustomerPhone(formatPhone(rawPhone));
@@ -79,6 +86,18 @@ const CartSidebar = () => {
             items: { items: cartItems } // Storing items as JSON
         };
 
+        // 0. Update User Profile if phone changed (Sync logic)
+        if (user && profile && customerPhone) {
+            const currentPhone = (profile.phone || profile.whatsapp || '').replace(/\D/g, '');
+            const newPhone = customerPhone.replace(/\D/g, '');
+
+            if (newPhone && newPhone !== currentPhone) {
+                console.log("Updating user phone from cart...");
+                // Update both to be consistent
+                updateProfile({ phone: customerPhone, whatsapp: customerPhone });
+            }
+        }
+
         // 1. Create order in DB (or try to)
         let orderResult;
         try {
@@ -98,10 +117,15 @@ const CartSidebar = () => {
             // Add to local history if success
             addOrder(orderResult);
         } else {
+            console.error("Order creation failed:", orderResult.error);
+            // Alert for awareness, but continue to WhatsApp fallback
+            // alert(`Erro ao salvar pedido: ${orderResult.error}`);
+
             // Fallback for WhatsApp if DB fails (timestamp/random)
-            orderNumDisplay = "OFF-" + Date.now().toString().slice(-6);
+            orderNumDisplay = Date.now().toString().slice(-6);
             console.warn("Using offline fallback ID for WhatsApp");
         }
+
 
         // 3. Construct WhatsApp Message
         const itemsList = cartItems.map(item =>
@@ -110,7 +134,6 @@ const CartSidebar = () => {
 
         const message = `*NOVO PEDIDO #${orderNumDisplay} - 3R GRILL*\n\n` +
             `*Itens do Pedido:*\n${itemsList}\n\n` +
-            `*Total: R$ ${cartTotal.toFixed(2)}*\n\n` +
             `*Dados do Cliente:*\n` +
             `Nome: ${customerName}\n` +
             `Telefone: ${customerPhone}`;

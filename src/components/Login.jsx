@@ -49,7 +49,15 @@ const Login = () => {
 
     return (
         <div className="login-container">
-            <div className="login-box">
+            <div className="login-box relative">
+                {/* Close Button */}
+                <button
+                    onClick={() => navigate('/')}
+                    className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
+                >
+                    <span className="material-symbols-outlined">close</span>
+                </button>
+
                 <div className="login-header">
                     <Link to="/" title="Ir para o Site">
                         <img
@@ -90,17 +98,18 @@ const Login = () => {
                         />
                     </div>
                     {error && <p className="error-msg">{error}</p>}
-                    <button type="submit" className="login-btn" disabled={loading}>
+                    <button
+                        type="submit"
+                        className={`login-btn ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        disabled={loading}
+                    >
                         {loading ? (
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                 <span className="spinner-small"></span> Entrando...
                             </span>
                         ) : 'Entrar'}
                     </button>
-                    {loading && <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '10px' }}>Isso pode levar alguns segundos...</p>}
                 </form>
-
-
             </div>
             <style>{`
                 .spinner-small {

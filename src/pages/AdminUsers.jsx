@@ -104,6 +104,8 @@ const AdminUsers = () => {
                 {
                     email: newUser.email,
                     full_name: newUser.full_name,
+                    first_name: (newUser.full_name || '').split(' ')[0] || '',
+                    last_name: (newUser.full_name || '').split(' ').slice(1).join(' ') || '',
                     phone: newUser.phone,
                     role: newUser.role
                 }
@@ -163,6 +165,8 @@ const AdminUsers = () => {
                 editingUser.id,
                 {
                     full_name: editingUser.full_name,
+                    first_name: (editingUser.full_name || '').split(' ')[0] || '',
+                    last_name: (editingUser.full_name || '').split(' ').slice(1).join(' ') || '',
                     phone: editingUser.phone,
                     role: editingUser.role
                 }

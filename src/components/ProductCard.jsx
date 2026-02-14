@@ -58,7 +58,7 @@ const ProductCard = ({ product }) => {
             <div className="product-info">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="product-category">{product.category}</span>
-                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>#{product.id}</span>
+                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>#{product.product_sku || product.id}</span>
                 </div>
                 <h3 className="product-title">{product.title}</h3>
                 <p className="product-desc">{product.description}</p>
@@ -80,7 +80,7 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
             </div>
-        </motion.div>
+        </motion.div >
     );
 };
 

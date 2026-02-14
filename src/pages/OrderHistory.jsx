@@ -8,15 +8,20 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import './OrderHistory.css';
 
+import { useCart } from '../context/CartContext'; // Import useCart
+
 const OrderHistory = () => {
     const { user, loading: authLoading } = useAuth();
+    const { addToCart, toggleCart } = useCart(); // Get cart controls
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // ... (useEffect and loadOrders remain the same)
 
     useEffect(() => {
         if (!authLoading) {
             if (user) {
-                loadOrders(user.$id); // Appwrite uses $id
+                loadOrders(user.$id);
             } else {
                 setLoading(false);
             }
@@ -30,18 +35,14 @@ const OrderHistory = () => {
                 COLLECTIONS.ORDERS,
                 [
                     Query.equal('user_id', uid),
-                    Query.orderDesc('$createdAt') // Appwrite standard field
+                    Query.orderDesc('$createdAt')
                 ]
             );
 
-            // Map Appwrite docs to expected format
             const mappedOrders = response.documents.map(doc => ({
                 ...doc,
                 id: doc.$id,
                 created_at: doc.$createdAt,
-                // Items might be stored as a JSON string or related docs. 
-                // Assuming JSON string based on Supabase schema usage pattern, or array if structured.
-                // If it's a JSON string, we parse it.
                 items: typeof doc.items === 'string' ? JSON.parse(doc.items) : (doc.items || [])
             }));
 
@@ -63,11 +64,33 @@ const OrderHistory = () => {
         });
     };
 
-    // Helper to repeat order (re-add items to cart) - for now just a placeholder action
     const handleRepeatOrder = (order) => {
-        // Logic to add items to cart would require context access
-        // Ideally we redirect to home with items added, or just show a message "Added to cart"
-        alert('Funcionalidade de repetir pedido em desenvolvimento!');
+        const items = Array.isArray(order.items) ? order.items : (order.items?.items || []);
+
+        if (items.length === 0) {
+            alert('Não há itens neste pedido para refazer.');
+            return;
+        }
+
+        let addedCount = 0;
+        items.forEach(item => {
+            // Ideally we should check if product still exists/has stock, 
+            // but for now we trust the historic data or just add it.
+            // Adjust payload to match what addToCart expects (it expects a product object)
+            addToCart({
+                id: item.id || item.product_id, // Ensure ID is present
+                title: item.title,
+                price: item.price,
+                image: item.image,
+                category: item.category
+            }, item.quantity);
+            addedCount++;
+        });
+
+        if (addedCount > 0) {
+            // alert('Itens adicionados ao carrinho!');
+            toggleCart(); // Open cart to show items
+        }
     };
 
     if (authLoading) return <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>Carregando autenticação...</div>;
@@ -129,8 +152,24 @@ const OrderHistory = () => {
                                         <span style={{ marginRight: '0.5rem' }}>Total:</span>
                                         <span className="total-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {parseFloat(order.total_amount || order.total).toFixed(2)}</span>
                                     </div>
-                                    <button className="repeat-btn" onClick={() => handleRepeatOrder(order)} style={{ padding: '0.5rem 1rem', background: '#f3f4f6', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                        Repetir Pedido
+                                    <button
+                                        className="repeat-btn"
+                                        onClick={() => handleRepeatOrder(order)}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            background: '#D4AF37',
+                                            color: 'black',
+                                            fontWeight: 'bold',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                        title="Adicionar itens ao carrinho novamente"
+                                    >
+                                        <ShoppingBag size={16} /> Refazer Pedido
                                     </button>
                                 </div>
                             </div>

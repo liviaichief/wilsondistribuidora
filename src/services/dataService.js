@@ -1,5 +1,5 @@
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
-import { Query, ID } from 'appwrite';
+import { Query, ID, Permission, Role } from 'appwrite';
 
 // Helper to expand image URL if needed (Appwrite might return file ID)
 const processDoc = (doc) => {
@@ -132,11 +132,22 @@ export const createOrder = async (orderData) => {
             order_number: nextNumber // Save the new sequence number
         };
 
+        // ... (existing code)
+
+        const permissions = [];
+        if (orderData.user_id && orderData.user_id !== 'guest') {
+            permissions.push(Permission.read(Role.user(orderData.user_id)));
+            permissions.push(Permission.update(Role.user(orderData.user_id)));
+            permissions.push(Permission.read(Role.team('admin'))); // Ensure admins can read too
+            permissions.push(Permission.update(Role.team('admin')));
+        }
+
         const response = await databases.createDocument(
             DATABASE_ID,
             COLLECTIONS.ORDERS,
             ID.unique(),
-            payload
+            payload,
+            permissions
         );
         return { success: true, ...processDoc(response) };
     } catch (error) {
