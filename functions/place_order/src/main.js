@@ -30,11 +30,17 @@ module.exports = async function (context) {
 
         for (const item of items) {
             // item should be { id: '...', quantity: 1 }
-            const product = await databases.getDocument(
-                DATABASE_ID,
-                PRODUCTS_COLLECTION,
-                item.id
-            );
+            let product;
+            try {
+                product = await databases.getDocument(
+                    DATABASE_ID,
+                    PRODUCTS_COLLECTION,
+                    item.id
+                );
+            } catch (err) {
+                console.error(`Error fetching product ${item.id}:`, err);
+                throw new Error(`Error fetching product ${item.id}: ${err.message}`);
+            }
 
             const qty = parseInt(item.quantity) || 1;
             const price = parseFloat(product.price);
@@ -53,14 +59,25 @@ module.exports = async function (context) {
         // 2. Generate Next Order Number (Server-side)
         // Note: For high scale, use a separate atomic counter collection. 
         // For this implementation, we reduce race window by running on server.
-        const lastOrders = await databases.listDocuments(
-            DATABASE_ID,
-            ORDERS_COLLECTION,
-            [
-                Query.orderDesc('order_number'),
-                Query.limit(1)
-            ]
-        );
+        let lastOrders;
+        try {
+            lastOrders = await databases.listDocuments(
+                DATABASE_ID,
+                ORDERS_COLLECTION,
+                [
+                    Query.orderDesc('order_number'),
+                    Query.limit(1)
+                ]
+            );
+        } catch (err) {
+            console.error('Error fetching last order:', err);
+            // Verify if error is "request cannot have request body"
+            if (err.message && err.message.includes('request cannot have request body')) {
+                // Try simplified query or adjust headers if possible
+                // But really, just report it
+            }
+            throw new Error(`Error fetching last order: ${err.message}`);
+        }
 
         let nextNumber = 100;
         if (lastOrders.documents.length > 0) {
@@ -89,13 +106,19 @@ module.exports = async function (context) {
             permissions.push(Permission.update(Role.user(user_id)));
         }
 
-        const order = await databases.createDocument(
-            DATABASE_ID,
-            ORDERS_COLLECTION,
-            ID.unique(),
-            orderData,
-            permissions
-        );
+        let order;
+        try {
+            order = await databases.createDocument(
+                DATABASE_ID,
+                ORDERS_COLLECTION,
+                ID.unique(),
+                orderData,
+                permissions
+            );
+        } catch (err) {
+            console.error('Error creating order document:', err);
+            throw new Error(`Error creating order document: ${err.message}`);
+        }
 
         return context.res.json({ success: true, order });
 
