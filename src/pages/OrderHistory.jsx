@@ -53,7 +53,6 @@ const OrderHistory = () => {
                 DATABASE_ID,
                 COLLECTIONS.ORDERS,
                 [
-                    Query.equal('user_id', uid),
                     Query.orderDesc('$createdAt'),
                     Query.limit(ITEMS_PER_PAGE),
                     Query.offset(offset)
