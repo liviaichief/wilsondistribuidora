@@ -77,8 +77,9 @@ const AuthModal = () => {
             if (authModalView === 'login') {
                 const { error } = await signIn(email, password);
                 if (error) throw error;
-                showAlert('Login realizado com sucesso!', 'success', 'Bem-vindo!');
-                setTimeout(() => closeAuthModal(), 1500);
+                if (error) throw error;
+                // showAlert('Login realizado com sucesso!', 'success', 'Bem-vindo!');
+                closeAuthModal();
             } else if (authModalView === 'register') {
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
                 let isoDate = null;
