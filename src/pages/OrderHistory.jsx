@@ -163,7 +163,13 @@ const OrderHistory = () => {
                                         </span>
                                     </div>
                                     <span className="order-status completed" style={{ background: '#d1fae5', color: '#065f46', padding: '0.25rem 0.75rem', borderRadius: '14px', fontSize: '0.8rem' }}>
-                                        {order.status || 'Concluído'}
+                                        {{
+                                            'pending': 'Pendente',
+                                            'confirmed': 'Confirmado',
+                                            'preparing': 'Em Preparo',
+                                            'delivered': 'Concluído',
+                                            'cancelled': 'Cancelado'
+                                        }[order.status] || order.status || 'Concluído'}
                                     </span>
                                 </div>
 

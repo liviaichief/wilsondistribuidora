@@ -53,8 +53,19 @@ const AdminDashboard = () => {
             );
 
             const recentOrders = ordersRes.documents;
+
+            // Calculate revenue ONLY for closed/completed orders
+            // Statuses considered "closed": 'completed', 'delivered', 'concluído', 'entregue'
+            const closedStatuses = ['completed', 'delivered', 'concluído', 'entregue', 'concluido'];
+
             const recentRevenue = recentOrders.reduce((acc, order) => {
-                return acc + (parseFloat(order.total_amount || 0));
+                const status = (order.status || '').toLowerCase();
+                if (closedStatuses.includes(status)) {
+                    // Check both potential fields for total amount
+                    const orderTotal = parseFloat(order.total_amount || order.total || 0);
+                    return acc + orderTotal;
+                }
+                return acc;
             }, 0);
 
             // Mock "Active Users" (e.g., users created recently as proxy or random for demo)
