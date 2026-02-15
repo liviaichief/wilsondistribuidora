@@ -98,7 +98,7 @@ module.exports = async function (context) {
             customer_name,
             customer_phone,
             payment_method,
-            status: 'pending'
+            status: 'confirmed'
         };
 
         const permissions = [];

@@ -50,6 +50,7 @@ async function setupSchema() {
         await createAttribute('orders', 'double', 'total', null, true);
         await createAttribute('orders', 'string', 'items', 10000, true); // JSON string
         await createAttribute('orders', 'string', 'user_id', 255, false); // Store User ID manually if not using relationship
+        await createAttribute('orders', 'string', 'status', 50, false, 'confirmed'); // Added status
 
         // 4. Create Banners Collection
         await createCollection('banners', 'Banners', [
