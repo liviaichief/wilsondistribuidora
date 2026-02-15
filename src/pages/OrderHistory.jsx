@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
 import { Query } from 'appwrite';
-import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw } from 'lucide-react';
+import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import './OrderHistory.css';
