@@ -81,12 +81,12 @@ const CartSidebar = () => {
         }
 
         const orderData = {
-            name: customerName,
-            phone: customerPhone,
+            customer_name: customerName,
+            customer_phone: customerPhone,
             paymentMethod: 'A combinar', // Default value since selection is removed
             total: cartTotal,
             user_id: user ? user.id : null,
-            items: { items: cartItems } // Storing items as JSON
+            items: cartItems // Sending array directly to backend function
         };
 
         // 0. Update User Profile if phone changed (Sync logic)
