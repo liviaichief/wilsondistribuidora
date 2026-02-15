@@ -25,23 +25,27 @@ module.exports = async function (context) {
         }
 
         // 1. Validate Items & Calculate Total from Real DB Prices
-        let calculatedTotal = 0;
-        const validatedItems = [];
-
-        for (const item of items) {
-            // item should be { id: '...', quantity: 1 }
-            let product;
+        // Optimization: Fetch all products in parallel
+        const productPromises = items.map(async (item) => {
             try {
-                product = await databases.getDocument(
+                const product = await databases.getDocument(
                     DATABASE_ID,
                     PRODUCTS_COLLECTION,
                     item.id
                 );
+                return { item, product };
             } catch (err) {
                 console.error(`Error fetching product ${item.id}:`, err);
                 throw new Error(`Error fetching product ${item.id}: ${err.message}`);
             }
+        });
 
+        const results = await Promise.all(productPromises);
+
+        let calculatedTotal = 0;
+        const validatedItems = [];
+
+        for (const { item, product } of results) {
             const qty = parseInt(item.quantity) || 1;
             const price = parseFloat(product.price);
 
