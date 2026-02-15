@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
 import { Query } from 'appwrite';
-import { ArrowLeft, Package, Clock, ShoppingBag } from 'lucide-react';
+import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import './OrderHistory.css';
@@ -53,6 +53,7 @@ const OrderHistory = () => {
                 DATABASE_ID,
                 COLLECTIONS.ORDERS,
                 [
+                    Query.equal('user_id', uid),
                     Query.orderDesc('$createdAt'),
                     Query.limit(ITEMS_PER_PAGE),
                     Query.offset(offset)
@@ -133,7 +134,17 @@ const OrderHistory = () => {
 
             <main className="history-content">
                 <div className="history-header">
-                    <h1>Meus Pedidos</h1>
+                    <h2>
+                        <ClipboardList className="icon" /> Meus Pedidos
+                        <button
+                            onClick={() => loadOrders(user.$id || user.id, page, false)}
+                            className="refresh-btn"
+                            title="Atualizar lista"
+                            style={{ marginLeft: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-color)' }}
+                        >
+                            <RefreshCcw size={20} />
+                        </button>
+                    </h2>
                     <Link to="/" className="back-link"><ArrowLeft size={18} /> Voltar as compras</Link>
                 </div>
 
