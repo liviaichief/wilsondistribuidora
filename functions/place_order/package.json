@@ -3,8 +3,7 @@
     "version": "1.0.0",
     "description": "Secure order placement function",
     "main": "src/main.js",
-    "type": "module",
     "dependencies": {
-        "node-appwrite": "^14.0.0"
+        "node-appwrite": "^13.0.0"
     }
 }

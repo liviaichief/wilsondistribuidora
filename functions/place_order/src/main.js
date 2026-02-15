@@ -1,7 +1,7 @@
 
-import { Client, Databases, ID, Permission, Role, Query } from 'node-appwrite';
+const { Client, Databases, ID, Permission, Role, Query } = require('node-appwrite');
 
-export default async function (context) {
+module.exports = async function (context) {
     const client = new Client()
         .setEndpoint(process.env.APPWRITE_ENDPOINT)
         .setProject(process.env.APPWRITE_PROJECT_ID)
