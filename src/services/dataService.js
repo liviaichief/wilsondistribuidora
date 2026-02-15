@@ -160,6 +160,8 @@ export const createOrder = async (orderData) => {
         // Use Function for secure Order Number generation and Total calculation
         console.log('Attempting to execute function with ID:', PLACE_ORDER_FUNC_ID);
         // Async execution (3rd param = true) to prevent timeouts
+        // SYNCHRONOUS execution (async=false) to ensure order is actually created
+        // and to catch any errors (like invalid products) before redirecting.
         const execution = await functions.createExecution(
             PLACE_ORDER_FUNC_ID,
             JSON.stringify({
@@ -169,25 +171,27 @@ export const createOrder = async (orderData) => {
                 customer_phone: orderData.customer_phone,
                 payment_method: orderData.paymentMethod
             }),
-            true // ASYNC MODE
+            false // SYNC MODE (Wait for result)
         );
 
-        if (execution.status === 'failed') {
-            console.error('Function execution failed start.', execution);
-            throw new Error(`Falha ao iniciar processamento: ${execution.status}`);
+        if (execution.status !== 'completed') {
+            console.error('Function execution failed.', execution);
+            throw new Error(`Falha no processamento: ${execution.status}`);
         }
 
-        // Async mode: We don't have the final DB order yet. 
-        // Return simulated success so frontend flows to WhatsApp immediately.
-        // The real order will appear in the History/DB a few seconds later.
-        console.log("Async execution started. ID:", execution.$id);
+        const data = JSON.parse(execution.responseBody);
 
+        if (!data.success) {
+            console.error('Order creation failed logic:', data.error);
+            throw new Error(data.error || 'Erro ao criar pedido');
+        }
+
+        // Real order created successfully
         return {
             success: true,
-            $id: execution.$id,
-            // Fallback ID for WhatsApp display until real processing is done
-            order_number: Math.floor(Date.now() % 100000),
-            status: 'processing'
+            $id: data.order.$id,
+            order_number: data.order.order_number,
+            status: data.order.status
         };
 
     } catch (error) {
