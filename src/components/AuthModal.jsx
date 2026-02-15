@@ -31,7 +31,6 @@ const AuthModal = () => {
     // Reset form when view changes
     useEffect(() => {
         setError('');
-        // setSuccessMsg(''); // Allow success message to persist across view changes
     }, [authModalView, isAuthModalOpen]);
 
     if (!isAuthModalOpen) return null;
@@ -78,7 +77,6 @@ const AuthModal = () => {
                 const { error } = await signIn(email, password);
                 if (error) throw error;
                 if (error) throw error;
-                // showAlert('Login realizado com sucesso!', 'success', 'Bem-vindo!');
                 closeAuthModal();
             } else if (authModalView === 'register') {
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
@@ -110,7 +108,6 @@ const AuthModal = () => {
             console.error(err);
             const msg = err.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : err.message;
             showAlert(msg, 'error', 'Erro');
-            // Keep inline error for persistent visibility if needed, but we used modal as requested.
         } finally {
             setLoading(false);
         }
@@ -149,9 +146,6 @@ const AuthModal = () => {
                     )}
 
                     <div className="auth-content">
-                        {/* {error && <div className="error-message" style={{ color: '#ff4444', marginBottom: '1rem', padding: '10px', background: 'rgba(255,0,0,0.1)', borderRadius: '4px' }}>{error}</div>} */}
-                        {/* {successMsg && <div className="success-message" style={{ color: '#4CAF50', marginBottom: '1rem', padding: '10px', background: 'rgba(76,175,80,0.1)', borderRadius: '4px' }}>{successMsg}</div>} */}
-
                         <form className="auth-form" onSubmit={handleSubmit} noValidate>
                             {authModalView === 'register' && (
                                 <div className="form-group">
@@ -163,7 +157,6 @@ const AuthModal = () => {
                                             placeholder="Seu nome"
                                             value={fullName}
                                             onChange={e => setFullName(e.target.value)}
-                                            // required - Manual validation
                                             style={{ width: '100%' }}
                                         />
                                     </div>
@@ -178,7 +171,6 @@ const AuthModal = () => {
                                     placeholder="seu@email.com"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                // required
                                 />
                             </div>
 
@@ -191,8 +183,6 @@ const AuthModal = () => {
                                         placeholder="******"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                    // required
-                                    // minLength={6}
                                     />
                                 </div>
                             )}
@@ -207,7 +197,6 @@ const AuthModal = () => {
                                             placeholder="(11) 99999-9999"
                                             value={phone}
                                             onChange={handlePhoneChange}
-                                        // required
                                         />
                                     </div>
                                     <div className="form-group">
