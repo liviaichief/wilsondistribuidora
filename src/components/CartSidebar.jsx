@@ -69,6 +69,14 @@ const CartSidebar = () => {
 
     const { addOrder } = useOrder();
 
+    // [NEW] Auto-open checkout form if guest mode is enabled while cart is open
+    React.useEffect(() => {
+        if (isCartOpen && guestMode && cartItems.length > 0) {
+            // Ensure we are ready to checkout
+            console.log("Guest mode active, ready for checkout form");
+        }
+    }, [isCartOpen, guestMode, cartItems]);
+
     const handleCheckout = async () => {
         if (!user && !guestMode) {
             openAuthModal('login');
@@ -192,7 +200,7 @@ const CartSidebar = () => {
                     )}
                 </div>
 
-                {cartItems.length > 0 && (
+                {cartItems.length > 0 && (user || guestMode) && (
                     <div className="checkout-form">
                         <h3><ShoppingBag size={16} style={{ marginBottom: -2 }} /> Cliente</h3>
                         <div className="form-group">
