@@ -66,8 +66,6 @@ const CartSidebar = () => {
         setCustomerPhone(formatPhone(e.target.value));
     };
 
-    if (!isCartOpen) return null;
-
     // [NEW] Auto-open checkout form if guest mode is enabled while cart is open
     React.useEffect(() => {
         if (isCartOpen && guestMode && cartItems.length > 0) {
@@ -75,6 +73,8 @@ const CartSidebar = () => {
             console.log("Guest mode active, ready for checkout form");
         }
     }, [isCartOpen, guestMode, cartItems]);
+
+    if (!isCartOpen) return null;
 
     const handleCheckout = async () => {
         if (!user && !guestMode) {

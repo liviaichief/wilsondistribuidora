@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
+    const [guestMode, setGuestMode] = useState(false); // [NEW] Guest Mode
 
     const [role, setRole] = useState(null);
     const [profile, setProfile] = useState(null); // [NEW]
@@ -38,6 +39,11 @@ export const AuthProvider = ({ children }) => {
             setProfile(null);
             setRole('client');
         }
+    };
+
+    const continueAsGuest = () => {
+        setGuestMode(true);
+        closeAuthModal();
     };
 
     useEffect(() => {
@@ -218,6 +224,8 @@ export const AuthProvider = ({ children }) => {
             setAuthModalView,
             openAuthModal,
             closeAuthModal,
+            guestMode,        // [NEW]
+            continueAsGuest,  // [NEW]
             isProfileModalOpen, // Exported state
             openProfileModal,   // Exported function
             closeProfileModal,  // Exported function
@@ -233,7 +241,7 @@ export const AuthProvider = ({ children }) => {
                 }
             }
         };
-    }, [user, profile, role, loading, isAuthModalOpen, authModalView, isProfileModalOpen]);
+    }, [user, profile, role, loading, isAuthModalOpen, authModalView, isProfileModalOpen, guestMode]);
 
     return (
         <AuthContext.Provider value={authValue}>
