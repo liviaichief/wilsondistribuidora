@@ -27,6 +27,9 @@ const CartSidebar = () => {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
 
+    const { showAlert } = useAlert(); // Moved up
+    const { addOrder } = useOrder(); // Moved up
+
     // Helper to format phone
     const formatPhone = (val) => {
         if (!val) return '';
@@ -64,10 +67,6 @@ const CartSidebar = () => {
     };
 
     if (!isCartOpen) return null;
-
-    const { showAlert } = useAlert(); // Hook do alerta
-
-    const { addOrder } = useOrder();
 
     // [NEW] Auto-open checkout form if guest mode is enabled while cart is open
     React.useEffect(() => {
