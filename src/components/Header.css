@@ -427,6 +427,13 @@
 }
 
 @media (max-width: 768px) {
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 1001;
+        /* High z-index to stay on top */
+    }
+
     .header-container {
         height: auto;
         min-height: 80px;
@@ -456,16 +463,58 @@
         width: 100%;
         justify-content: space-between;
         margin-bottom: 0.5rem;
-        padding: 0;
+        padding: 0.5rem 0;
+        /* Added padding */
+    }
+
+    /* Mobile: Bigger Icons & Touch Targets */
+    .header-actions .cart-btn {
+        transform: scale(1.3);
+        /* 30% larger icons */
+        padding: 12px;
+        /* Larger touch area */
+        margin-left: 5px;
+    }
+
+    .header-actions {
+        gap: 15px;
+        /* More space between cart and user */
+    }
+
+    /* Adjust "Hello User" text on mobile */
+    .admin-link {
+        font-size: 0.85rem;
+        /* Slightly larger text */
+        margin-right: auto;
+        /* Push icons to the right if using flex space */
     }
 
     /* User menu dropdown positioning fix for mobile */
     .user-menu-dropdown {
         position: absolute;
         top: 100%;
-        right: 0;
-        width: 200px;
-        margin-top: 5px;
+        right: -10px;
+        /* Align closer to screen edge */
+        width: 250px;
+        /* Wider for better readability */
+        margin-top: 12px;
+        background-color: rgba(30, 30, 30, 0.98);
+        /* Less transparent */
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .user-menu-item {
+        padding: 1rem 1.2rem;
+        /* Larger tap targets */
+        font-size: 0.95rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        /* Separator */
+    }
+
+    .user-menu-item:last-child {
+        border-bottom: none;
     }
 
     .header-nav-section {

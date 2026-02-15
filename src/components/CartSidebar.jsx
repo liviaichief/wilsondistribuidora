@@ -151,12 +151,12 @@ const CartSidebar = () => {
         const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-        // 4. Open WhatsApp
-        window.open(whatsappUrl, '_blank');
-
-        // 5. Cleanup
+        // 4. Cleanup (Before Redirect)
         clearCart();
         toggleCart(); // Close cart sidebar
+
+        // 5. Open WhatsApp (Same Tab for smoother mobile experience)
+        window.location.href = whatsappUrl;
     };
 
     return (
