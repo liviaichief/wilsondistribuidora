@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useOrder } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { createOrder } from '../services/dataService';
 import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../lib/imageUtils';
@@ -64,6 +65,8 @@ const CartSidebar = () => {
 
     if (!isCartOpen) return null;
 
+    const { showAlert } = useAlert(); // Hook do alerta
+
     const { addOrder } = useOrder();
 
     const handleCheckout = async () => {
@@ -73,7 +76,7 @@ const CartSidebar = () => {
         }
 
         if (!customerName || !customerPhone) {
-            alert('Por favor, preencha todos os dados para finalizar o pedido.');
+            showAlert('Ops! Para finalizar seu pedido, precisaremos do seu nome e WhatsApp. 📝', 'warning', 'Dados Incompletos');
             return;
         }
 
@@ -119,7 +122,7 @@ const CartSidebar = () => {
         } else {
             console.error("Order creation failed:", orderResult.error);
             // Alert for awareness, but continue to WhatsApp fallback
-            // alert(`Erro ao salvar pedido: ${orderResult.error}`);
+            showAlert(`Erro ao salvar pedido: ${orderResult.error}`, 'error');
 
             // Fallback for WhatsApp if DB fails (timestamp/random)
             orderNumDisplay = Date.now().toString().slice(-6);

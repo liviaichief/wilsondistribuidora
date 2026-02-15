@@ -1,0 +1,9 @@
+{
+    "name": "place-order",
+    "version": "1.0.0",
+    "description": "Secure order placement function",
+    "main": "src/main.js",
+    "dependencies": {
+        "node-appwrite": "^11.1.1"
+    }
+}

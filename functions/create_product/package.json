@@ -1,0 +1,9 @@
+{
+    "name": "create-product",
+    "version": "1.0.0",
+    "description": "Secure product creation function",
+    "main": "src/main.js",
+    "dependencies": {
+        "node-appwrite": "^11.1.1"
+    }
+}

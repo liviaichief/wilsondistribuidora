@@ -10,8 +10,10 @@ import {
     DollarSign
 } from 'lucide-react';
 import './Admin.css'; // Reusing admin styles
+import { useAlert } from '../context/AlertContext';
 
 const AdminDashboard = () => {
+    const { showAlert, showConfirm } = useAlert();
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalOrders: 0,
@@ -110,16 +112,22 @@ const AdminDashboard = () => {
     );
 
     const handleBackfill = async () => {
-        if (window.confirm('Deseja iniciar o backfill de SKUs? Isso irá atualizar produtos sem SKU ou com padrão antigo.')) {
-            setLoading(true);
-            const result = await backfillSKUs();
-            setLoading(false);
-            if (result.success) {
-                alert(`Backfill concluído! ${result.updatedCount} produtos atualizados.`);
-            } else {
-                alert(`Erro no backfill: ${result.error}`);
-            }
-        }
+        showConfirm(
+            'Deseja iniciar o backfill de SKUs? Isso irá atualizar produtos antigos e padronizar o catálogo. 📦',
+            async () => {
+                setLoading(true);
+                const result = await backfillSKUs();
+                setLoading(false);
+                if (result.success) {
+                    showAlert(`Backfill concluído! ${result.updatedCount} produtos atualizados. ✅`, 'success');
+                } else {
+                    showAlert(`Erro no backfill: ${result.error} ❌`, 'error');
+                }
+            },
+            'Iniciar Backfill',
+            'Sim, Atualizar',
+            'Cancelar'
+        );
     };
 
     if (loading) {

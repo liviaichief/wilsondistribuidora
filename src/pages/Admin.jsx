@@ -46,8 +46,8 @@ const Admin = () => {
         try {
             const data = await getProducts();
 
-            if (data) {
-                setProducts(data);
+            if (data && data.documents) {
+                setProducts(data.documents);
             } else {
                 setProducts([]);
             }
@@ -360,10 +360,11 @@ const Admin = () => {
                                                     file
                                                 );
 
-                                                const url = storage.getFileView(BUCKET_ID, result.$id);
-                                                setCurrentProduct({ ...currentProduct, image: url.href || url });
+                                                // Store the File ID, not the URL.
+                                                // getImageUrl() in ProductCard and Admin will handle this ID correctly.
+                                                setCurrentProduct({ ...currentProduct, image: result.$id });
                                             } catch (err) {
-                                                alert('Erro no upload: ' + err.message);
+                                                showAlert('Erro no upload: ' + err.message, 'error');
                                                 console.error(err);
                                             }
                                         }

@@ -9,33 +9,43 @@ import Header from '../components/Header';
 import './OrderHistory.css';
 
 import { useCart } from '../context/CartContext'; // Import useCart
+import { useAlert } from '../context/AlertContext';
 
 const OrderHistory = () => {
     const { user, loading: authLoading } = useAuth();
     const { addToCart, toggleCart } = useCart(); // Get cart controls
+    const { showAlert } = useAlert();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const ITEMS_PER_PAGE = 10;
 
-    // ... (useEffect and loadOrders remain the same)
-
+    // Load initial data
     useEffect(() => {
         if (!authLoading) {
             if (user) {
-                loadOrders(user.$id);
+                // Initial load (page 1)
+                loadOrders(user.$id, 1);
             } else {
                 setLoading(false);
             }
         }
     }, [user, authLoading]);
 
-    const loadOrders = async (uid) => {
+    const loadOrders = async (uid, pageNum) => {
         try {
+            setLoading(true);
+            const offset = (pageNum - 1) * ITEMS_PER_PAGE;
+
             const response = await databases.listDocuments(
                 DATABASE_ID,
                 COLLECTIONS.ORDERS,
                 [
                     Query.equal('user_id', uid),
-                    Query.orderDesc('$createdAt')
+                    Query.orderDesc('$createdAt'),
+                    Query.limit(ITEMS_PER_PAGE),
+                    Query.offset(offset)
                 ]
             );
 
@@ -46,12 +56,24 @@ const OrderHistory = () => {
                 items: typeof doc.items === 'string' ? JSON.parse(doc.items) : (doc.items || [])
             }));
 
-            setOrders(mappedOrders);
+            if (pageNum === 1) {
+                setOrders(mappedOrders);
+            } else {
+                setOrders(prev => [...prev, ...mappedOrders]);
+            }
+            setTotal(response.total);
+
         } catch (error) {
             console.error('Error fetching orders:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleLoadMore = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        loadOrders(user.$id, nextPage);
     };
 
     const formatDate = (dateString) => {
@@ -68,7 +90,7 @@ const OrderHistory = () => {
         const items = Array.isArray(order.items) ? order.items : (order.items?.items || []);
 
         if (items.length === 0) {
-            alert('Não há itens neste pedido para refazer.');
+            showAlert('Parece que este pedido não tem itens disponíveis para adicionar ao carrinho no momento. 🛒', 'warning', 'Pedido Vazio');
             return;
         }
 
@@ -88,7 +110,7 @@ const OrderHistory = () => {
         });
 
         if (addedCount > 0) {
-            // alert('Itens adicionados ao carrinho!');
+            // showAlert('Itens adicionados ao carrinho com sucesso! 😋', 'success');
             toggleCart(); // Open cart to show items
         }
     };
@@ -174,6 +196,27 @@ const OrderHistory = () => {
                                 </div>
                             </div>
                         ))}
+
+
+                        {orders.length < total && (
+                            <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                                <button
+                                    onClick={handleLoadMore}
+                                    disabled={loading}
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: '#333',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: loading ? 'wait' : 'pointer',
+                                        opacity: loading ? 0.7 : 1
+                                    }}
+                                >
+                                    {loading ? 'Carregando...' : 'Carregar mais pedidos'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>

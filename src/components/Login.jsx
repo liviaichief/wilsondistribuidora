@@ -16,10 +16,11 @@ const Login = () => {
 
     // Redirect if already logged in
     React.useEffect(() => {
-        if (!authLoading && user && !loading) {
-            navigate('/');
+        // Only redirect if auth is done loading and we have a user
+        if (!authLoading && user) {
+            navigate('/', { replace: true });
         }
-    }, [user, authLoading, navigate, loading]);
+    }, [user, authLoading, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();

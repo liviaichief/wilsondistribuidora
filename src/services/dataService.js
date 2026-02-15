@@ -1,5 +1,9 @@
-import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
+import { databases, functions, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { Query, ID, Permission, Role } from 'appwrite';
+
+// Function IDs - Should be in environment variables in production
+const PLACE_ORDER_FUNC_ID = import.meta.env.VITE_FUNC_PLACE_ORDER || 'place_order';
+const CREATE_PRODUCT_FUNC_ID = import.meta.env.VITE_FUNC_CREATE_PRODUCT || 'create_product';
 
 // Helper to expand image URL if needed (Appwrite might return file ID)
 const processDoc = (doc) => {
@@ -9,14 +13,18 @@ const processDoc = (doc) => {
     };
 };
 
-export const getProducts = async (category) => {
+export const getProducts = async (category, page = 1, limit = 20) => {
     try {
         const queries = [];
         if (category && category !== 'all') {
             queries.push(Query.equal('category', category));
         }
-        // Appwrite default limit is 25, increase if needed or implement pagination
-        queries.push(Query.limit(100));
+
+        // Pagination
+        const offset = (page - 1) * limit;
+        queries.push(Query.limit(limit));
+        queries.push(Query.offset(offset));
+
         queries.push(Query.orderDesc('$createdAt'));
 
         const response = await databases.listDocuments(
@@ -25,10 +33,13 @@ export const getProducts = async (category) => {
             queries
         );
 
-        return response.documents.map(processDoc);
+        return {
+            documents: response.documents.map(processDoc),
+            total: response.total
+        };
     } catch (error) {
         console.error("Error fetching products:", error);
-        return [];
+        return { documents: [], total: 0 };
     }
 };
 
@@ -63,37 +74,45 @@ const getNextSKU = async () => {
 
 export const saveProduct = async (product) => {
     try {
-        let sku = product.product_sku;
-        if (!sku) {
-            sku = await getNextSKU();
-        }
-
-        const payload = {
-            title: product.title,
-            description: product.description,
-            price: parseFloat(product.price),
-            category: product.category,
-            image: product.image,
-            product_sku: sku
-        };
-
         let response;
         if (product.id) {
+            // Update: Standard DB update
+            const payload = {
+                title: product.title,
+                description: product.description,
+                price: parseFloat(product.price),
+                category: product.category,
+                image: product.image
+            };
+
             response = await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTIONS.PRODUCTS,
                 product.id,
                 payload
             );
+            return processDoc(response);
         } else {
+            // Create: Client-side SKU generation (Fallback due to function limit)
+            const sku = await getNextSKU();
+
+            const payload = {
+                title: product.title,
+                description: product.description,
+                price: parseFloat(product.price),
+                category: product.category,
+                image: product.image,
+                product_sku: sku
+            };
+
             response = await databases.createDocument(
                 DATABASE_ID,
                 COLLECTIONS.PRODUCTS,
                 ID.unique(),
                 payload
             );
+            return processDoc(response);
         }
-        return processDoc(response);
     } catch (error) {
         console.error('Error saving product:', error);
         throw error;
@@ -138,53 +157,33 @@ export const getBanners = async () => {
 
 export const createOrder = async (orderData) => {
     try {
-        // 1. Get the last order to determine the next number
-        const lastOrders = await databases.listDocuments(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            [
-                Query.orderDesc('$createdAt'),
-                Query.limit(1)
-            ]
+        // Use Function for secure Order Number generation and Total calculation
+        console.log('Attempting to execute function with ID:', PLACE_ORDER_FUNC_ID);
+        const execution = await functions.createExecution(
+            PLACE_ORDER_FUNC_ID,
+            JSON.stringify({
+                items: orderData.items,
+                user_id: orderData.user_id,
+                customer_name: orderData.customer_name,
+                customer_phone: orderData.customer_phone,
+                payment_method: orderData.paymentMethod
+            })
         );
 
-        let nextNumber = 100; // Default start
-        if (lastOrders.documents.length > 0) {
-            const lastOrder = lastOrders.documents[0];
-            if (lastOrder.order_number) {
-                nextNumber = lastOrder.order_number + 1;
-            }
+        if (execution.status !== 'completed') {
+            console.error('Function execution failed. Details:', execution);
+            const errorMsg = execution.responseBody || execution.stderr || 'Status not completed';
+            throw new Error(`Falha no processamento: ${errorMsg}`);
         }
 
-        // Prepare items as JSON string
-        const payload = {
-            customer_name: orderData.name,
-            customer_phone: orderData.phone,
-            payment_method: orderData.paymentMethod,
-            total: parseFloat(orderData.total),
-            items: JSON.stringify(orderData.items),
-            user_id: orderData.user_id || 'guest', // Fallback
-            order_number: nextNumber // Save the new sequence number
-        };
+        const result = JSON.parse(execution.responseBody);
 
-        // ... (existing code)
-
-        const permissions = [];
-        if (orderData.user_id && orderData.user_id !== 'guest') {
-            permissions.push(Permission.read(Role.user(orderData.user_id)));
-            permissions.push(Permission.update(Role.user(orderData.user_id)));
-            permissions.push(Permission.read(Role.team('admin'))); // Ensure admins can read too
-            permissions.push(Permission.update(Role.team('admin')));
+        if (!result.success) {
+            throw new Error(result.error || 'Unknown error creating order');
         }
 
-        const response = await databases.createDocument(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            ID.unique(),
-            payload,
-            permissions
-        );
-        return { success: true, ...processDoc(response) };
+        return { success: true, ...processDoc(result.order) };
+
     } catch (error) {
         console.error("Error creating order:", error);
         return { success: false, error: error.message };
