@@ -21,21 +21,32 @@ const OrderHistory = () => {
     const [total, setTotal] = useState(0);
     const ITEMS_PER_PAGE = 10;
 
-    // Load initial data
+    // Load initial data and set up polling for async updates
     useEffect(() => {
+        let interval;
+
         if (!authLoading) {
             if (user) {
-                // Initial load (page 1)
+                // Initial load
                 loadOrders(user.$id, 1);
+
+                // Poll every 5 seconds to check for new async orders
+                interval = setInterval(() => {
+                    loadOrders(user.$id, 1, true); // true = silent update (no loading spinner)
+                }, 5000);
             } else {
                 setLoading(false);
             }
         }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
     }, [user, authLoading]);
 
-    const loadOrders = async (uid, pageNum) => {
+    const loadOrders = async (uid, pageNum, silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const offset = (pageNum - 1) * ITEMS_PER_PAGE;
 
             const response = await databases.listDocuments(
