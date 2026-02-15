@@ -63,5 +63,7 @@
     /* Garantir que containers não transbordem */
     .home-container {
         overflow-x: hidden;
+        padding-top: 100px;
+        /* Compensate for FIXED header height */
     }
 }

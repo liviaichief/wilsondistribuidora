@@ -428,8 +428,11 @@
 
 @media (max-width: 768px) {
     .site-header {
-        position: sticky;
+        position: fixed;
+        /* FIXED positioning for robustness */
         top: 0;
+        left: 0;
+        width: 100%;
         z-index: 1001;
         /* High z-index to stay on top */
     }
