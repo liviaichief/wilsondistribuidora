@@ -443,17 +443,24 @@
     .header-container {
         height: auto;
         min-height: 80px;
-        flex-direction: column;
+        flex-direction: row;
+        /* [NEW] Row layout for horizontal alignment */
+        flex-wrap: wrap;
+        /* [NEW] Allow wrapping if needed (e.g. nav below) */
         align-items: center;
-        /* Reduced padding to fit elements */
-        padding: 0.5rem 0.5rem;
+        justify-content: space-between;
+        /* [NEW] Logo Left, Actions Right */
+        padding: 0.5rem 1rem;
         gap: 0.5rem;
     }
 
     .header-logo-section {
-        flex: 0 0 auto;
-        width: 100%;
-        justify-content: center;
+        flex: 0 1 auto;
+        /* [NEW] Allow shrinking/growing naturally */
+        width: auto;
+        /* [NEW] Not full width */
+        justify-content: flex-start;
+        /* [NEW] Align logo to start */
         padding-bottom: 0;
         margin-bottom: 0;
     }
@@ -464,29 +471,30 @@
     }
 
     .header-actions-section {
-        position: relative;
-        top: 0;
-        right: 0;
-        width: 100%;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        padding: 0.5rem 0;
-        /* Added padding */
+        position: static;
+        /* [NEW] Flow naturally in the flex container */
+        width: auto;
+        /* [NEW] Only take necessary space */
+        justify-content: flex-end;
+        /* [NEW] Right align */
+        padding: 0;
+        margin-bottom: 0;
     }
 
     /* Mobile: Bigger Icons & Touch Targets */
     .header-actions .cart-btn {
-        transform: scale(1.3);
-        /* 30% larger icons */
-        /* Reduced padding from 12px to 8px */
-        padding: 8px;
-        margin-left: 2px;
+        transform: scale(1.1);
+        /* [ADJUST] Slightly smaller scaling than before to fit row */
+        padding: 6px;
+        margin-left: 5px;
     }
 
     .header-actions {
-        gap: 4px;
-        width: 100%;
+        gap: 8px;
+        /* [ADJUST] More gap for better touch targets */
+        width: auto;
         justify-content: flex-end;
+        padding-bottom: 0;
     }
 
     /* Adjust "Hello User" text on mobile */
