@@ -66,6 +66,8 @@ const CharcoalIcon = ({ size = 20, className }) => (
 );
 
 
+import { APP_VERSION } from '../version';
+
 const Header = ({ activeCategory, onCategoryChange }) => {
     const location = useLocation();
     const isHome = location.pathname === '/';
@@ -74,6 +76,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const { toggleOrderSidebar } = useOrder();
     const { user, openAuthModal, signOut, isAdmin, isOwner, openProfileModal } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+    const [showVersion, setShowVersion] = React.useState(false); // Version display state
     // const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false); // Removed local state
     const [logoutMessage, setLogoutMessage] = React.useState(null);
     const userMenuRef = React.useRef(null);
@@ -135,8 +138,15 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                 <div className="header-actions-section">
                     <div className="header-actions">
                         {user && (
-                            <span className="admin-link" style={{ cursor: 'default', textDecoration: 'none', marginRight: '10px' }}>
-                                Olá, {user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}
+                            <span
+                                className="admin-link"
+                                style={{ cursor: 'pointer', textDecoration: 'none', marginRight: '10px', userSelect: 'none' }}
+                                onClick={() => {
+                                    setShowVersion(true);
+                                    setTimeout(() => setShowVersion(false), 2000);
+                                }}
+                            >
+                                {showVersion ? APP_VERSION : `Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`}
                             </span>
                         )}
 
@@ -208,7 +218,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 <div className="cart-totalizer">
                                     <span className="cart-total-value" style={{ fontSize: '0.9rem' }}>{cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
                                 </div>
-                                <button className="nav-checkout-btn text-xs py-1 px-3" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }} onClick={toggleCart}>
+                                <button className="nav-checkout-btn" onClick={toggleCart}>
                                     Finalizar
                                 </button>
                             </div>
