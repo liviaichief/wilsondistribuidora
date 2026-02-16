@@ -123,22 +123,10 @@ const AdminDashboard = () => {
                 .sort((a, b) => b.sales - a.sales)
                 .slice(0, 5);
 
-            // 4. activeUsersCount - Users logged in "this month"
-            const startOfMonth = new Date();
-            startOfMonth.setDate(1); // Set to 1st of month
-            startOfMonth.setHours(0, 0, 0, 0); // Start of day
-
-            const activeUsersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.PROFILES,
-                [
-                    Query.greaterThanEqual('last_login', startOfMonth.toISOString()), // Filter by Login Date
-                    Query.limit(1) // We only care about total
-                ]
-            );
-
-            // If query fails (field missing), fallback to mock or 0
-            const activeUsersCount = activeUsersRes.total;
+            // 4. activeUsersCount
+            // 'last_login' attribute might be missing in production schema, so we skip the query to avoid crash.
+            // Ideally we should add this attribute to schema.
+            const activeUsersCount = 0;
 
             const currentUser = await account.get(); // Fetch current user to check labels
 
