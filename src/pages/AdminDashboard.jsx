@@ -208,22 +208,14 @@ const AdminDashboard = () => {
     );
 
     const handleBackfill = async () => {
-        showConfirm(
-            'Deseja iniciar o backfill de SKUs? Isso irá atualizar produtos antigos e padronizar o catálogo. 📦',
-            async () => {
-                setLoading(true);
-                const result = await backfillSKUs();
-                setLoading(false);
-                if (result.success) {
-                    showAlert(`Backfill concluído! ${result.updatedCount} produtos atualizados. ✅`, 'success');
-                } else {
-                    showAlert(`Erro no backfill: ${result.error} ❌`, 'error');
-                }
-            },
-            'Iniciar Backfill',
-            'Sim, Atualizar',
-            'Cancelar'
-        );
+        setLoading(true);
+        const result = await backfillSKUs();
+        setLoading(false);
+        if (result.success) {
+            showAlert(`Backfill concluído! ${result.updatedCount} produtos atualizados. ✅`, 'success');
+        } else {
+            showAlert(`Erro no backfill: ${result.error} ❌`, 'error');
+        }
     };
 
     if (loading) {
