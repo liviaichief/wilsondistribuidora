@@ -146,12 +146,29 @@ module.exports = async function (context) {
                 const { items, user_id, customer_name, customer_phone, payment_method } = payload;
 
                 if (user_id && user_id !== 'guest') {
-                    // Generate a temporary order number or fetch next (risky if DB fetch fails)
-                    // Let's use a random fallback for error cases or 0
-                    const fallbackNumber = Math.floor(100000 + Math.random() * 900000);
+                    // Attempt to fetch the next sequential number to maintain pattern
+                    let nextOrderNum = Math.floor(100000 + Math.random() * 900000); // Default fallback
+                    try {
+                        const lastOrdersRec = await databases.listDocuments(
+                            DATABASE_ID,
+                            ORDERS_COLLECTION,
+                            [
+                                Query.orderDesc('order_number'),
+                                Query.limit(1)
+                            ]
+                        );
+                        if (lastOrdersRec.documents.length > 0) {
+                            const lastNum = lastOrdersRec.documents[0].order_number;
+                            if (lastNum) nextOrderNum = lastNum + 1;
+                        } else {
+                            nextOrderNum = 100;
+                        }
+                    } catch (numErr) {
+                        context.error('Failed to fetch number for failed order:', numErr);
+                    }
 
                     const failedOrderData = {
-                        order_number: fallbackNumber,
+                        order_number: nextOrderNum,
                         total: 0, // Unknown if calc failed
                         items: JSON.stringify(items || []),
                         user_id: user_id,
