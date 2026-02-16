@@ -24,7 +24,7 @@
     border-radius: 12px;
     border: 1px solid rgba(212, 175, 55, 0.3);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    position: relative;
+    z-index: 2001;
     animation: slideUp 0.3s ease;
     display: flex;
     flex-direction: column;
