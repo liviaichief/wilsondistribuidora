@@ -455,6 +455,7 @@
     }
 
     .header-logo-section {
+        order: 1;
         flex: 0 1 auto;
         /* [NEW] Allow shrinking/growing naturally */
         width: auto;
@@ -471,6 +472,7 @@
     }
 
     .header-actions-section {
+        order: 2;
         position: static;
         /* [NEW] Flow naturally in the flex container */
         width: auto;
@@ -531,10 +533,11 @@
     }
 
     .header-nav-section {
+        order: 3;
         width: 100%;
         padding-top: 0;
-        margin-top: 30px;
-        /* [NEW] Move menu down by 30px */
+        margin-top: 5px;
+        /* [NEW] Move menu down slightly */
     }
 
     .cart-totalizer {
