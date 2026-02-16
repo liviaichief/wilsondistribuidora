@@ -14,13 +14,25 @@ module.exports = async function (context) {
 
     try {
         if (!context.req.body) {
+            context.error('No body provided in request');
             return context.res.json({ success: false, error: 'No body provided' }, 400);
         }
 
-        const payload = JSON.parse(context.req.body);
+        let payload;
+        try {
+            payload = JSON.parse(context.req.body);
+        } catch (e) {
+            context.error('Failed to parse body', context.req.body);
+            return context.res.json({ success: false, error: 'Invalid JSON body' }, 400);
+        }
+
+        context.log('Payload received:', JSON.stringify(payload));
         const { items, user_id, customer_name, customer_phone, payment_method } = payload;
 
+        context.log(`Processing order for User: ${user_id}, Name: ${customer_name}`);
+
         if (!items || !Array.isArray(items) || items.length === 0) {
+            context.error('Invalid items array', items);
             return context.res.json({ success: false, error: 'Invalid items' }, 400);
         }
 
@@ -51,6 +63,7 @@ module.exports = async function (context) {
 
             calculatedTotal += price * qty;
 
+            // ... (inside loop)
             validatedItems.push({
                 product_id: product.$id,
                 title: product.title,
@@ -60,9 +73,9 @@ module.exports = async function (context) {
             });
         }
 
+        context.log(`Total calculated: ${calculatedTotal}, Validated Items: ${validatedItems.length}`);
+
         // 2. Generate Next Order Number (Server-side)
-        // Note: For high scale, use a separate atomic counter collection. 
-        // For this implementation, we reduce race window by running on server.
         let lastOrders;
         try {
             lastOrders = await databases.listDocuments(
@@ -74,12 +87,7 @@ module.exports = async function (context) {
                 ]
             );
         } catch (err) {
-            console.error('Error fetching last order:', err);
-            // Verify if error is "request cannot have request body"
-            if (err.message && err.message.includes('request cannot have request body')) {
-                // Try simplified query or adjust headers if possible
-                // But really, just report it
-            }
+            context.error('Error fetching last order:', err);
             throw new Error(`Error fetching last order: ${err.message}`);
         }
 
@@ -88,6 +96,8 @@ module.exports = async function (context) {
             const lastNum = lastOrders.documents[0].order_number;
             if (lastNum) nextNumber = lastNum + 1;
         }
+
+        context.log(`Next Order Number: ${nextNumber}`);
 
         // 3. Create Order
         const orderData = {
@@ -104,11 +114,10 @@ module.exports = async function (context) {
         const permissions = [];
         if (user_id && user_id !== 'guest') {
             permissions.push(Permission.read(Role.user(user_id)));
-            // Users typically can't update their order status directly, only admin
-            // But they might need update perm if they can cancel? Let's stick to read for now unless defined otherwise.
-            // Actually, existing code gave update permission. Let's keep it to avoid regression.
             permissions.push(Permission.update(Role.user(user_id)));
         }
+
+        context.log(`Creating order document... Permissions: ${JSON.stringify(permissions)}`);
 
         let order;
         try {
@@ -119,8 +128,9 @@ module.exports = async function (context) {
                 orderData,
                 permissions
             );
+            context.log(`Order created successfully: ${order.$id}`);
         } catch (err) {
-            console.error('Error creating order document:', err);
+            context.error('Error creating order document:', err);
             throw new Error(`Error creating order document: ${err.message}`);
         }
 
