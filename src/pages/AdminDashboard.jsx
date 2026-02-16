@@ -9,6 +9,16 @@ import {
     Activity,
     DollarSign
 } from 'lucide-react';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Cell
+} from 'recharts';
 import './Admin.css'; // Reusing admin styles
 import { useAlert } from '../context/AlertContext';
 
@@ -20,7 +30,8 @@ const AdminDashboard = () => {
         recentOrdersCount: 0,
         totalRevenue: 0,
         recentRevenue: 0,
-        activeUsers: 0 // Mock for now
+        activeUsers: 0,
+        topProducts: []
     });
     const [loading, setLoading] = useState(true);
 
@@ -30,14 +41,24 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            // 1. Fetch Users Count
+            // 1. Fetch Client Users Count
             const usersRes = await databases.listDocuments(
                 DATABASE_ID,
                 COLLECTIONS.PROFILES,
-                [Query.limit(1)] // We only need the total from metadata
+                [
+                    Query.equal('role', 'client'),
+                    Query.limit(1)
+                ]
             );
 
-            // 2. Fetch Orders (Last 30 Days)
+            // 2. Fetch Total Orders (All Time)
+            const totalOrdersRes = await databases.listDocuments(
+                DATABASE_ID,
+                COLLECTIONS.ORDERS,
+                [Query.limit(1)]
+            );
+
+            // 3. Fetch Recent Orders (Revenue Calculation - Last 30 Days)
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -53,36 +74,85 @@ const AdminDashboard = () => {
             );
 
             const recentOrders = ordersRes.documents;
-
-            // Calculate revenue ONLY for closed/completed orders
-            // Statuses considered "closed": 'completed', 'delivered', 'concluído', 'entregue'
-            const closedStatuses = ['completed', 'delivered', 'concluído', 'entregue', 'concluido'];
+            const closedStatuses = ['completed', 'delivered', 'concluído', 'entregue', 'concluido', 'confirmed'];
+            const productSales = {};
 
             const recentRevenue = recentOrders.reduce((acc, order) => {
                 const status = (order.status || '').toLowerCase();
+
+                // Process items for Top Products regardless of status (or maybe only paid?)
+                // Usually "Best Sellers" implies sold items, so we should probably check status too.
+                // But often dashboard shows "Popularity" which counts even pending orders.
+                // Let's count consistent with Revenue: only closed? Or at least not cancelled.
+                // For simplicity and volume, let's include all non-cancelled orders or just stick to closedStatuses for strictness.
+                // Let's use closedStatuses to match revenue logic.
                 if (closedStatuses.includes(status)) {
-                    // Check both potential fields for total amount
+                    // 1. Revenue
                     const orderTotal = parseFloat(order.total_amount || order.total || 0);
-                    return acc + orderTotal;
+                    acc += orderTotal;
+
+                    // 2. Top Products Processing
+                    try {
+                        let items = order.items;
+                        if (typeof items === 'string') {
+                            items = JSON.parse(items);
+                        }
+
+                        if (Array.isArray(items)) {
+                            items.forEach(item => {
+                                const title = item.title || 'Produto Desconhecido';
+                                const qty = item.quantity || 1;
+
+                                if (productSales[title]) {
+                                    productSales[title] += qty;
+                                } else {
+                                    productSales[title] = qty;
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error parsing items for order', order.$id, e);
+                    }
                 }
                 return acc;
             }, 0);
 
-            // Mock "Active Users" (e.g., users created recently as proxy or random for demo)
-            // Real implementation would track last_login in profile
-            const activeUsersCount = Math.floor(usersRes.total * 0.4); // Mock: 40% active
+            // Convert productSales map to array and sort
+            const topProducts = Object.entries(productSales)
+                .map(([name, sales]) => ({ name, sales }))
+                .sort((a, b) => b.sales - a.sales)
+                .slice(0, 5);
+
+            // 4. activeUsersCount - Users logged in "this month"
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1); // Set to 1st of month
+            startOfMonth.setHours(0, 0, 0, 0); // Start of day
+
+            const activeUsersRes = await databases.listDocuments(
+                DATABASE_ID,
+                COLLECTIONS.PROFILES,
+                [
+                    Query.greaterThanEqual('last_login', startOfMonth.toISOString()), // Filter by Login Date
+                    Query.limit(1) // We only care about total
+                ]
+            );
+
+            // If query fails (field missing), fallback to mock or 0
+            const activeUsersCount = activeUsersRes.total;
 
             setStats({
                 totalUsers: usersRes.total,
-                totalOrders: ordersRes.total, // specific to query, so it's 30d orders
+                totalOrders: totalOrdersRes.total, // GLOBAL Total
                 recentOrdersCount: ordersRes.total,
                 totalRevenue: 0, // Would need full scan for total, skipping for performance
                 recentRevenue: recentRevenue,
-                activeUsers: activeUsersCount
+                activeUsers: activeUsersCount,
+                topProducts: topProducts
             });
 
         } catch (error) {
             console.error("Error loading dashboard stats:", error);
+            // Partial error handling - keep other stats if one fails
         } finally {
             setLoading(false);
         }
@@ -145,6 +215,9 @@ const AdminDashboard = () => {
         return <div className="admin-container"><p style={{ padding: '2rem' }}>Carregando dashboard...</p></div>;
     }
 
+    // Chart Colors
+    const COLORS = ['#D4AF37', '#C5A028', '#B69119', '#A7820A', '#987300'];
+
     return (
         <div className="admin-container">
             <div className="admin-content">
@@ -186,21 +259,21 @@ const AdminDashboard = () => {
                         value={stats.totalUsers}
                         icon={Users}
                         color="#2196f3" // Blue
-                        subtext="+12% vs mês anterior"
+                        subtext="Clientes cadastrados"
                     />
                     <StatCard
                         title="Usuários Ativos"
                         value={stats.activeUsers}
                         icon={Activity}
                         color="#ff9800" // Orange
-                        subtext="Logados nos últimos 7 dias"
+                        subtext="Logados este mês"
                     />
                     <StatCard
-                        title="Pedidos Pendentes"
-                        value="5" // Mock
+                        title="Total de Pedidos"
+                        value={stats.totalOrders}
                         icon={ShoppingBag}
-                        color="#f44336" // Red
-                        subtext="Aguardando processamento"
+                        color="#9c27b0" // Purple
+                        subtext="Histórico completo"
                     />
                 </div>
 
@@ -209,7 +282,7 @@ const AdminDashboard = () => {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                     gap: '20px'
                 }}>
-                    {/* Placeholder for future charts */}
+                    {/* Top 5 Products Chart (Requested in 'Recent Activity' slot) */}
                     <div style={{
                         background: '#1e1e1e',
                         padding: '24px',
@@ -217,9 +290,41 @@ const AdminDashboard = () => {
                         border: '1px solid #333',
                         minHeight: '300px'
                     }}>
-                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Atividade Recente</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#444' }}>
-                            <p>Gráfico de vendas (Em breve)</p>
+                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Ranking: Top 5 Produtos Mais Vendidos</h3>
+                        <div style={{ width: '100%', height: 300 }}>
+                            {stats.topProducts.length > 0 ? (
+                                <ResponsiveContainer>
+                                    <BarChart
+                                        layout="vertical"
+                                        data={stats.topProducts}
+                                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                                        <XAxis type="number" stroke="#888" />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            stroke="#fff"
+                                            width={100}
+                                            tick={{ fontSize: 12 }}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#333', borderColor: '#D4AF37', color: '#fff' }}
+                                            itemStyle={{ color: '#D4AF37' }}
+                                            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                                        />
+                                        <Bar dataKey="sales" name="Vendas" radius={[0, 4, 4, 0]} barSize={30}>
+                                            {stats.topProducts.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>
+                                    <p>Sem dados de vendas suficientes.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -230,9 +335,9 @@ const AdminDashboard = () => {
                         border: '1px solid #333',
                         minHeight: '300px'
                     }}>
-                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Produtos Mais Vendidos</h3>
+                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Visão Geral (Em breve)</h3>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#444' }}>
-                            <p>Lista de top produtos (Em breve)</p>
+                            <p>Análise detalhada em desenvolvimento</p>
                         </div>
                     </div>
                 </div>

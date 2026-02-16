@@ -34,6 +34,29 @@ export const AuthProvider = ({ children }) => {
             );
             setProfile(doc);
             setRole(doc.role || 'client');
+
+            // [NEW] Track Last Activity (Login) for Dashboard KPIs
+            // We update this if it's missing or if the date has changed (once per day per user)
+            const now = new Date();
+            const lastLogin = doc.last_login ? new Date(doc.last_login) : null;
+            const isDifferentDay = !lastLogin ||
+                lastLogin.getDate() !== now.getDate() ||
+                lastLogin.getMonth() !== now.getMonth() ||
+                lastLogin.getFullYear() !== now.getFullYear();
+
+            if (isDifferentDay) {
+                // Fire and forget update to avoid blocking UI
+                databases.updateDocument(
+                    DATABASE_ID,
+                    COLLECTIONS.PROFILES,
+                    userId,
+                    { last_login: now.toISOString() }
+                ).catch(err => {
+                    // Suppress error if field doesn't exist yet in schema
+                    console.warn("Could not update last_login:", err);
+                });
+            }
+
         } catch (error) {
             console.error("Error fetching profile:", error);
             setProfile(null);

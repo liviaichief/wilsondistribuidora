@@ -35,6 +35,7 @@ async function debugOrders() {
         response.documents.forEach(doc => {
             console.log('\n------------------------------------------------');
             console.log(`Order ID: ${doc.$id}`);
+            console.log(`Created At: ${doc.$createdAt}`);
             console.log(`Order Number: ${doc.order_number}`);
             console.log(`User ID (in data): ${doc.user_id}`);
             console.log(`Permissions:`, doc.$permissions);

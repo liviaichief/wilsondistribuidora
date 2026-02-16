@@ -77,7 +77,9 @@ const CartSidebar = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = async () => {
-        if (!user && !guestMode) {
+        // If not logged in AND fields are empty, prompt login/guest choice
+        // If fields are filled, we assume implicit guest checkout
+        if (!user && !guestMode && (!customerName || !customerPhone)) {
             openAuthModal('login');
             return;
         }
@@ -199,7 +201,7 @@ const CartSidebar = () => {
                     )}
                 </div>
 
-                {cartItems.length > 0 && (user || guestMode) && (
+                {cartItems.length > 0 && (
                     <div className="checkout-form">
                         <h3><ShoppingBag size={16} style={{ marginBottom: -2 }} /> Cliente</h3>
                         <div className="form-group">

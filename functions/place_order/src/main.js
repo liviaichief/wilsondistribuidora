@@ -116,6 +116,9 @@ module.exports = async function (context) {
             permissions.push(Permission.read(Role.user(user_id)));
             permissions.push(Permission.update(Role.user(user_id)));
         }
+        // Allow Admins to view/edit ALL orders
+        permissions.push(Permission.read(Role.label('admin')));
+        permissions.push(Permission.update(Role.label('admin')));
 
         context.log(`Creating order document... Permissions: ${JSON.stringify(permissions)}`);
 
