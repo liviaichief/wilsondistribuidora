@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS, account } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import { backfillSKUs } from '../services/dataService';
 import {
@@ -140,19 +140,34 @@ const AdminDashboard = () => {
             // If query fails (field missing), fallback to mock or 0
             const activeUsersCount = activeUsersRes.total;
 
+            const currentUser = await account.get(); // Fetch current user to check labels
+
             setStats({
                 totalUsers: usersRes.total,
-                totalOrders: totalOrdersRes.total, // GLOBAL Total
+                totalOrders: totalOrdersRes.total,
                 recentOrdersCount: ordersRes.total,
-                totalRevenue: 0, // Would need full scan for total, skipping for performance
+                totalRevenue: 0,
                 recentRevenue: recentRevenue,
                 activeUsers: activeUsersCount,
-                topProducts: topProducts
+                topProducts: topProducts,
+                debug: {
+                    userId: currentUser.$id,
+                    labels: currentUser.labels || [],
+                    rawOrdersCount: ordersRes.total,
+                    filters: { thirtyDaysAgo: thirtyDaysAgo.toISOString() },
+                    error: null
+                }
             });
 
         } catch (error) {
             console.error("Error loading dashboard stats:", error);
-            // Partial error handling - keep other stats if one fails
+            setStats(prev => ({
+                ...prev,
+                debug: {
+                    ...prev.debug,
+                    error: error.message
+                }
+            }));
         } finally {
             setLoading(false);
         }
@@ -340,6 +355,19 @@ const AdminDashboard = () => {
                             <p>Análise detalhada em desenvolvimento</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Debug Section for Production Troubleshooting */}
+                <div style={{ marginTop: '40px', padding: '20px', background: '#000', border: '1px solid #333', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px', color: '#0f0' }}>
+                    <h4>🔧 Debug Info (Admin Only)</h4>
+                    <p>App Version: {import.meta.env.VITE_APP_VERSION || 'Unknown'}</p>
+                    <p>User ID: {stats.debug?.userId || 'Not loaded'}</p>
+                    <p>User Labels: {stats.debug?.labels?.join(', ') || 'None'}</p>
+                    <p>Raw Orders Found: {stats.debug?.rawOrdersCount ?? '?'}</p>
+                    <p>Filters Used: {JSON.stringify(stats.debug?.filters || {})}</p>
+                    {stats.debug?.error && (
+                        <p style={{ color: 'red' }}>Last Error: {stats.debug.error}</p>
+                    )}
                 </div>
             </div>
         </div>
