@@ -152,3 +152,22 @@
     background: var(--primary-color);
     color: #000;
 }
+@media (max-width: 768px) {
+    .order-history-container {
+        padding-top: 140px; /* Compensate for fixed header */
+    }
+
+    .history-content {
+        padding: 1rem; /* Reduce side padding on mobile */
+    }
+
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .history-header h2 {
+        font-size: 1.5rem;
+    }
+}
