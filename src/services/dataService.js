@@ -160,8 +160,9 @@ export const createOrder = async (orderData) => {
         // Use Function for secure Order Number generation and Total calculation
         console.log('Attempting to execute function with ID:', PLACE_ORDER_FUNC_ID);
         // Async execution (3rd param = true) to prevent timeouts
-        // SYNCHRONOUS execution (async=false) to ensure order is actually created
-        // and to catch any errors (like invalid products) before redirecting.
+        // ASYNCHRONOUS execution as requested by user.
+        // The function will create the order in the background.
+        // If it fails, it will save a record with status 'error'.
         const execution = await functions.createExecution(
             PLACE_ORDER_FUNC_ID,
             JSON.stringify({
@@ -171,27 +172,16 @@ export const createOrder = async (orderData) => {
                 customer_phone: orderData.customer_phone,
                 payment_method: orderData.paymentMethod
             }),
-            false // SYNC MODE (Wait for result)
+            true // ASYNC MODE (Return immediately)
         );
 
-        if (execution.status !== 'completed') {
-            console.error('Function execution failed.', execution);
-            throw new Error(`Falha no processamento: ${execution.status}`);
-        }
-
-        const data = JSON.parse(execution.responseBody);
-
-        if (!data.success) {
-            console.error('Order creation failed logic:', data.error);
-            throw new Error(data.error || 'Erro ao criar pedido');
-        }
-
-        // Real order created successfully
+        // In async mode, we don't get the order details back immediately.
+        // We assume success and let the user check "My Orders" later.
         return {
             success: true,
-            $id: data.order.$id,
-            order_number: data.order.order_number,
-            status: data.order.status
+            $id: 'processing',
+            order_number: 'Em processamento',
+            status: 'processing'
         };
 
     } catch (error) {

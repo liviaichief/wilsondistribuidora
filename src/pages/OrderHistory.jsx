@@ -172,13 +172,18 @@ const OrderHistory = () => {
                                             {formatDate(order.created_at)}
                                         </span>
                                     </div>
-                                    <span className="order-status completed" style={{ background: '#d1fae5', color: '#065f46', padding: '0.25rem 0.75rem', borderRadius: '14px', fontSize: '0.8rem' }}>
+                                    <span className={`order-status ${order.status}`} style={{
+                                        background: order.status === 'error' ? '#fee2e2' : ['pending', 'preparing'].includes(order.status) ? '#fef3c7' : '#d1fae5',
+                                        color: order.status === 'error' ? '#991b1b' : ['pending', 'preparing'].includes(order.status) ? '#92400e' : '#065f46',
+                                        padding: '0.25rem 0.75rem', borderRadius: '14px', fontSize: '0.8rem'
+                                    }}>
                                         {{
                                             'pending': 'Pendente',
                                             'confirmed': 'Confirmado',
                                             'preparing': 'Em Preparo',
                                             'delivered': 'Concluído',
-                                            'cancelled': 'Cancelado'
+                                            'cancelled': 'Cancelado',
+                                            'error': 'Falha no Pedido'
                                         }[order.status] || order.status || 'Concluído'}
                                     </span>
                                 </div>

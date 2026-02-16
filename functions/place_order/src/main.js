@@ -137,7 +137,49 @@ module.exports = async function (context) {
         return context.res.json({ success: true, order });
 
     } catch (error) {
-        context.error(error.message);
+        context.error('Order processing failed:', error.message);
+
+        // Attempt to save the failed order so the user can see it in "My Orders"
+        try {
+            if (context.req.body) { // If payload exists
+                const payload = JSON.parse(context.req.body); // Re-parse safely
+                const { items, user_id, customer_name, customer_phone, payment_method } = payload;
+
+                if (user_id && user_id !== 'guest') {
+                    // Generate a temporary order number or fetch next (risky if DB fetch fails)
+                    // Let's use a random fallback for error cases or 0
+                    const fallbackNumber = Math.floor(100000 + Math.random() * 900000);
+
+                    const failedOrderData = {
+                        order_number: fallbackNumber,
+                        total: 0, // Unknown if calc failed
+                        items: JSON.stringify(items || []),
+                        user_id: user_id,
+                        customer_name: customer_name || 'Erro',
+                        customer_phone: customer_phone || '',
+                        payment_method: payment_method || 'error',
+                        status: 'error'
+                    };
+
+                    const permissions = [
+                        Permission.read(Role.user(user_id)),
+                        Permission.update(Role.user(user_id))
+                    ];
+
+                    const failedOrder = await databases.createDocument(
+                        DATABASE_ID,
+                        ORDERS_COLLECTION,
+                        ID.unique(),
+                        failedOrderData,
+                        permissions
+                    );
+                    context.log(`Failed order saved for visibility: ${failedOrder.$id}`);
+                }
+            }
+        } catch (saveError) {
+            context.error('Could not save failed order record:', saveError.message);
+        }
+
         return context.res.json({ success: false, error: error.message }, 500);
     }
 };
