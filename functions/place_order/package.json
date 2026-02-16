@@ -4,6 +4,6 @@
     "description": "Secure order placement function",
     "main": "src/main.js",
     "dependencies": {
-        "node-appwrite": "11.1.0"
+        "node-appwrite": "^13.0.0"
     }
 }
