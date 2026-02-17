@@ -13,32 +13,32 @@ const AdminLayout = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <div className="logo" style={{ fontSize: '1.2rem', color: 'var(--primary-color)' }}>Boutique Admin</div>
+                <div className="logo" style={{ fontSize: '1.4rem', color: 'var(--primary-color)' }}>Boutique Admin</div>
 
                 <nav className="admin-nav">
                     <Link
                         to="/admin/dashboard"
                         className={`nav-link ${location.pathname === '/admin/dashboard' ? 'active' : ''}`}
                     >
-                        <LayoutDashboard size={20} /> <span className="nav-text">Dashboard</span>
+                        <LayoutDashboard size={28} /> <span className="nav-text">Dashboard</span>
                     </Link>
                     <Link
                         to="/admin"
                         className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}
                     >
-                        <ShoppingBag size={20} /> <span className="nav-text">Produtos</span>
+                        <ShoppingBag size={28} /> <span className="nav-text">Produtos</span>
                     </Link>
                     <Link
                         to="/admin/users"
                         className={`nav-link ${location.pathname.startsWith('/admin/users') ? 'active' : ''}`}
                     >
-                        <Users size={20} /> <span className="nav-text">Usuários</span>
+                        <Users size={28} /> <span className="nav-text">Usuários</span>
                     </Link>
                 </nav>
 
                 <div className="admin-actions">
                     <Link to="/" className="nav-link" title="Voltar para Loja">
-                        <ArrowLeft size={18} /> <span className="nav-text">Loja</span>
+                        <ArrowLeft size={25} /> <span className="nav-text">Loja</span>
                     </Link>
                     <button
                         onClick={() => {
@@ -61,7 +61,7 @@ const AdminLayout = () => {
                         title="Sair"
                         style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}
                     >
-                        <LogOut size={18} />
+                        <LogOut size={25} />
                     </button>
                 </div>
             </header>
