@@ -259,52 +259,28 @@ const AdminUsers = () => {
 
     return (
         <div className="admin-container">
-            <div className="admin-content">
-                <div className="header-title" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="admin-content-inner">
+                <div className="admin-section-header">
                     <div>
                         <h2>Gestão de Usuários</h2>
-                        <p style={{ color: '#888' }}>Gerencie perfis e acessos do sistema.</p>
+                        <p className="section-subtitle">Gerencie perfis e acessos do sistema.</p>
                     </div>
                     <button onClick={() => setIsCreateModalOpen(true)} className="add-btn">
-                        <UserPlus size={20} /> Novo Usuário
+                        <UserPlus size={20} /> <span className="add-text">Novo Usuário</span>
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="tabs-container" style={{ display: 'flex', gap: '20px', marginBottom: '20px', borderBottom: '1px solid #333' }}>
+                <div className="tabs-container">
                     <button
                         onClick={() => setActiveTab('admins')}
-                        className={`tab-btn ${activeTab === 'admins' ? 'active' : ''}`}
-                        style={{
-                            padding: '10px 20px',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: activeTab === 'admins' ? '2px solid #D4AF37' : '2px solid transparent',
-                            color: activeTab === 'admins' ? '#D4AF37' : '#888',
-                            fontSize: '1rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            gap: '8px',
-                            alignItems: 'center'
-                        }}
+                        className={`tab-underlined ${activeTab === 'admins' ? 'active' : ''}`}
                     >
-                        <Shield size={18} /> Administração
+                        <Shield size={18} /> Administration
                     </button>
                     <button
                         onClick={() => setActiveTab('customers')}
-                        className={`tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
-                        style={{
-                            padding: '10px 20px',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: activeTab === 'customers' ? '2px solid #D4AF37' : '2px solid transparent',
-                            color: activeTab === 'customers' ? '#D4AF37' : '#888',
-                            fontSize: '1rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            gap: '8px',
-                            alignItems: 'center'
-                        }}
+                        className={`tab-underlined ${activeTab === 'customers' ? 'active' : ''}`}
                     >
                         <User size={18} /> Clientes
                     </button>
@@ -312,22 +288,15 @@ const AdminUsers = () => {
 
                 {/* Filters (Only for Customers) */}
                 {activeTab === 'customers' && (
-                    <div className="filters-bar" style={{ marginBottom: '20px', display: 'flex', gap: '15px' }}>
-                        <div className="search-input" style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-                            <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                    <div className="filters-bar">
+                        <div className="search-input-wrapper">
+                            <Search size={18} className="search-icon" />
                             <input
                                 type="text"
                                 placeholder="Buscar por nome..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 10px 10px 35px',
-                                    borderRadius: '6px',
-                                    border: '1px solid #333',
-                                    background: '#121212',
-                                    color: '#fff'
-                                }}
+                                className="filter-input-main"
                             />
                         </div>
                     </div>

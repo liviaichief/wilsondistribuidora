@@ -15,33 +15,30 @@ const AdminLayout = () => {
             <header className="admin-header">
                 <div className="logo" style={{ fontSize: '1.2rem', color: 'var(--primary-color)' }}>Boutique Admin</div>
 
-                <nav className="admin-nav" style={{ flex: 1, marginLeft: '40px' }}>
+                <nav className="admin-nav">
                     <Link
                         to="/admin/dashboard"
                         className={`nav-link ${location.pathname === '/admin/dashboard' ? 'active' : ''}`}
-                        style={{ color: location.pathname === '/admin/dashboard' ? '#fff' : 'var(--text-muted)' }}
                     >
-                        <LayoutDashboard size={20} /> Dashboard
+                        <LayoutDashboard size={20} /> <span className="nav-text">Dashboard</span>
                     </Link>
                     <Link
                         to="/admin"
                         className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}
-                        style={{ color: location.pathname === '/admin' ? '#fff' : 'var(--text-muted)' }}
                     >
-                        <ShoppingBag size={20} /> Produtos
+                        <ShoppingBag size={20} /> <span className="nav-text">Produtos</span>
                     </Link>
                     <Link
                         to="/admin/users"
                         className={`nav-link ${location.pathname.startsWith('/admin/users') ? 'active' : ''}`}
-                        style={{ color: location.pathname.startsWith('/admin/users') ? '#fff' : 'var(--text-muted)' }}
                     >
-                        <Users size={20} /> Usuários
+                        <Users size={20} /> <span className="nav-text">Usuários</span>
                     </Link>
                 </nav>
 
-                <div className="admin-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div className="admin-actions">
                     <Link to="/" className="nav-link" title="Voltar para Loja">
-                        <ArrowLeft size={18} /> Loja
+                        <ArrowLeft size={18} /> <span className="nav-text">Loja</span>
                     </Link>
                     <button
                         onClick={() => {

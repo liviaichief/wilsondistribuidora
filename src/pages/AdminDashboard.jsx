@@ -174,36 +174,17 @@ const AdminDashboard = () => {
     };
 
     const StatCard = ({ title, value, icon: Icon, color, subtext }) => (
-        <div className="stat-card" style={{
-            background: '#1e1e1e',
-            borderRadius: '12px',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            border: '1px solid #333'
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                    <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '4px' }}>{title}</p>
-                    <h3 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fff', margin: 0 }}>
-                        {value}
-                    </h3>
+        <div className="stat-card">
+            <div className="stat-card-header">
+                <div className="stat-info">
+                    <p className="stat-title">{title}</p>
+                    <h3 className="stat-value">{value}</h3>
                 </div>
-                <div style={{
-                    backgroundColor: `${color}20`,
-                    padding: '10px',
-                    borderRadius: '8px',
-                    color: color
-                }}>
+                <div className="stat-icon-wrapper" style={{ backgroundColor: `${color}20`, color: color }}>
                     <Icon size={24} />
                 </div>
             </div>
-            {subtext && (
-                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
-                    {subtext}
-                </p>
-            )}
+            {subtext && <p className="stat-subtext">{subtext}</p>}
         </div>
     );
 
@@ -227,33 +208,21 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-container">
-            <div className="admin-content">
-                <div className="header-title" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="admin-content-inner">
+                <div className="admin-section-header">
                     <div>
                         <h2>Dashboard</h2>
-                        <p style={{ color: '#888' }}>Visão geral da performance da loja.</p>
+                        <p className="section-subtitle">Visão geral da performance da loja.</p>
                     </div>
                     <button
                         onClick={handleBackfill}
-                        style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#333',
-                            color: '#fff',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
+                        className="backfill-btn"
                     >
                         Atualizar SKUs (Backfill)
                     </button>
                 </div>
 
-                <div className="stats-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                    gap: '20px',
-                    marginBottom: '40px'
-                }}>
+                <div className="stats-grid">
                     <StatCard
                         title="Vendas (30 dias)"
                         value={`R$ ${stats.recentRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -284,21 +253,11 @@ const AdminDashboard = () => {
                     />
                 </div>
 
-                <div className="charts-section" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                    gap: '20px'
-                }}>
+                <div className="charts-section">
                     {/* Top 5 Products Chart (Requested in 'Recent Activity' slot) */}
-                    <div style={{
-                        background: '#1e1e1e',
-                        padding: '24px',
-                        borderRadius: '12px',
-                        border: '1px solid #333',
-                        minHeight: '300px'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Ranking: Top 5 Produtos Mais Vendidos</h3>
-                        <div style={{ width: '100%', height: 300 }}>
+                    <div className="chart-container">
+                        <h3 className="chart-title">Ranking: Top 5 Produtos Mais Vendidos</h3>
+                        <div className="chart-wrapper">
                             {stats.topProducts.length > 0 ? (
                                 <ResponsiveContainer>
                                     <BarChart
@@ -335,22 +294,16 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    <div style={{
-                        background: '#1e1e1e',
-                        padding: '24px',
-                        borderRadius: '12px',
-                        border: '1px solid #333',
-                        minHeight: '300px'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Visão Geral (Em breve)</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#444' }}>
+                    <div className="chart-container">
+                        <h3 className="chart-title">Visão Geral (Em breve)</h3>
+                        <div className="chart-placeholder">
                             <p>Análise detalhada em desenvolvimento</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Debug Section for Production Troubleshooting */}
-                <div style={{ marginTop: '40px', padding: '20px', background: '#000', border: '1px solid #333', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px', color: '#0f0' }}>
+                <div className="debug-section">
                     <h4>🔧 Debug Info (Admin Only)</h4>
                     <p>App Version: {import.meta.env.VITE_APP_VERSION || 'Unknown'}</p>
                     <p>User ID: {stats.debug?.userId || 'Not loaded'}</p>

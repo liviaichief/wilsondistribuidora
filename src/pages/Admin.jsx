@@ -113,97 +113,52 @@ const Admin = () => {
         <div className="admin-container">
             {/* Removed NotificationModal component */}
 
-            <div className="admin-sidebar-tabs" style={{ marginBottom: '20px', display: 'flex', gap: '10px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+            <div className="admin-sidebar-tabs">
                 <button
                     className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`}
                     onClick={() => setActiveTab('products')}
-                    style={{
-                        background: activeTab === 'products' ? '#444' : 'transparent',
-                        border: 'none',
-                        color: 'white',
-                        padding: '10px 20px',
-                        cursor: 'pointer',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
                 >
-                    <ShoppingBag size={18} /> Produtos
+                    <ShoppingBag size={18} /> <span>Produtos</span>
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'banners' ? 'active' : ''}`}
                     onClick={() => setActiveTab('banners')}
-                    style={{
-                        background: activeTab === 'banners' ? '#444' : 'transparent',
-                        border: 'none',
-                        color: 'white',
-                        padding: '10px 20px',
-                        cursor: 'pointer',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
                 >
-                    <ImageIcon size={18} /> Banners
+                    <ImageIcon size={18} /> <span>Banners</span>
                 </button>
             </div>
 
             {activeTab === 'banners' ? (
                 <AdminBanners />
             ) : (
-                <div className="admin-content">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div className="admin-content-inner">
+                    <div className="admin-section-header">
                         <h2>Gerenciar Produtos</h2>
                         <button onClick={openNewModal} className="add-btn">
-                            <Plus size={20} /> Novo Produto
+                            <Plus size={20} /> <span className="add-text">Novo Produto</span>
                         </button>
                     </div>
 
                     {/* Filters Bar */}
-                    <div className="filters-bar" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                    <div className="filters-bar">
                         <input
                             type="text"
                             placeholder="Filtrar por Título..."
                             value={titleFilter}
                             onChange={(e) => setTitleFilter(e.target.value)}
-                            style={{
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #333',
-                                background: '#121212',
-                                color: '#fff',
-                                flex: 1,
-                                minWidth: '200px'
-                            }}
+                            className="filter-input-main"
                         />
                         <input
                             type="text"
                             placeholder="Filtrar por SKU..."
                             value={skuFilter}
                             onChange={(e) => setSkuFilter(e.target.value)}
-                            style={{
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #333',
-                                background: '#121212',
-                                color: '#fff',
-                                flex: 1,
-                                minWidth: '150px'
-                            }}
+                            className="filter-input-main"
                         />
                         <select
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
-                            style={{
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #333',
-                                background: '#121212',
-                                color: '#fff',
-                                minWidth: '150px'
-                            }}
+                            className="filter-select-main"
                         >
                             <option value="all">Todas as Categorias</option>
                             <option value="carne">Carne</option>
