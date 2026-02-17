@@ -534,10 +534,11 @@
 
     .header-nav-section {
         order: 3;
+        flex: 0 0 100%;
         width: 100%;
         padding-top: 0;
-        margin-top: 5px;
-        /* [NEW] Move menu down slightly */
+        margin-top: 10px;
+        /* [NEW] Space between top row and menu */
     }
 
     .cart-totalizer {
