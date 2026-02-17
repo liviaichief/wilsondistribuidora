@@ -132,7 +132,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                         )}
 
                         <button className="cart-btn" onClick={toggleCart}>
-                            <ShoppingBag size={22} />
+                            <ShoppingBag size={31} />
                             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                         </button>
 
@@ -142,7 +142,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 title="Minha Conta"
                             >
-                                <User size={22} color={user ? "var(--primary-color)" : "white"} />
+                                <User size={31} color={user ? "var(--primary-color)" : "white"} />
                             </button>
 
                             {isUserMenuOpen && (
