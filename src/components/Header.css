@@ -11,16 +11,21 @@
 
 .header-container {
     display: flex;
-    align-items: flex-end;
-    /* Align bottom for tabs and actions logic */
+    flex-direction: column;
     padding: 0.5rem 2rem;
-    gap: 1rem;
+    gap: 0.5rem;
     max-width: 100%;
-    justify-content: space-between;
-    height: 145px;
-    /* Increased height by ~20% */
+    height: auto;
+    min-height: 145px;
     position: relative;
-    /* Context for absolute positioning */
+}
+
+.header-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100px;
 }
 
 /* 1. Logo Section */
@@ -45,15 +50,10 @@
 }
 
 /* 3. Actions Section */
-.header-actions-section {
-    position: absolute;
-    top: 15px;
-    right: 20px;
+.header-actions {
     display: flex;
-    align-items: flex-start;
-    padding: 0;
-    height: auto;
-    z-index: 10;
+    align-items: center;
+    gap: 10px;
 }
 
 .header-logo-section {
@@ -442,45 +442,32 @@
 
     .header-container {
         height: auto;
-        min-height: 80px;
-        flex-direction: row;
-        /* [NEW] Row layout for horizontal alignment */
-        flex-wrap: wrap;
-        /* [NEW] Allow wrapping if needed (e.g. nav below) */
-        align-items: center;
-        justify-content: space-between;
-        /* [NEW] Logo Left, Actions Right */
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
         padding: 0.5rem 1rem;
-        gap: 0.5rem;
+        gap: 0;
+    }
+
+    .header-main-row {
+        height: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .header-logo-section {
-        order: 1;
-        flex: 0 1 auto;
-        /* [NEW] Allow shrinking/growing naturally */
-        width: auto;
-        /* [NEW] Not full width */
-        justify-content: flex-start;
-        /* [NEW] Align logo to start */
-        padding-bottom: 0;
-        margin-bottom: 0;
+        flex: 0 0 auto;
     }
 
     .header-logo {
         max-height: 50px;
-        /* Logo menor no mobile */
     }
 
     .header-actions-section {
-        order: 2;
-        position: static;
-        /* [NEW] Flow naturally in the flex container */
-        width: auto;
-        /* [NEW] Only take necessary space */
+        grid-area: actions;
+        display: flex;
         justify-content: flex-end;
-        /* [NEW] Right align */
-        padding: 0;
-        margin-bottom: 0;
     }
 
     /* Mobile: Bigger Icons & Touch Targets */
@@ -533,12 +520,10 @@
     }
 
     .header-nav-section {
-        order: 3;
-        flex: 0 0 100%;
+        grid-area: nav;
         width: 100%;
         padding-top: 0;
-        margin-top: 10px;
-        /* [NEW] Space between top row and menu */
+        margin-top: 5px;
     }
 
     .cart-totalizer {

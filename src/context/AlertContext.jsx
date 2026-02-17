@@ -66,7 +66,7 @@ export const AlertProvider = ({ children }) => {
         <AlertContext.Provider value={{ showAlert, showConfirm, closeAlert }}>
             {children}
             {alertConfig && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 max-w-sm w-full mx-4 p-8 text-center animate-fade-in-up relative">
                         <div className="flex justify-center mb-6">
                             {getIcon(alertConfig.type)}
@@ -98,8 +98,8 @@ export const AlertProvider = ({ children }) => {
                                 <button
                                     onClick={closeAlert}
                                     className={`px-8 py-2 rounded text-white font-medium transition-colors shadow-lg ${alertConfig.type === 'error' ? 'bg-red-600 hover:bg-red-700 hover:shadow-red-500/20' :
-                                            alertConfig.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/20' :
-                                                'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/20'
+                                        alertConfig.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/20' :
+                                            'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/20'
                                         }`}
                                 >
                                     OK

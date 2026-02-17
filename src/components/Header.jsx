@@ -106,41 +106,20 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     return (
         <header className={`site-header ${isHome ? 'home-header' : ''}`}>
             <div className="header-container">
-                {/* 1. Logo Section */}
-                <div className="header-logo-section" onClick={() => {
-                    // Navigate to home and force a reload (without query params)
-                    window.location.href = '/';
-                }} style={{ cursor: 'pointer' }}>
-                    <img src="/logo-3r.jpeg" alt="3R Grill Boutique de Carnes" className="header-logo" />
-                </div>
-
-                {/* 2. Category Nav Section (Independent) */}
-                {isHome && (
-                    <div className="header-nav-section">
-                        <nav className="category-nav-inline">
-                            <div className="category-list">
-                                {categories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        className={`category-item ${activeCategory === cat.id ? 'active' : ''}`}
-                                        onClick={() => onCategoryChange(cat.id)}
-                                    >
-                                        <cat.icon size={18} className="category-icon" />
-                                        <span>{cat.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </nav>
+                {/* Top Row: Logo and Actions */}
+                <div className="header-main-row">
+                    {/* 1. Logo Section */}
+                    <div className="header-logo-section" onClick={() => {
+                        window.location.href = '/';
+                    }} style={{ cursor: 'pointer' }}>
+                        <img src="/logo-3r.jpeg" alt="3R Grill Boutique de Carnes" className="header-logo" />
                     </div>
-                )}
 
-                {/* 3. User Actions Section (Independent) */}
-                <div className="header-actions-section">
+                    {/* 2. User Actions Section */}
                     <div className="header-actions">
                         {user && (
                             <span
                                 className="admin-link"
-                                style={{ cursor: 'pointer', textDecoration: 'none', marginRight: '10px', userSelect: 'none' }}
                                 onClick={() => {
                                     setShowVersion(true);
                                     setTimeout(() => setShowVersion(false), 2000);
@@ -225,6 +204,26 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                         )}
                     </div>
                 </div>
+
+                {/* Bottom Row: Navigation Tabs (Only on Home) */}
+                {isHome && (
+                    <div className="header-nav-section">
+                        <nav className="category-nav-inline">
+                            <div className="category-list">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        className={`category-item ${activeCategory === cat.id ? 'active' : ''}`}
+                                        onClick={() => onCategoryChange(cat.id)}
+                                    >
+                                        <cat.icon size={18} className="category-icon" />
+                                        <span>{cat.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </nav>
+                    </div>
+                )}
             </div>
             {
                 logoutMessage && (
