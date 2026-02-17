@@ -24,10 +24,12 @@ const OssobucoIcon = ({ size = 20, className }) => (
 
 const DrumstickIcon = ({ size = 20, className }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        {/* Chicken Leg (Coxa): Bone at top-right, meat at bottom-left */}
-        <path d="M17.5 17.5c2.5 2.5 4.5 0.5 4.5 0.5l-6-6" /> {/* Bone end / Knuckle */}
-        <path d="M16 12l5 5" /> {/* Bone shaft extends */}
-        <path d="M7 3C4 6 3 11 6 14c3 3 8 2 11-1s4-8 1-11c-3-3-8-4-11 1z" /> {/* Meat Bulb */}
+        {/* Novo ícone de Coxa de Frango conforme imagem enviada */}
+        <path d="M11 13c-2.5-2.5-3.5-7-1.5-9s6.5-1 9 1.5 1.5 6.5-1 8.5-6.5 1.5-6.5-1z" />
+        <path d="M11.5 12.5L7 17" />
+        <path d="M7 15.5c-1-1-2.5 0-1.5 1 .5.5 1 .5 1.5 0s1 .5 1.5 0c1-1-0.5-2-1.5-1z" />
+        <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+        <path d="M19.5 9c0.5 1.5 0 3.5-2 5" />
     </svg>
 );
 
