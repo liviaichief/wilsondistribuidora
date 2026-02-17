@@ -461,7 +461,8 @@
     }
 
     .header-logo {
-        max-height: 50px;
+        max-height: 60px;
+        /* Increased from 50px to 60px (20%) */
     }
 
     .header-actions-section {
@@ -488,7 +489,17 @@
 
     /* Adjust "Hello User" text on mobile */
     .admin-link {
-        display: none !important;
+        display: block !important;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        margin-right: 5px;
+        color: var(--primary-color);
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: rgba(212, 175, 55, 0.05);
+        border: 1px solid rgba(212, 175, 55, 0.2);
     }
 
     /* User menu dropdown positioning fix for mobile */

@@ -1,15 +1,21 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
 const Logout = () => {
     const { signOut } = useAuth();
+    const { clearCart } = useCart();
     const navigate = useNavigate();
 
     useEffect(() => {
         const doLogout = async () => {
             console.log("Forcing logout...");
+
+            // Clear the shopping cart state
+            clearCart();
+
             await signOut();
             // Clear known potential stale tokens
             localStorage.removeItem('sb-ofpqtmiyuffmfgeoocml-auth-token');
@@ -20,7 +26,7 @@ const Logout = () => {
             setTimeout(() => navigate('/'), 1500);
         };
         doLogout();
-    }, [signOut, navigate]);
+    }, [signOut, clearCart, navigate]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 text-white">
