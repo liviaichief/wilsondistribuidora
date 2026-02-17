@@ -300,8 +300,8 @@
     /* Grow to fill space */
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.6rem;
+    gap: 0.6rem;
+    padding: 0.8rem 1.5rem;
     border: 1px solid #333;
     border-radius: 4px;
     background: transparent;
