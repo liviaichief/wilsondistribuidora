@@ -307,12 +307,12 @@
     background: transparent;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--text-muted);
     white-space: nowrap;
     letter-spacing: 0.2px;
     text-transform: uppercase;
-    font-size: 0.7rem;
+    font-size: 0.9rem;
 }
 
 .category-item:hover {
@@ -539,10 +539,8 @@
     }
 
     .category-item {
-        padding: 0.45rem 0.7rem;
-        /* Aumentado ~10% */
-        font-size: 0.77rem;
-        /* Aumentado 10% de 0.7rem */
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
     }
 
     .cart-totalizer {

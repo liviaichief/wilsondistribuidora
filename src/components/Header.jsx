@@ -218,7 +218,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                         className={`category-item ${activeCategory === cat.id ? 'active' : ''}`}
                                         onClick={() => onCategoryChange(cat.id)}
                                     >
-                                        <cat.icon size={18} className="category-icon" />
+                                        {cat.id === 'all' && <cat.icon size={18} className="category-icon" />}
                                         <span>{cat.label}</span>
                                     </button>
                                 ))}
