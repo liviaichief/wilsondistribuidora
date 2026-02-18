@@ -16,8 +16,15 @@ const processDoc = (doc) => {
 export const getProducts = async (category, page = 1, limit = 20) => {
     try {
         const queries = [];
-        if (category && category !== 'all') {
+        if (category && category === 'all') {
+            // "PROMOÇÕES" tab - only show items in promotion
+            queries.push(Query.equal('is_promotion', true));
+        } else if (category && category !== 'all') {
+            // Specific category - show only items for this category AND NOT in promotion
             queries.push(Query.equal('category', category));
+            queries.push(Query.equal('is_promotion', false));
+        } else {
+            // Fallback for Admin or listing all items (not usually called from Home with undefined)
         }
 
         // Pagination
@@ -83,7 +90,9 @@ export const saveProduct = async (product) => {
                 price: parseFloat(product.price),
                 category: product.category,
                 image: product.image,
-                uom: product.uom || 'KG'
+                uom: product.uom || 'KG',
+                is_promotion: !!product.is_promotion,
+                promo_price: product.promo_price ? parseFloat(product.promo_price) : null
             };
 
             response = await databases.updateDocument(
@@ -104,7 +113,9 @@ export const saveProduct = async (product) => {
                 category: product.category,
                 image: product.image,
                 product_sku: sku,
-                uom: product.uom || 'KG'
+                uom: product.uom || 'KG',
+                is_promotion: !!product.is_promotion,
+                promo_price: product.promo_price ? parseFloat(product.promo_price) : null
             };
 
             response = await databases.createDocument(

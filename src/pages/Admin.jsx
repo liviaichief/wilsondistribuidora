@@ -30,8 +30,13 @@ const Admin = () => {
         description: '',
         price: '',
         category: 'carne',
-        image: ''
+        image: '',
+        is_promotion: false,
+        promo_price: ''
     });
+
+    const [editingPromoId, setEditingPromoId] = useState(null);
+    const [tempPromoPrice, setTempPromoPrice] = useState('');
 
     useEffect(() => {
         if (activeTab === 'products') {
@@ -96,8 +101,49 @@ const Admin = () => {
     };
 
     const openNewModal = () => {
-        setCurrentProduct({ title: '', description: '', price: '', category: 'carne', image: '', uom: 'KG' });
+        setCurrentProduct({
+            title: '',
+            description: '',
+            price: '',
+            category: 'carne',
+            image: '',
+            uom: 'KG',
+            is_promotion: false,
+            promo_price: ''
+        });
         setIsModalOpen(true);
+    };
+
+    const handleTogglePromotion = async (product) => {
+        const newStatus = !product.is_promotion;
+        try {
+            await saveProduct({
+                ...product,
+                is_promotion: newStatus,
+                promo_price: newStatus ? (product.promo_price || product.price) : null
+            });
+            loadProducts();
+            if (newStatus) {
+                setEditingPromoId(product.id);
+                setTempPromoPrice(product.promo_price || product.price);
+            }
+        } catch (err) {
+            showAlert('Erro ao atualizar promoção: ' + err.message, 'error');
+        }
+    };
+
+    const handleSavePromoPrice = async (product) => {
+        try {
+            await saveProduct({
+                ...product,
+                promo_price: parseFloat(tempPromoPrice)
+            });
+            setEditingPromoId(null);
+            loadProducts();
+            showAlert('Preço promocional atualizado!', 'success');
+        } catch (err) {
+            showAlert('Erro ao salvar preço: ' + err.message, 'error');
+        }
     };
 
     // Filter Logic
@@ -214,6 +260,7 @@ const Admin = () => {
                                         <th>Título</th>
                                         <th>Categoria</th>
                                         <th>Preço</th>
+                                        <th>Promoção</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -232,6 +279,42 @@ const Admin = () => {
                                                 <td>{item.title}</td>
                                                 <td><span className="badge">{item.category}</span></td>
                                                 <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <label className="switch">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.is_promotion}
+                                                                onChange={() => handleTogglePromotion(item)}
+                                                            />
+                                                            <span className="slider round"></span>
+                                                        </label>
+                                                        {item.is_promotion && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
+                                                                    onChange={(e) => {
+                                                                        setEditingPromoId(item.id);
+                                                                        setTempPromoPrice(e.target.value);
+                                                                    }}
+                                                                    style={{ width: '80px', padding: '4px', fontSize: '0.9rem' }}
+                                                                    placeholder="Preço"
+                                                                />
+                                                                {editingPromoId === item.id && (
+                                                                    <button
+                                                                        onClick={() => handleSavePromoPrice(item)}
+                                                                        className="icon-btn"
+                                                                        style={{ width: '24px', height: '24px', background: 'var(--primary-color)', color: '#000' }}
+                                                                    >
+                                                                        <CheckCircle size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td>
                                                     <div className="actions">
                                                         <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
@@ -368,7 +451,33 @@ const Admin = () => {
                                     </label>
                                 </div>
                             </div>
-                            <button type="submit" className="save-btn" style={{ width: '100%', justifyContent: 'center' }}>
+                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={currentProduct.is_promotion}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                                <span>Produto em Promoção</span>
+                            </div>
+
+                            {currentProduct.is_promotion && (
+                                <div className="form-group">
+                                    <label>Preço Promocional (R$)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        required={currentProduct.is_promotion}
+                                        value={currentProduct.promo_price}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
+                                        placeholder="Ex: 79.90"
+                                    />
+                                </div>
+                            )}
+
+                            <button type="submit" className="save-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }}>
                                 Salvar Produto
                             </button>
                         </form>

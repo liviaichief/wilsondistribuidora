@@ -51,12 +51,22 @@ const ProductCard = ({ product }) => {
                         e.target.style.filter = 'none';
                     }}
                 />
-                <div className="price-tag">
-                    R$ {product.price.toFixed(2)}
+                <div className={`price-tag ${product.is_promotion ? 'on-promo' : ''}`}>
+                    {product.is_promotion && product.promo_price ? (
+                        <>
+                            <span className="original-price">R$ {product.price.toFixed(2)}</span>
+                            <span className="promo-price">R$ {parseFloat(product.promo_price).toFixed(2)}</span>
+                        </>
+                    ) : (
+                        `R$ ${product.price.toFixed(2)}`
+                    )}
                     <span className="uom-tag">/ {product.uom || 'KG'}</span>
                 </div>
             </div>
             <div className="product-info">
+                {product.is_promotion && (
+                    <div className="promo-badge">PROMOÇÃO</div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="product-category">{product.category}</span>
                     <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>#{product.product_sku || product.id}</span>
