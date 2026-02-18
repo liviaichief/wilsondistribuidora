@@ -76,9 +76,15 @@ const AuthModal = () => {
             if (authModalView === 'login') {
                 const { error } = await signIn(email, password);
                 if (error) throw error;
-                if (error) throw error;
                 closeAuthModal();
             } else if (authModalView === 'register') {
+                // Client-side validation for password to avoid unnecessary server calls
+                if (password.length < 8) {
+                    showAlert('A senha deve ter pelo menos 8 caracteres.', 'error', 'Senha Fraca');
+                    setLoading(false);
+                    return;
+                }
+
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
                 let isoDate = null;
                 if (birthDate.length === 10) {
@@ -93,6 +99,7 @@ const AuthModal = () => {
                 });
 
                 if (error) throw error;
+
                 if (data?.user?.identities?.length === 0) {
                     showAlert('Este e-mail já está cadastrado.', 'error', 'Erro no Cadastro');
                 } else {
@@ -105,9 +112,28 @@ const AuthModal = () => {
                 showAlert('E-mail de recuperação enviado.', 'success', 'Recuperação de Senha');
             }
         } catch (err) {
-            console.error(err);
-            const msg = err.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : err.message;
-            showAlert(msg, 'error', 'Erro');
+            console.error('Auth Error Details:', err);
+
+            let errorMsg = err.message || 'Houve um erro ao processar sua solicitação.';
+
+            // Helpful translations for Appwrite errors
+            if (errorMsg.includes('Invalid login credentials') || errorMsg.includes('Invalid credentials')) {
+                errorMsg = 'E-mail ou senha incorretos.';
+            } else if (errorMsg.includes('commonly used password')) {
+                errorMsg = 'Esta senha é muito comum e fácil de descobrir. Por favor, tente uma senha mais forte.';
+            } else if (errorMsg.includes('Password must be between 8 and 265')) {
+                errorMsg = 'A senha deve ter pelo menos 8 caracteres.';
+            } else if (errorMsg.includes('A user with the same email already exists')) {
+                errorMsg = 'Já existe uma conta com este e-mail.';
+            } else if (errorMsg.includes('Invalid `email` param') || errorMsg.includes('email is invalid')) {
+                errorMsg = 'O endereço de e-mail informado não é válido.';
+            } else if (errorMsg.includes('Rate limit exceeded')) {
+                errorMsg = 'Muitas tentativas seguidas. Por favor, aguarde alguns minutos.';
+            } else if (errorMsg.includes('Network Error') || errorMsg.includes('Failed to fetch')) {
+                errorMsg = 'Erro de conexão. Verifique sua internet.';
+            }
+
+            showAlert(errorMsg, 'error', 'Erro');
         } finally {
             setLoading(false);
         }

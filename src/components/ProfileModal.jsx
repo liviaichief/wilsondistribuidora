@@ -27,6 +27,17 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         }
     }, [isOpen, user]);
 
+    const handleWhatsAppChange = (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+
+        let formatted = value;
+        if (value.length > 2) formatted = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+        if (value.length > 7) formatted = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+
+        setFormData({ ...formData, whatsapp: formatted });
+    };
+
     const fetchProfile = async () => {
         if (!user?.$id) return;
         try {
@@ -186,8 +197,8 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                             className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all placeholder-zinc-700 outline-none"
                             type="text"
                             value={formData.whatsapp}
-                            onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                            placeholder="+55 (11) 98765-4321"
+                            onChange={handleWhatsAppChange}
+                            placeholder="(11) 98765-4321"
                         />
                     </div>
                 </div>

@@ -40,10 +40,19 @@ const Login = () => {
             navigate('/');
 
         } catch (error) {
-            console.error("Login Error:", error);
-            setError(error.message === 'Invalid login credentials'
-                ? 'E-mail ou senha incorretos.'
-                : error.message || 'Erro ao realizar login.');
+            console.error("Login Error Details:", error);
+
+            let msg = error.message || 'Erro ao realizar login.';
+
+            if (msg.includes('Invalid login credentials') || msg.includes('Invalid credentials')) {
+                msg = 'E-mail ou senha incorretos.';
+            } else if (msg.includes('Rate limit exceeded')) {
+                msg = 'Muitas tentativas falhas. Aguarde alguns minutos.';
+            } else if (msg.includes('Network Error') || msg.includes('Failed to fetch')) {
+                msg = 'Erro de conexão com o servidor.';
+            }
+
+            setError(msg);
             setLoading(false);
         }
     };
