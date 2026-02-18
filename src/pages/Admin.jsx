@@ -96,7 +96,7 @@ const Admin = () => {
     };
 
     const openNewModal = () => {
-        setCurrentProduct({ title: '', description: '', price: '', category: 'carne', image: '' });
+        setCurrentProduct({ title: '', description: '', price: '', category: 'carne', image: '', uom: 'KG' });
         setIsModalOpen(true);
     };
 
@@ -342,6 +342,31 @@ const Admin = () => {
                                     <option value="acessorios">Acessórios</option>
                                     <option value="insumos">Insumos</option>
                                 </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Unidade de Medida</label>
+                                <div style={{ display: 'flex', gap: '20px', padding: '10px 0' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name="uom"
+                                            value="KG"
+                                            checked={currentProduct.uom === 'KG' || !currentProduct.uom}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
+                                        />
+                                        KG
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name="uom"
+                                            value="Unidade"
+                                            checked={currentProduct.uom === 'Unidade'}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
+                                        />
+                                        Unidade
+                                    </label>
+                                </div>
                             </div>
                             <button type="submit" className="save-btn" style={{ width: '100%', justifyContent: 'center' }}>
                                 Salvar Produto

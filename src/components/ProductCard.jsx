@@ -53,6 +53,7 @@ const ProductCard = ({ product }) => {
                 />
                 <div className="price-tag">
                     R$ {product.price.toFixed(2)}
+                    <span className="uom-tag">/ {product.uom || 'KG'}</span>
                 </div>
             </div>
             <div className="product-info">

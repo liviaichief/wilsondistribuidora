@@ -82,7 +82,8 @@ export const saveProduct = async (product) => {
                 description: product.description,
                 price: parseFloat(product.price),
                 category: product.category,
-                image: product.image
+                image: product.image,
+                uom: product.uom || 'KG'
             };
 
             response = await databases.updateDocument(
@@ -102,7 +103,8 @@ export const saveProduct = async (product) => {
                 price: parseFloat(product.price),
                 category: product.category,
                 image: product.image,
-                product_sku: sku
+                product_sku: sku,
+                uom: product.uom || 'KG'
             };
 
             response = await databases.createDocument(

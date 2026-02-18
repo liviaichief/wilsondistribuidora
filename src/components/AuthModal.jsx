@@ -80,7 +80,7 @@ const AuthModal = () => {
             } else if (authModalView === 'register') {
                 // Client-side validation for password to avoid unnecessary server calls
                 if (password.length < 8) {
-                    showAlert('A senha deve ter pelo menos 8 caracteres.', 'error', 'Senha Fraca');
+                    showAlert('Churrasqueiro(a) A senha deve conter mais de 8 caracteres.', 'error', 'Senha Fraca');
                     setLoading(false);
                     return;
                 }
