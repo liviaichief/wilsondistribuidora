@@ -23,14 +23,22 @@ export const getImageUrl = (imagePath) => {
     // However, if the user says "in production", and they likely just uploaded via the new admin, it's an Appwrite File ID.
 
     // 3. Assume it's an Appwrite File ID if it has no slashes and looks like an ID
-    // or even if it has slashes, `getFileView` might just fail if invalid.
     try {
         // Clean up path found in some migrations
         const cleanId = imagePath.replace('product-images/', '');
 
-        // getFileView returns a URL object in JS SDK
-        const result = storage.getFileView(BUCKET_ID, cleanId);
-        return result.href;
+        // Use getFilePreview for better performance and browser compatibility 
+        // especially for large images (e.g. 2.3MB)
+        const result = storage.getFilePreview(
+            BUCKET_ID,
+            cleanId,
+            1000, // width
+            1000, // height
+            undefined, // gravity
+            100 // quality
+        );
+
+        return result.href || result;
     } catch (error) {
         console.warn('Error generating Appwrite image URL:', error);
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+Imagem';
