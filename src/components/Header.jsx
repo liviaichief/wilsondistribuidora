@@ -96,7 +96,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     }, []);
 
     const categories = [
-        { id: 'all', label: 'TODOS', icon: Sparkles },
+        { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
         { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
         { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
         { id: 'embutidos', label: 'EMBUTIDOS', icon: SausageIcon },
