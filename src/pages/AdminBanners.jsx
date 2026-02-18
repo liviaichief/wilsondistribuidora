@@ -335,25 +335,16 @@ const AdminBanners = () => {
                                                 }}
                                             />
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{ fontSize: '0.9rem', color: '#888' }}>OU URL Externa (Opcional):</span>
-                                            <input
-                                                type="text"
-                                                value={formData.image_url}
-                                                onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                                                placeholder="https://..."
-                                                style={{ flex: 1 }}
-                                            />
-                                        </div>
                                         {(imageFile || formData.image_url) && (
                                             <div style={{
                                                 marginTop: '10px',
-                                                height: '100px',
+                                                height: '150px',
                                                 background: '#000',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                border: '1px solid #444'
+                                                border: '1px solid #444',
+                                                borderRadius: '4px'
                                             }}>
                                                 <img
                                                     src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)}
