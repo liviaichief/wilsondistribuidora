@@ -7,7 +7,7 @@ import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
 import AdminOrders from './AdminOrders';
 import AdminSettings from './AdminSettings';
-import { useAlert } from '../context/AlertContext'; // Import useAlert
+import { useAlert } from '../context/AlertContext';
 import './Admin.css';
 
 const Admin = () => {
@@ -17,7 +17,7 @@ const Admin = () => {
     const [products, setProducts] = useState([]);
     const [settingsData, setSettingsData] = useState({ whatsapp_number: '' });
 
-    const { showAlert, showConfirm } = useAlert(); // Hook usage
+    const { showAlert, showConfirm } = useAlert();
 
     // Filter State
     const [filterTitle, setFilterTitle] = useState('');

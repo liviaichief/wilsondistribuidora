@@ -219,19 +219,12 @@ export const AuthProvider = ({ children }) => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
 
-    const openProfileModal = () => {
-        console.log("AuthContext: openProfileModal called");
-        setIsProfileModalOpen(true);
-    };
-    const closeProfileModal = () => {
-        console.log("AuthContext: closeProfileModal called");
-        setIsProfileModalOpen(false);
-    };
+    const openProfileModal = () => setIsProfileModalOpen(true);
+    const closeProfileModal = () => setIsProfileModalOpen(false);
 
     const updateProfile = async (data) => {
         if (!user || !user.$id) return;
         try {
-            console.log("Updating profile with:", data);
             await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTIONS.PROFILES,

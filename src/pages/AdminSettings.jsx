@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
 import { Save, Phone, Info } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
+import AdminHealthDashboard from '../components/AdminHealthDashboard';
 
 const AdminSettings = () => {
     const [settings, setSettings] = useState({ whatsapp_number: '' });

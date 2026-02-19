@@ -6,12 +6,10 @@ const PLACE_ORDER_FUNC_ID = import.meta.env.VITE_FUNC_PLACE_ORDER || 'place_orde
 const CREATE_PRODUCT_FUNC_ID = import.meta.env.VITE_FUNC_CREATE_PRODUCT || 'create_product';
 
 // Helper to expand image URL if needed (Appwrite might return file ID)
-const processDoc = (doc) => {
-    return {
-        ...doc,
-        id: doc.$id
-    };
-};
+const processDoc = (doc) => ({
+    ...doc,
+    id: doc.$id
+});
 
 export const getProducts = async (category, page = 1, limit = 20) => {
     try {
@@ -176,12 +174,7 @@ export const getBanners = async () => {
 
 export const createOrder = async (orderData) => {
     try {
-        // Use Function for secure Order Number generation and Total calculation
-        console.log('Attempting to execute function with ID:', PLACE_ORDER_FUNC_ID);
-        // Async execution (3rd param = true) to prevent timeouts
-        // ASYNCHRONOUS execution as requested by user.
-        // The function will create the order in the background.
-        // If it fails, it will save a record with status 'error'.
+        // Create order via Function for secure Order Number and Total calculation
         const execution = await functions.createExecution(
             PLACE_ORDER_FUNC_ID,
             JSON.stringify({

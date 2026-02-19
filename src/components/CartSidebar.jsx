@@ -73,8 +73,7 @@ const CartSidebar = () => {
     // [NEW] Auto-open checkout form if guest mode is enabled while cart is open
     React.useEffect(() => {
         if (isCartOpen && guestMode && cartItems.length > 0) {
-            // Ensure we are ready to checkout
-            console.log("Guest mode active, ready for checkout form");
+            // Ready for checkout
         }
     }, [isCartOpen, guestMode, cartItems]);
 
@@ -108,7 +107,6 @@ const CartSidebar = () => {
             const newPhone = customerPhone.replace(/\D/g, '');
 
             if (newPhone && newPhone !== currentPhone) {
-                console.log("Updating user phone from cart...");
                 // Update both to be consistent
                 updateProfile({ phone: customerPhone, whatsapp: customerPhone });
             }
