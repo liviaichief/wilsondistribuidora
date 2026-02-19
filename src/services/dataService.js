@@ -18,17 +18,17 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             // "PROMOÇÕES" tab - ONLY show items in promotion
             queries.push(Query.equal('is_promotion', true));
         } else if (category && category !== 'all') {
-            // Specific category - show items for this category AND NOT in promotion
+            // Specific category - show items for this category
             queries.push(Query.equal('category', category));
-            // Using notEqual(true) instead of equal(false) to catch null/missing values as well
-            queries.push(Query.notEqual('is_promotion', true));
         }
+
+        // Show queries in console for debugging (user will see this)
+        console.log(`Fetching products for category: "${category}"`, queries);
 
         // Pagination and sorting
         const offset = (page - 1) * limit;
         queries.push(Query.limit(limit));
         queries.push(Query.offset(offset));
-
         queries.push(Query.orderDesc('$createdAt'));
 
         const response = await databases.listDocuments(
@@ -37,9 +37,32 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             queries
         );
 
+        console.log(`Response for "${category}":`, response.total, "documents found.");
+        if (response.documents.length > 0) {
+            console.log("Sample product attributes:", {
+                title: response.documents[0].title,
+                category: response.documents[0].category,
+                is_promotion: response.documents[0].is_promotion,
+                active: response.documents[0].active
+            });
+        }
+
+        // CLIENT-SIDE FILTERING for Promotion logic to ensure visibility
+        let filteredDocs = response.documents.map(processDoc);
+
+        if (category === 'all') {
+            // Promo tab: only show items where is_promotion is explicitly true
+            filteredDocs = filteredDocs.filter(d => d.is_promotion === true);
+        } else if (category && category !== 'all') {
+            // Specific category: only show items where is_promotion is NOT true
+            filteredDocs = filteredDocs.filter(d => d.is_promotion !== true);
+        }
+
         return {
-            documents: response.documents.map(processDoc),
-            total: response.total
+            documents: filteredDocs,
+            total: category === 'all' || (category && category !== 'all')
+                ? filteredDocs.length // Simplified total for now
+                : response.total
         };
     } catch (error) {
         console.error("Error fetching products:", error);
