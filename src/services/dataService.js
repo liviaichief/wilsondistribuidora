@@ -15,13 +15,13 @@ export const getProducts = async (category, page = 1, limit = 20) => {
     try {
         const queries = [];
         if (category && category === 'all') {
-            // "PROMOÇÕES" tab - only show items in promotion
+            // "PROMOÇÕES" tab - ONLY show items in promotion
             queries.push(Query.equal('is_promotion', true));
         } else if (category && category !== 'all') {
-            // Specific category - show only items for this category
+            // Specific category - show items for this category AND NOT in promotion
+            // As requested: products in promo move ONLY to the promo tab.
             queries.push(Query.equal('category', category));
-            // Removed is_promotion filter here to show both regular and promo items
-            // inside their respective categories as requested.
+            queries.push(Query.equal('is_promotion', false));
         }
 
         // Task-2: Only show active products on Home (Admin will likely call this differently or we check category)
