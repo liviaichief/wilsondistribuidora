@@ -134,14 +134,40 @@ const AdminOrders = () => {
                                                 <Package size={16} /> Itens do Pedido
                                             </h4>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                {Array.isArray(order.items) ? order.items.map((item, idx) => (
-                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #222', paddingBottom: '5px' }}>
-                                                        <span>{item.quantity}x {item.title}</span>
-                                                        <span style={{ color: '#888' }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                                    </div>
-                                                )) : (
-                                                    <p style={{ color: '#666' }}>{typeof order.items === 'string' ? order.items : 'Lista de itens não disponível'}</p>
-                                                )}
+                                                {(() => {
+                                                    let items = [];
+                                                    try {
+                                                        items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                                                    } catch (e) {
+                                                        console.error("Error parsing items:", e);
+                                                        items = [];
+                                                    }
+
+                                                    if (!Array.isArray(items) || items.length === 0) {
+                                                        return <p style={{ color: '#666' }}>Lista de itens não disponível</p>;
+                                                    }
+
+                                                    return items.map((item, idx) => (
+                                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #222', paddingBottom: '8px', alignItems: 'center' }}>
+                                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                                <span style={{
+                                                                    background: '#333',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '0.8rem',
+                                                                    color: 'var(--primary-color)',
+                                                                    fontWeight: 'bold'
+                                                                }}>
+                                                                    {item.quantity}x
+                                                                </span>
+                                                                <span style={{ fontSize: '0.9rem' }}>{item.title || item.name || 'Produto'}</span>
+                                                            </div>
+                                                            <span style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                                                R$ {parseFloat((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    ));
+                                                })()}
                                             </div>
                                             <div style={{ marginTop: '15px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem' }}>
                                                 TOTAL: R$ {parseFloat(order.total || 0).toFixed(2)}
