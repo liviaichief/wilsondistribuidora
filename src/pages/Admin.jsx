@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, saveProduct, deleteProduct } from '../services/dataService';
+import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID } from 'appwrite';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
+import AdminOrders from './AdminOrders';
+import AdminSettings from './AdminSettings';
 import { useAlert } from '../context/AlertContext'; // Import useAlert
 import './Admin.css';
 
@@ -13,6 +15,7 @@ const Admin = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
+    const [settingsData, setSettingsData] = useState({ whatsapp_number: '' });
 
     const { showAlert, showConfirm } = useAlert(); // Hook usage
 
@@ -32,7 +35,8 @@ const Admin = () => {
         category: 'carne',
         image: '',
         is_promotion: false,
-        promo_price: ''
+        promo_price: '',
+        active: true
     });
 
     const [editingPromoId, setEditingPromoId] = useState(null);
@@ -109,7 +113,8 @@ const Admin = () => {
             image: '',
             uom: 'KG',
             is_promotion: false,
-            promo_price: ''
+            promo_price: '',
+            active: true
         });
         setIsModalOpen(true);
     };
@@ -172,10 +177,26 @@ const Admin = () => {
                 >
                     <ImageIcon size={18} /> <span>Banners</span>
                 </button>
+                <button
+                    className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('orders')}
+                >
+                    <ClipboardList size={18} /> <span>Pedidos</span>
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('settings')}
+                >
+                    <Settings size={18} /> <span>Configurações</span>
+                </button>
             </div>
 
             {activeTab === 'banners' ? (
                 <AdminBanners />
+            ) : activeTab === 'orders' ? (
+                <AdminOrders />
+            ) : activeTab === 'settings' ? (
+                <AdminSettings />
             ) : (
                 <div className="admin-content-inner">
                     <div className="admin-section-header">
@@ -213,6 +234,7 @@ const Admin = () => {
                             <option value="acompanhamentos">Acompanhamentos</option>
                             <option value="acessorios">Acessórios</option>
                             <option value="insumos">Insumos</option>
+                            <option value="bebidas">Bebidas</option>
                         </select>
                         {/* Clear Filters Button */}
                         {(titleFilter || skuFilter || categoryFilter !== 'all') && (
@@ -260,6 +282,7 @@ const Admin = () => {
                                         <th>Título</th>
                                         <th>Categoria</th>
                                         <th>Preço</th>
+                                        <th>Ativo</th>
                                         <th>Promoção</th>
                                         <th>Ações</th>
                                     </tr>
@@ -279,6 +302,24 @@ const Admin = () => {
                                                 <td>{item.title}</td>
                                                 <td><span className="badge">{item.category}</span></td>
                                                 <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
+                                                <td>
+                                                    <label className="switch">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={item.active !== false}
+                                                            onChange={async () => {
+                                                                try {
+                                                                    await saveProduct({ ...item, active: !item.active });
+                                                                    loadProducts();
+                                                                    showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success');
+                                                                } catch (err) {
+                                                                    showAlert(err.message, 'error');
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span className="slider round"></span>
+                                                    </label>
+                                                </td>
                                                 <td>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                         <label className="switch">
@@ -424,6 +465,7 @@ const Admin = () => {
                                     <option value="acompanhamentos">Acompanhamentos</option>
                                     <option value="acessorios">Acessórios</option>
                                     <option value="insumos">Insumos</option>
+                                    <option value="bebidas">Bebidas</option>
                                 </select>
                             </div>
                             <div className="form-group">

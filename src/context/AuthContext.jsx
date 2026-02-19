@@ -74,7 +74,28 @@ export const AuthProvider = ({ children }) => {
             try {
                 const session = await account.get();
                 setUser(mapUser(session));
-                await fetchProfile(session.$id);
+
+                // [FIX for Task-3] Ensure profile document exists (especially for OAuth users)
+                try {
+                    await fetchProfile(session.$id);
+                } catch (pErr) {
+                    if (pErr.code === 404) {
+                        const defaultRole = 'client';
+                        await databases.createDocument(
+                            DATABASE_ID,
+                            COLLECTIONS.PROFILES,
+                            session.$id,
+                            {
+                                email: session.email,
+                                full_name: session.name || '',
+                                first_name: (session.name || '').split(' ')[0] || '',
+                                last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
+                                role: defaultRole
+                            }
+                        );
+                        await fetchProfile(session.$id);
+                    }
+                }
             } catch (error) {
                 // Not logged in
                 setUser(null);

@@ -4,7 +4,7 @@ import { useOrder } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
-import { createOrder } from '../services/dataService';
+import { createOrder, getSettings } from '../services/dataService';
 import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../lib/imageUtils';
 import './CartSidebar.css';
@@ -26,6 +26,7 @@ const CartSidebar = () => {
 
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
+    const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Default fallback
 
     const { showAlert } = useAlert(); // Moved up
     const { addOrder } = useOrder(); // Moved up
@@ -45,9 +46,12 @@ const CartSidebar = () => {
 
     // Auto-fill form if user is logged in
     React.useEffect(() => {
-        if (isCartOpen && user) {
-            // Reload profile to get latest data
-            refreshProfile();
+        if (isCartOpen) {
+            if (user) refreshProfile();
+            // Fetch system settings for WhatsApp number
+            getSettings().then(data => {
+                if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
+            });
         }
     }, [isCartOpen, user]);
 
@@ -150,7 +154,7 @@ const CartSidebar = () => {
             `Nome: ${customerName}\n` +
             `Telefone: ${customerPhone}`;
 
-        const phoneNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+        const phoneNumber = whatsappNumber;
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
         // 4. Cleanup (Before Redirect)

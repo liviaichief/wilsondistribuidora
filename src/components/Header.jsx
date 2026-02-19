@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useOrder } from '../context/OrderContext';
 
 import { useAuth } from '../context/AuthContext';
-import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield } from 'lucide-react';
+import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer } from 'lucide-react';
 import './Header.css';
 
 // Custom Icons - Doodle Style
@@ -103,6 +103,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
         { id: 'acompanhamentos', label: 'ACOMPANHAMENTOS', icon: GarlicBreadIcon },
         { id: 'acessorios', label: 'ACESSÓRIOS', icon: CharcoalIcon },
         { id: 'insumos', label: 'INSUMOS', icon: Flame },
+        { id: 'bebidas', label: 'BEBIDAS', icon: Beer },
     ];
 
     return (

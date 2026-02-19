@@ -27,15 +27,14 @@ export const getImageUrl = (imagePath) => {
         // Clean up path found in some migrations
         const cleanId = imagePath.replace('product-images/', '');
 
-        // Use getFilePreview for better performance and browser compatibility 
-        // especially for large images (e.g. 2.3MB)
+        // Use getFilePreview with slightly lower quality and size for better compatibility
         const result = storage.getFilePreview(
             BUCKET_ID,
             cleanId,
-            1000, // width
-            1000, // height
-            undefined, // gravity
-            100 // quality
+            800, // width
+            800, // height
+            'center', // gravity
+            90 // quality - 100 sometimes causes issues
         );
 
         return result.href || result;

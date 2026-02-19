@@ -23,8 +23,12 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             // Specific category - show only items for this category AND NOT in promotion
             queries.push(Query.equal('category', category));
             queries.push(Query.equal('is_promotion', false));
-        } else {
-            // Fallback for Admin or listing all items (not usually called from Home with undefined)
+        }
+
+        // Task-2: Only show active products on Home (Admin will likely call this differently or we check category)
+        // If it's a category fetch (likely from Home), only show active
+        if (category) {
+            queries.push(Query.equal('active', true));
         }
 
         // Pagination
@@ -92,7 +96,8 @@ export const saveProduct = async (product) => {
                 image: product.image,
                 uom: product.uom || 'KG',
                 is_promotion: !!product.is_promotion,
-                promo_price: product.promo_price ? parseFloat(product.promo_price) : null
+                promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
+                active: product.active !== false
             };
 
             response = await databases.updateDocument(
@@ -115,7 +120,8 @@ export const saveProduct = async (product) => {
                 product_sku: sku,
                 uom: product.uom || 'KG',
                 is_promotion: !!product.is_promotion,
-                promo_price: product.promo_price ? parseFloat(product.promo_price) : null
+                promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
+                active: product.active !== false
             };
 
             response = await databases.createDocument(
@@ -185,16 +191,15 @@ export const createOrder = async (orderData) => {
                 customer_phone: orderData.customer_phone,
                 payment_method: orderData.paymentMethod
             }),
-            true // ASYNC MODE (Return immediately)
+            false // SYNC MODE - Wait for order number
         );
 
-        // In async mode, we don't get the order details back immediately.
-        // We assume success and let the user check "My Orders" later.
+        const response = JSON.parse(execution.responseBody);
         return {
             success: true,
-            $id: 'processing',
-            order_number: 'Em processamento',
-            status: 'processing'
+            $id: response.$id || 'processing',
+            order_number: response.order_number || 'Novo',
+            status: response.status || 'success'
         };
 
     } catch (error) {
@@ -247,5 +252,30 @@ export const backfillSKUs = async () => {
     } catch (error) {
         console.error('Error during backfill:', error);
         return { success: false, error: error.message };
+    }
+};
+
+// Task-5: Settings helper
+export const getSettings = async () => {
+    try {
+        const response = await databases.listDocuments(DATABASE_ID, 'settings');
+        const settings = {};
+        response.documents.forEach(doc => {
+            settings[doc.key] = doc.value;
+        });
+        return settings;
+    } catch (e) {
+        console.error("Error fetching settings:", e);
+        return {};
+    }
+};
+
+export const updateSettings = async (key, value) => {
+    try {
+        await databases.updateDocument(DATABASE_ID, 'settings', key, { value });
+        return true;
+    } catch (e) {
+        console.error("Error updating settings:", e);
+        throw e;
     }
 };

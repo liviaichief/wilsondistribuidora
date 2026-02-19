@@ -13,7 +13,8 @@ const CATEGORY_PRIORITY = {
     'embutidos': 3,
     'acompanhamentos': 4,
     'acessorios': 5,
-    'insumos': 6
+    'insumos': 6,
+    'bebidas': 7
 };
 
 const Home = () => {
