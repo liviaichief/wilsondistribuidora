@@ -24,20 +24,16 @@ export const getImageUrl = (imagePath) => {
 
     // 3. Assume it's an Appwrite File ID if it has no slashes and looks like an ID
     try {
-        // Clean up path found in some migrations
         const cleanId = imagePath.replace('product-images/', '');
 
-        // Use getFilePreview with slightly lower quality and size for better compatibility
-        const result = storage.getFilePreview(
-            BUCKET_ID,
-            cleanId,
-            800, // width
-            800, // height
-            'center', // gravity
-            90 // quality - 100 sometimes causes issues
-        );
+        // Manual construction of Appwrite Preview URL for maximum reliability
+        // Endpoint and Project ID are derived from the same source as the main client
+        const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
+        const project = import.meta.env.VITE_APPWRITE_PROJECT_ID || '698e695d001d446b21d9';
+        const bucket = import.meta.env.VITE_APPWRITE_BUCKET_ID || 'product-images';
 
-        return result.href || result;
+        // Direct URL format that works even if SDK state is weird
+        return `${endpoint}/storage/buckets/${bucket}/files/${cleanId}/preview?project=${project}&width=800&height=800&gravity=center&quality=90`;
     } catch (error) {
         console.warn('Error generating Appwrite image URL:', error);
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+Imagem';

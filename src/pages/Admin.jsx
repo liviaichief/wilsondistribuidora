@@ -17,6 +17,7 @@ const Admin = () => {
     const [products, setProducts] = useState([]);
     const [settingsData, setSettingsData] = useState({ whatsapp_number: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [previewUrl, setPreviewUrl] = useState('');
 
     const { showAlert, showConfirm } = useAlert();
@@ -440,6 +441,7 @@ const Admin = () => {
                                     onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
+                                            setIsUploadingImage(true);
                                             try {
                                                 const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
                                                 if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
@@ -454,10 +456,12 @@ const Admin = () => {
                                                     file
                                                 );
 
-                                                setCurrentProduct({ ...currentProduct, image: result.$id });
+                                                setCurrentProduct(prev => ({ ...prev, image: result.$id }));
                                             } catch (err) {
                                                 showAlert('Erro no upload: ' + err.message, 'error');
                                                 console.error(err);
+                                            } finally {
+                                                setIsUploadingImage(false);
                                             }
                                         }
                                     }}
@@ -540,10 +544,10 @@ const Admin = () => {
                             <button
                                 type="submit"
                                 className="save-btn"
-                                disabled={isSaving}
-                                style={{ width: '100%', justifyContent: 'center', marginTop: '20px', opacity: isSaving ? 0.7 : 1 }}
+                                disabled={isSaving || isUploadingImage}
+                                style={{ width: '100%', justifyContent: 'center', marginTop: '20px', opacity: (isSaving || isUploadingImage) ? 0.7 : 1 }}
                             >
-                                {isSaving ? 'Salvando...' : 'Salvar Produto'}
+                                {isSaving ? 'Salvando...' : isUploadingImage ? 'Enviando Imagem...' : 'Salvar Produto'}
                             </button>
                         </form>
                     </div>
