@@ -19,19 +19,12 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             queries.push(Query.equal('is_promotion', true));
         } else if (category && category !== 'all') {
             // Specific category - show items for this category AND NOT in promotion
-            // As requested: products in promo move ONLY to the promo tab.
             queries.push(Query.equal('category', category));
-            queries.push(Query.equal('is_promotion', false));
+            // Using notEqual(true) instead of equal(false) to catch null/missing values as well
+            queries.push(Query.notEqual('is_promotion', true));
         }
 
-        // Task-2: Only show active products on Home (Admin will likely call this differently or we check category)
-        // If it's a category fetch (likely from Home), only show active
-        // If it's a category fetch (likely from Home), show items that are NOT explicitly disabled
-        if (category) {
-            queries.push(Query.notEqual('active', false));
-        }
-
-        // Pagination
+        // Pagination and sorting
         const offset = (page - 1) * limit;
         queries.push(Query.limit(limit));
         queries.push(Query.offset(offset));
