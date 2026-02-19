@@ -189,11 +189,15 @@ export const createOrder = async (orderData) => {
         );
 
         const response = JSON.parse(execution.responseBody);
+
+        // The backend function returns { success: true, order: { ... } }
+        const orderInfo = response.order || {};
+
         return {
-            success: true,
-            $id: response.$id || 'processing',
-            order_number: response.order_number || 'Novo',
-            status: response.status || 'success'
+            success: response.success !== false,
+            $id: orderInfo.$id || 'processing',
+            order_number: orderInfo.order_number || 'Novo',
+            status: orderInfo.status || 'success'
         };
 
     } catch (error) {

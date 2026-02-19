@@ -125,9 +125,11 @@ const CartSidebar = () => {
         let orderNumDisplay = "";
         if (orderResult.success) {
             // Priority: order_number (numeric) > $id (uuid)
-            if (orderResult.order_number) {
+            const isNumeric = /^\d+$/.test(orderResult.order_number?.toString());
+
+            if (orderResult.order_number && isNumeric) {
                 orderNumDisplay = orderResult.order_number.toString().padStart(5, '0');
-            } else if (orderResult.$id) {
+            } else if (orderResult.$id && orderResult.$id !== 'processing') {
                 // If it's the Appwrite ID, take the last 6 chars uppercase
                 orderNumDisplay = orderResult.$id.slice(-6).toUpperCase();
             } else {
