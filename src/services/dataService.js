@@ -13,22 +13,10 @@ const processDoc = (doc) => ({
 
 export const getProducts = async (category, page = 1, limit = 20) => {
     try {
-        const queries = [];
-        if (category && category === 'all') {
-            // "PROMOÇÕES" tab - ONLY show items in promotion
-            queries.push(Query.equal('is_promotion', true));
-        } else if (category && category !== 'all') {
-            // Specific category - show items for this category
-            queries.push(Query.equal('category', category));
-        }
-
-        // Show queries in console for debugging (user will see this)
-        console.log(`Fetching products for category: "${category}"`, queries);
-
-        // Pagination and sorting
-        const offset = (page - 1) * limit;
-        queries.push(Query.limit(limit));
-        queries.push(Query.offset(offset));
+        // REMOVED server-side category filter temporarily to diagnose index/case issues
+        // We will fetch more items and filter in memory to ensure visibility.
+        const queries = []; // Initialize queries array
+        queries.push(Query.limit(100));
         queries.push(Query.orderDesc('$createdAt'));
 
         const response = await databases.listDocuments(
@@ -37,32 +25,37 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             queries
         );
 
-        console.log(`Response for "${category}":`, response.total, "documents found.");
-        if (response.documents.length > 0) {
-            console.log("Sample product attributes:", {
-                title: response.documents[0].title,
-                category: response.documents[0].category,
-                is_promotion: response.documents[0].is_promotion,
-                active: response.documents[0].active
-            });
+        console.log("DB RAW RESPONSE:", response.documents.length, "items found.");
+
+        // Map and Clean
+        let allDocs = response.documents.map(processDoc);
+
+        // Debug categories found
+        const existingCats = [...new Set(allDocs.map(d => d.category))];
+        console.log("Categories present in DB:", existingCats);
+
+        let filteredDocs = allDocs;
+
+        // Apply Category Logic
+        if (category && category !== 'all') {
+            const targetCat = category.toLowerCase();
+            filteredDocs = filteredDocs.filter(d =>
+                (d.category || '').toLowerCase() === targetCat
+            );
         }
 
-        // CLIENT-SIDE FILTERING for Promotion logic to ensure visibility
-        let filteredDocs = response.documents.map(processDoc);
-
+        // Apply Promotion Logic (Strict as requested)
         if (category === 'all') {
-            // Promo tab: only show items where is_promotion is explicitly true
+            // Aba Geral/Promo: Apenas o que é promoção
             filteredDocs = filteredDocs.filter(d => d.is_promotion === true);
-        } else if (category && category !== 'all') {
-            // Specific category: only show items where is_promotion is NOT true
+        } else {
+            // Abas de Categoria: Apenas o que NÃO é promoção
             filteredDocs = filteredDocs.filter(d => d.is_promotion !== true);
         }
 
         return {
             documents: filteredDocs,
-            total: category === 'all' || (category && category !== 'all')
-                ? filteredDocs.length // Simplified total for now
-                : response.total
+            total: filteredDocs.length
         };
     } catch (error) {
         console.error("Error fetching products:", error);
