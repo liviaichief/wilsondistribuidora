@@ -25,8 +25,9 @@ export const getProducts = async (category, page = 1, limit = 20) => {
 
         // Task-2: Only show active products on Home (Admin will likely call this differently or we check category)
         // If it's a category fetch (likely from Home), only show active
+        // If it's a category fetch (likely from Home), show items that are NOT explicitly disabled
         if (category) {
-            queries.push(Query.equal('active', true));
+            queries.push(Query.notEqual('active', false));
         }
 
         // Pagination
