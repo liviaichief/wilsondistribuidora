@@ -16,6 +16,8 @@ const Admin = () => {
     const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
     const [settingsData, setSettingsData] = useState({ whatsapp_number: '' });
+    const [isSaving, setIsSaving] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState('');
 
     const { showAlert, showConfirm } = useAlert();
 
@@ -71,6 +73,7 @@ const Admin = () => {
 
     const handleEdit = (product) => {
         setCurrentProduct(product);
+        setPreviewUrl(getImageUrl(product.image));
         setIsModalOpen(true);
     };
 
@@ -94,13 +97,20 @@ const Admin = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        if (isSaving) return;
+
+        setIsSaving(true);
         try {
             await saveProduct(currentProduct);
             setIsModalOpen(false);
+            setPreviewUrl('');
             loadProducts();
             showAlert('Produto salvo com sucesso.', 'success', 'Sucesso!');
         } catch (err) {
+            console.error('Save error:', err);
             showAlert(err.message, 'error', 'Erro ao salvar');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -116,6 +126,7 @@ const Admin = () => {
             promo_price: '',
             active: true
         });
+        setPreviewUrl('');
         setIsModalOpen(true);
     };
 
@@ -425,13 +436,17 @@ const Admin = () => {
                                 <label>Imagem</label>
                                 <input
                                     type="file"
-                                    accept="image/png, image/jpeg, image/jpg"
+                                    accept="image/png, image/jpeg, image/jpg, image/webp"
                                     onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
                                             try {
-                                                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-                                                if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG.');
+                                                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                                                if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
+
+                                                // Show local preview immediately
+                                                const localUrl = URL.createObjectURL(file);
+                                                setPreviewUrl(localUrl);
 
                                                 const result = await storage.createFile(
                                                     BUCKET_ID,
@@ -439,8 +454,6 @@ const Admin = () => {
                                                     file
                                                 );
 
-                                                // Store the File ID, not the URL.
-                                                // getImageUrl() in ProductCard and Admin will handle this ID correctly.
                                                 setCurrentProduct({ ...currentProduct, image: result.$id });
                                             } catch (err) {
                                                 showAlert('Erro no upload: ' + err.message, 'error');
@@ -449,8 +462,13 @@ const Admin = () => {
                                         }
                                     }}
                                 />
-                                {currentProduct.image && (
-                                    <img src={getImageUrl(currentProduct.image)} alt="Preview" style={{ marginTop: '10px', maxHeight: '100px', borderRadius: '4px' }} />
+                                {previewUrl && (
+                                    <div style={{ marginTop: '10px', position: 'relative' }}>
+                                        <img src={previewUrl} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #444' }} />
+                                        <span style={{ position: 'absolute', bottom: '5px', left: '5px', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', fontSize: '10px', borderRadius: '4px' }}>
+                                            Preview
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                             <div className="form-group">
@@ -519,8 +537,13 @@ const Admin = () => {
                                 </div>
                             )}
 
-                            <button type="submit" className="save-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }}>
-                                Salvar Produto
+                            <button
+                                type="submit"
+                                className="save-btn"
+                                disabled={isSaving}
+                                style={{ width: '100%', justifyContent: 'center', marginTop: '20px', opacity: isSaving ? 0.7 : 1 }}
+                            >
+                                {isSaving ? 'Salvando...' : 'Salvar Produto'}
                             </button>
                         </form>
                     </div>

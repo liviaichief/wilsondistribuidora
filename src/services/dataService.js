@@ -95,43 +95,33 @@ const getNextSKU = async () => {
 export const saveProduct = async (product) => {
     try {
         let response;
-        if (product.id) {
-            // Update: Standard DB update
-            const payload = {
-                title: product.title,
-                description: product.description,
-                price: parseFloat(product.price),
-                category: product.category,
-                image: product.image,
-                uom: product.uom || 'KG',
-                is_promotion: !!product.is_promotion,
-                promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
-                active: product.active !== false
-            };
+        // Use either product.id (mapped) or product.$id (raw Appwrite)
+        const docId = product.id || product.$id;
 
+        const payload = {
+            title: product.title,
+            description: product.description,
+            price: parseFloat(product.price),
+            category: product.category,
+            image: product.image, // Should be File ID or URL
+            uom: product.uom || 'KG',
+            is_promotion: !!product.is_promotion,
+            promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
+            active: product.active !== false
+        };
+
+        if (docId) {
+            // UPDATE
             response = await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTIONS.PRODUCTS,
-                product.id,
+                docId,
                 payload
             );
-            return processDoc(response);
         } else {
-            // Create: Client-side SKU generation (Fallback due to function limit)
+            // CREATE
             const sku = await getNextSKU();
-
-            const payload = {
-                title: product.title,
-                description: product.description,
-                price: parseFloat(product.price),
-                category: product.category,
-                image: product.image,
-                product_sku: sku,
-                uom: product.uom || 'KG',
-                is_promotion: !!product.is_promotion,
-                promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
-                active: product.active !== false
-            };
+            payload.product_sku = sku;
 
             response = await databases.createDocument(
                 DATABASE_ID,
@@ -139,8 +129,8 @@ export const saveProduct = async (product) => {
                 ID.unique(),
                 payload
             );
-            return processDoc(response);
         }
+        return processDoc(response);
     } catch (error) {
         console.error('Error saving product:', error);
         throw error;
