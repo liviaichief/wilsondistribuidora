@@ -122,6 +122,11 @@ const AdminHealthDashboard = () => {
                 
                 .refresh-health-btn { background: transparent; border: 1px solid #444; color: #aaa; padding: 5px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
                 .refresh-health-btn:hover { background: #333; color: #fff; }
+
+                @media (max-width: 768px) {
+                    .health-grid { grid-template-columns: 1fr; }
+                    .summary-stats { flex-direction: column; gap: 15px; }
+                }
             `}</style>
         </div>
     );

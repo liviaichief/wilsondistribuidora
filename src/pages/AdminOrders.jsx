@@ -120,7 +120,7 @@ const AdminOrders = () => {
 
                             {expandedOrder === order.$id && (
                                 <div className="order-details-expanded" style={{ padding: '20px', borderTop: '1px solid #333', background: '#121212' }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                                    <div className="order-details-grid">
                                         <div>
                                             <h4 style={{ color: 'var(--primary-color)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <User size={16} /> Dados do Cliente

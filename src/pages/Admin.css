@@ -633,3 +633,29 @@ input:checked+.slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+
+/* Order Details Grid */
+.order-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+@media (max-width: 900px) {
+    .order-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .order-summary-row {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
+    .order-summary-row>div:first-child {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+}
