@@ -71,6 +71,8 @@ const AdminSettings = () => {
                     </button>
                 </form>
             </div>
+
+            <AdminHealthDashboard />
         </div>
     );
 };
