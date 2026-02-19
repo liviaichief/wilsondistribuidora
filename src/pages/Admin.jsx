@@ -50,8 +50,8 @@ const Admin = () => {
         }
     }, [activeTab]);
 
-    const loadProducts = async () => {
-        setLoading(true);
+    const loadProducts = async (silent = false) => {
+        if (!silent) setLoading(true);
         setError(null);
 
         try {
@@ -138,7 +138,7 @@ const Admin = () => {
                 is_promotion: newStatus,
                 promo_price: newStatus ? (product.promo_price || product.price) : null
             });
-            loadProducts();
+            loadProducts(true);
             if (newStatus) {
                 setEditingPromoId(product.id);
                 setTempPromoPrice(product.promo_price || product.price);
@@ -155,7 +155,7 @@ const Admin = () => {
                 promo_price: parseFloat(tempPromoPrice)
             });
             setEditingPromoId(null);
-            loadProducts();
+            loadProducts(true);
             showAlert('Preço promocional atualizado!', 'success');
         } catch (err) {
             showAlert('Erro ao salvar preço: ' + err.message, 'error');
@@ -321,7 +321,7 @@ const Admin = () => {
                                                             onChange={async () => {
                                                                 try {
                                                                     await saveProduct({ ...item, active: !item.active });
-                                                                    loadProducts();
+                                                                    loadProducts(true);
                                                                     showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success');
                                                                 } catch (err) {
                                                                     showAlert(err.message, 'error');
