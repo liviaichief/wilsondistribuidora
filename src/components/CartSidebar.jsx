@@ -124,9 +124,15 @@ const CartSidebar = () => {
         // 2. Determine Order Number for WhatsApp
         let orderNumDisplay = "";
         if (orderResult.success) {
-            orderNumDisplay = orderResult.order_number
-                ? orderResult.order_number.toString().padStart(5, '0')
-                : orderResult.id.slice(-6).toUpperCase();
+            // Priority: order_number (numeric) > $id (uuid)
+            if (orderResult.order_number) {
+                orderNumDisplay = orderResult.order_number.toString().padStart(5, '0');
+            } else if (orderResult.$id) {
+                // If it's the Appwrite ID, take the last 6 chars uppercase
+                orderNumDisplay = orderResult.$id.slice(-6).toUpperCase();
+            } else {
+                orderNumDisplay = "NOVO";
+            }
 
             // Add to local history if success
             addOrder(orderResult);
