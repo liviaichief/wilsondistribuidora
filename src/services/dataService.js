@@ -27,6 +27,7 @@ export const getProducts = async (category, page = 1, limit = 20) => {
 
         console.log("DB RAW RESPONSE:", response.documents.length, "items found.");
 
+
         // Map and Clean
         let allDocs = response.documents.map(processDoc);
 
@@ -48,10 +49,11 @@ export const getProducts = async (category, page = 1, limit = 20) => {
         if (category === 'all') {
             // Aba Geral/Promo: Apenas o que é promoção
             filteredDocs = filteredDocs.filter(d => d.is_promotion === true);
-        } else {
-            // Abas de Categoria: Apenas o que NÃO é promoção
+        } else if (category) {
+            // Abas de Categoria Específica: Apenas o que NÃO é promoção
             filteredDocs = filteredDocs.filter(d => d.is_promotion !== true);
         }
+        // If category is undefined/null (Admin usage), return EVERYTHING.
 
         return {
             documents: filteredDocs,

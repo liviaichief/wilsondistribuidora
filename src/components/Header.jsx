@@ -95,6 +95,47 @@ const Header = ({ activeCategory, onCategoryChange }) => {
         };
     }, []);
 
+    // Auto-scroll logic
+    const categoryListRef = React.useRef(null);
+    const scrollDirection = React.useRef(null);
+
+    React.useEffect(() => {
+        const handleMouseMove = (e) => {
+            const { clientX } = e;
+            const windowWidth = window.innerWidth;
+            const threshold = 150; // Trigger area size
+
+            if (clientX > windowWidth - threshold) {
+                scrollDirection.current = 'right';
+            } else if (clientX < threshold) {
+                scrollDirection.current = 'left';
+            } else {
+                scrollDirection.current = null;
+            }
+        };
+
+        let animationFrameId;
+        const scrollLoop = () => {
+            if (scrollDirection.current && categoryListRef.current) {
+                const speed = 4;
+                if (scrollDirection.current === 'right') {
+                    categoryListRef.current.scrollLeft += speed;
+                } else {
+                    categoryListRef.current.scrollLeft -= speed;
+                }
+            }
+            animationFrameId = requestAnimationFrame(scrollLoop);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        scrollLoop();
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
     const categories = [
         { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
         { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
@@ -212,7 +253,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                 {isHome && (
                     <div className="header-nav-section">
                         <nav className="category-nav-inline">
-                            <div className="category-list">
+                            <div className="category-list" ref={categoryListRef}>
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
