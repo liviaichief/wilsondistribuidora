@@ -150,8 +150,21 @@ const AdminUsers = () => {
                     }
                     const data = await res.json();
                     authId = data.$id;
+
+                    // [NEW] Sync Label
+                    if (newUser.role === 'admin' || newUser.role === 'owner') {
+                        await fetch(`${client.config.endpoint}/users/${authId}/labels`, {
+                            method: 'PUT',
+                            headers: {
+                                'X-Appwrite-Project': client.config.project,
+                                'X-Appwrite-Key': apiKey,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ labels: ['admin'] })
+                        });
+                    }
                 } catch (apiErr) {
-                    console.error("Auth creation failed:", apiErr);
+                    console.error("Auth creation/label failed:", apiErr);
                     throw apiErr;
                 }
             } else {
@@ -236,6 +249,26 @@ const AdminUsers = () => {
                     role: editingUser.role
                 }
             );
+
+            // [NEW] Sync Auth Labels
+            const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
+            if (apiKey) {
+                try {
+                    const labels = (editingUser.role === 'admin' || editingUser.role === 'owner') ? ['admin'] : [];
+                    await fetch(`${client.config.endpoint}/users/${editingUser.id}/labels`, {
+                        method: 'PUT',
+                        headers: {
+                            'X-Appwrite-Project': client.config.project,
+                            'X-Appwrite-Key': apiKey,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ labels })
+                    });
+                    console.log(`Auth labels synced for ${editingUser.email}:`, labels);
+                } catch (apiErr) {
+                    console.error("Failed to sync labels:", apiErr);
+                }
+            }
             showAlert("Dados atualizados com sucesso!", 'success');
             setIsEditModalOpen(false);
             loadUsers();
