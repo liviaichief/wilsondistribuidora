@@ -236,10 +236,28 @@
     }
 
     .price-tag {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
         top: 5px;
         right: 5px;
+    }
+
+    .price-tag.on-promo {
+        padding: 0.15rem 0.35rem;
+        gap: 2px;
+    }
+
+    .promo-price {
+        font-size: 0.85rem;
+    }
+
+    .original-price {
+        font-size: 0.65rem;
+        margin-right: 2px;
+    }
+
+    .uom-tag {
+        font-size: 0.6rem;
     }
 
     .btn-add {
