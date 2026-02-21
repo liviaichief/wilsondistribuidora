@@ -24,13 +24,9 @@ export const getImageUrl = (imagePath) => {
         // Use the SDK method which is more reliable than manual construction
         // It automatically uses the correct endpoint and project ID from the client config
         if (storage && fileId) {
-            const url = storage.getFilePreview(
+            const url = storage.getFileView(
                 BUCKET_ID,
-                fileId,
-                800,
-                800,
-                'center',
-                90
+                fileId
             ).toString();
 
             // Helpful debug for the user to see what's being requested
@@ -45,7 +41,7 @@ export const getImageUrl = (imagePath) => {
         const endpoint = client?.config?.endpoint || 'https://cloud.appwrite.io/v1';
         const project = client?.config?.project || '698e695d001d446b21d9';
 
-        return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/preview?project=${project}`;
+        return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
     } catch (error) {
         console.warn('Error generating Appwrite image URL:', error);
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+Imagem';

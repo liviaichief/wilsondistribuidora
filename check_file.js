@@ -1,4 +1,3 @@
-
 import { Client, Storage } from 'node-appwrite';
 
 const client = new Client()
@@ -8,16 +7,10 @@ const client = new Client()
 
 const storage = new Storage(client);
 
-async function listBuckets() {
+async function checkFile() {
     try {
-        const response = await storage.listBuckets();
-        console.log("Buckets found:");
-        response.buckets.forEach(b => {
-            console.log(`ID: ${b.$id} | Name: ${b.name}`);
-        });
-    } catch (e) {
-        console.error("Error:", e.message);
-    }
+        const response = await storage.getFile('product-images', '6998fadc001199b1f494');
+        console.log(response);
+    } catch (e) { console.error(e) }
 }
-
-listBuckets();
+checkFile();

@@ -5,6 +5,7 @@ import { useAlert } from '../context/AlertContext';
 import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
 import { ID, Query } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
+import imageCompression from 'browser-image-compression';
 import './Admin.css'; // Reuse admin styles
 
 const AdminBanners = () => {
@@ -115,10 +116,18 @@ const AdminBanners = () => {
 
             // Upload image if selected
             if (imageFile) {
+                const options = {
+                    maxSizeMB: 0.25, // ~250KB max
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true,
+                };
+                const compressedFile = await imageCompression(imageFile, options);
+                console.log(`Comprimiu banner: ${(imageFile.size / 1024).toFixed(0)}KB para ${(compressedFile.size / 1024).toFixed(0)}KB`);
+
                 const fileUpload = await storage.createFile(
                     BUCKET_ID,
                     ID.unique(),
-                    imageFile
+                    compressedFile
                 );
 
                 // Construct URL manually to match the Product behavior and satisfy the URL format requirement

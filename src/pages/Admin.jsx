@@ -8,6 +8,7 @@ import AdminBanners from './AdminBanners';
 import AdminOrders from './AdminOrders';
 import AdminSettings from './AdminSettings';
 import { useAlert } from '../context/AlertContext';
+import imageCompression from 'browser-image-compression';
 import './Admin.css';
 
 const Admin = () => {
@@ -450,10 +451,18 @@ const Admin = () => {
                                                 const localUrl = URL.createObjectURL(file);
                                                 setPreviewUrl(localUrl);
 
+                                                const options = {
+                                                    maxSizeMB: 0.2,
+                                                    maxWidthOrHeight: 1000,
+                                                    useWebWorker: true,
+                                                };
+                                                const compressedFile = await imageCompression(file, options);
+                                                console.log(`Comprimiu imagem: ${(file.size / 1024).toFixed(0)}KB para ${(compressedFile.size / 1024).toFixed(0)}KB`);
+
                                                 const result = await storage.createFile(
                                                     BUCKET_ID,
                                                     ID.unique(),
-                                                    file
+                                                    compressedFile
                                                 );
 
                                                 setCurrentProduct(prev => ({ ...prev, image: result.$id }));
