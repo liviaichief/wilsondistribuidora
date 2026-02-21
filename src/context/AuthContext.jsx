@@ -58,9 +58,12 @@ export const AuthProvider = ({ children }) => {
             }
 
         } catch (error) {
-            console.error("Error fetching profile:", error);
+            if (error.code !== 404) {
+                console.error("Error fetching profile:", error);
+            }
             setProfile(null);
             setRole('client');
+            throw error; // Throw so caller knows what happened (e.g. 404)
         }
     };
 
@@ -90,10 +93,13 @@ export const AuthProvider = ({ children }) => {
                                 full_name: session.name || '',
                                 first_name: (session.name || '').split(' ')[0] || '',
                                 last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
+                                user_id: session.$id,
                                 role: defaultRole
                             }
                         );
                         await fetchProfile(session.$id);
+                    } else {
+                        console.error("Profile check error:", pErr);
                     }
                 }
             } catch (error) {
@@ -163,11 +169,12 @@ export const AuthProvider = ({ children }) => {
                         first_name: (additionalData?.full_name || '').split(' ')[0] || '',
                         last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
                         phone: additionalData?.phone || '',
+                        user_id: acc.$id,
                         role: defaultRole
                     }
                 );
             } catch (dbError) {
-                console.error("Error creating profile document:", dbError);
+                console.error("Error creating profile document during signup:", dbError);
             }
 
             setRole(defaultRole);

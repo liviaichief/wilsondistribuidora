@@ -169,6 +169,7 @@ const AdminUsers = () => {
                     first_name: (newUser.full_name || '').split(' ')[0] || '',
                     last_name: (newUser.full_name || '').split(' ').slice(1).join(' ') || '',
                     phone: newUser.phone,
+                    user_id: authId,
                     role: newUser.role
                 }
             );
