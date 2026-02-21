@@ -11,10 +11,10 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
-    const [guestMode, setGuestMode] = useState(false); // [NEW] Guest Mode
+    const [guestMode, setGuestMode] = useState(false); // Guest Mode
 
     const [role, setRole] = useState(null);
-    const [profile, setProfile] = useState(null); // [NEW]
+    const [profile, setProfile] = useState(null);
 
     // Helper: Map Appwrite User to our App context user shape
     const mapUser = (acc) => ({
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
             setProfile(doc);
             setRole(doc.role || 'client');
 
-            // [NEW] Track Last Activity (Login) for Dashboard KPIs
+            // Track Last Activity (Login) for Dashboard KPIs
             // We update this if it's missing or if the date has changed (once per day per user)
             const now = new Date();
             const lastLogin = doc.last_login ? new Date(doc.last_login) : null;
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
                 const session = await account.get();
                 setUser(mapUser(session));
 
-                // [FIX for Task-3] Ensure profile document exists (especially for OAuth users)
+                // Ensure profile document exists (especially for OAuth users)
                 try {
                     await fetchProfile(session.$id);
                 } catch (pErr) {
@@ -252,8 +252,7 @@ export const AuthProvider = ({ children }) => {
         // Appwrite Labels/Teams handles roles differently. 
         // For simplicity in this port, we can check email or label.
         // Assuming admin@local.com is admin for now.
-        // [FIX] Relaxed check for testing: any email starting with 'admin' is admin
-        // Also check actual DB role
+        // Check actual DB role
         const isAdmin = user?.email?.startsWith('admin') || role === 'admin' || role === 'owner';
 
         return {
@@ -268,8 +267,8 @@ export const AuthProvider = ({ children }) => {
             setAuthModalView,
             openAuthModal,
             closeAuthModal,
-            guestMode,        // [NEW]
-            continueAsGuest,  // [NEW]
+            guestMode,
+            continueAsGuest,
             isProfileModalOpen, // Exported state
             openProfileModal,   // Exported function
             closeProfileModal,  // Exported function

@@ -151,7 +151,7 @@ const AdminUsers = () => {
                     const data = await res.json();
                     authId = data.$id;
 
-                    // [NEW] Sync Label
+                    // Sync Label
                     if (newUser.role === 'admin' || newUser.role === 'owner') {
                         await fetch(`${client.config.endpoint}/users/${authId}/labels`, {
                             method: 'PUT',
@@ -250,7 +250,7 @@ const AdminUsers = () => {
                 }
             );
 
-            // [NEW] Sync Auth Labels
+            // Sync Auth Labels
             const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
             if (apiKey) {
                 try {
@@ -264,7 +264,6 @@ const AdminUsers = () => {
                         },
                         body: JSON.stringify({ labels })
                     });
-                    console.log(`Auth labels synced for ${editingUser.email}:`, labels);
                 } catch (apiErr) {
                     console.error("Failed to sync labels:", apiErr);
                 }
