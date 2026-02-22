@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save } from 'lucide-react';
 import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
@@ -121,8 +121,11 @@ const AdminBanners = () => {
                     maxWidthOrHeight: 1920,
                     useWebWorker: true,
                 };
-                const compressedFile = await imageCompression(imageFile, options);
-                console.log(`Comprimiu banner: ${(imageFile.size / 1024).toFixed(0)}KB para ${(compressedFile.size / 1024).toFixed(0)}KB`);
+                const compressedBlob = await imageCompression(imageFile, options);
+                console.log(`Comprimiu banner: ${(imageFile.size / 1024).toFixed(0)}KB para ${(compressedBlob.size / 1024).toFixed(0)}KB`);
+
+                // Appwrite requires a File object with a name in some SDK versions/environments
+                const compressedFile = new File([compressedBlob], imageFile.name, { type: imageFile.type });
 
                 const fileUpload = await storage.createFile(
                     BUCKET_ID,
@@ -427,7 +430,17 @@ const AdminBanners = () => {
                                 </div>
 
                                 <button type="submit" className="save-btn" disabled={isSaving}>
-                                    {isSaving ? 'Salvando...' : (editingBanner ? 'Salvar Alterações' : 'Criar Banner')}
+                                    {isSaving ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={20} />
+                                            <span>Salvando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={20} />
+                                            <span>{editingBanner ? 'Salvar Alterações' : 'Criar Banner'}</span>
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </div>

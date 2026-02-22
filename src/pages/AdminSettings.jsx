@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Phone, Info, X, ShieldAlert } from 'lucide-react';
+import { Save, Phone, Info, X, ShieldAlert, Loader2 } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { account } from '../lib/appwrite';
@@ -130,7 +130,17 @@ const AdminSettings = () => {
                     </div>
 
                     <button type="submit" className="save-btn" disabled={saving} style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }}>
-                        <Save size={20} /> {saving ? 'Salvando...' : 'Salvar Configurações'}
+                        {saving ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} />
+                                <span>Salvando...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save size={20} />
+                                <span>Salvar Configurações</span>
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

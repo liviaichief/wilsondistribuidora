@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID, Permission, Role } from 'appwrite';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save, Loader2 } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
 import AdminOrders from './AdminOrders';
@@ -459,8 +459,11 @@ const Admin = () => {
                                                     maxWidthOrHeight: 1000,
                                                     useWebWorker: true,
                                                 };
-                                                const compressedFile = await imageCompression(file, options);
-                                                console.log(`Comprimiu imagem: ${(file.size / 1024).toFixed(0)}KB para ${(compressedFile.size / 1024).toFixed(0)}KB`);
+                                                const compressedBlob = await imageCompression(file, options);
+                                                console.log(`Comprimiu imagem: ${(file.size / 1024).toFixed(0)}KB para ${(compressedBlob.size / 1024).toFixed(0)}KB`);
+
+                                                // Appwrite requires a File object with a name in some SDK versions/environments
+                                                const compressedFile = new File([compressedBlob], file.name, { type: file.type });
 
                                                 const result = await storage.createFile(
                                                     BUCKET_ID,
@@ -591,7 +594,22 @@ const Admin = () => {
                                 disabled={isSaving || isUploadingImage}
                                 style={{ width: '100%', justifyContent: 'center', marginTop: '20px', opacity: (isSaving || isUploadingImage) ? 0.7 : 1 }}
                             >
-                                {isSaving ? 'Salvando...' : isUploadingImage ? 'Enviando Imagem...' : 'Salvar Produto'}
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        <span>Salvando...</span>
+                                    </>
+                                ) : isUploadingImage ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        <span>Enviando Imagem...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={20} />
+                                        <span>Salvar Produto</span>
+                                    </>
+                                )}
                             </button>
                         </form>
                     </div>

@@ -3,7 +3,7 @@ import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import { databases, DATABASE_ID, COLLECTIONS, client } from '../lib/appwrite';
 import { ID, Query } from 'appwrite';
-import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User } from 'lucide-react';
+import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User, Loader2, Save } from 'lucide-react';
 import './Admin.css';
 
 const AdminUsers = () => {
@@ -571,7 +571,17 @@ const AdminUsers = () => {
                                     </select>
                                 </div>
                                 <button type="submit" className="save-btn" disabled={isCreating} style={{ justifyContent: 'center', width: '100%' }}>
-                                    {isCreating ? 'Criando...' : 'Criar Usuário'}
+                                    {isCreating ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={20} />
+                                            <span>Criando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus size={20} />
+                                            <span>Criar Usuário</span>
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </div>
@@ -620,7 +630,17 @@ const AdminUsers = () => {
                                     </select>
                                 </div>
                                 <button type="submit" className="save-btn" disabled={isUpdating} style={{ justifyContent: 'center', width: '100%' }}>
-                                    {isUpdating ? 'Salvando...' : 'Salvar Alterações'}
+                                    {isUpdating ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={20} />
+                                            <span>Salvando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={20} />
+                                            <span>Salvar Alterações</span>
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </div>
