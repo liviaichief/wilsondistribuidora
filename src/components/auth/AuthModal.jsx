@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../context/AlertContext';
 import { X, Mail, Lock, User, Phone, Calendar, LogIn, ArrowRight } from 'lucide-react';
 import './AuthModal.css';
 
@@ -304,3 +304,5 @@ const AuthModal = () => {
 };
 
 export default AuthModal;
+
+

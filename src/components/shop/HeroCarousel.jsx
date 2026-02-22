@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getBanners } from '../services/dataService';
-import { getImageUrl } from '../lib/imageUtils';
+import { getBanners } from '../../services/dataService';
+import { getImageUrl } from '../../lib/imageUtils';
 import './HeroCarousel.css';
 
 const DEFAULT_SLIDES = [
@@ -160,3 +160,5 @@ const HeroCarousel = () => {
 };
 
 export default HeroCarousel;
+
+

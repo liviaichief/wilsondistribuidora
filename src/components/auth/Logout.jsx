@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
@@ -58,3 +58,5 @@ const Logout = () => {
 };
 
 export default Logout;
+
+

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Activity, ShieldCheck, Database, Zap, RefreshCw, CheckCircle, AlertCircle, BarChart3 } from 'lucide-react';
-import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
+import { databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 
 const AdminHealthDashboard = () => {
     const [health, setHealth] = useState({
@@ -133,3 +133,5 @@ const AdminHealthDashboard = () => {
 };
 
 export default AdminHealthDashboard;
+
+

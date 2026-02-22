@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 import { databases, DATABASE_ID, COLLECTIONS, client } from '../lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User } from 'lucide-react';
@@ -7,6 +8,7 @@ import './Admin.css';
 
 const AdminUsers = () => {
     const { showAlert, showConfirm } = useAlert();
+    const { role: loggedInRole } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -28,8 +30,19 @@ const AdminUsers = () => {
         password: '',
         full_name: '',
         phone: '',
-        role: 'client'
+        role: ''
     });
+
+    const openCreateModal = () => {
+        setNewUser({
+            email: '',
+            password: '',
+            full_name: '',
+            phone: '',
+            role: ''
+        });
+        setIsCreateModalOpen(true);
+    };
 
     // Edit User Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -56,8 +69,9 @@ const AdminUsers = () => {
 
             // Base queries
             if (activeTab === 'admins') {
+                const adminRoles = loggedInRole === 'owner' ? ['owner'] : ['admin', 'owner'];
                 queries = [
-                    Query.equal('role', ['admin', 'owner']),
+                    Query.equal('role', adminRoles),
                     Query.orderDesc('$createdAt')
                 ];
             } else {
@@ -121,6 +135,12 @@ const AdminUsers = () => {
 
     const handleCreateUser = async (e) => {
         e.preventDefault();
+
+        if (!newUser.role) {
+            showAlert('Por favor, selecione um Perfil de Acesso.', 'error');
+            return;
+        }
+
         setIsCreating(true);
 
         try {
@@ -200,15 +220,27 @@ const AdminUsers = () => {
         }
     };
 
-    const handleDeleteUser = async (userId) => {
+    const handleDeleteUser = async (targetUser) => {
         showConfirm(
             "Tem certeza? Isso excluirá o PERFIL permanentemente.",
             async () => {
                 try {
+                    // Impede deletar o último proprietário independentemente se quem deleta é admin ou owner
+                    if (targetUser.role === 'owner') {
+                        const ownersRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
+                            Query.equal('role', 'owner'),
+                            Query.limit(2)
+                        ]);
+                        if (ownersRes.total <= 1) {
+                            showAlert("Não é possível excluir o único proprietário do sistema.", "error");
+                            return;
+                        }
+                    }
+
                     const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
                     if (apiKey) {
                         try {
-                            await fetch(`${client.config.endpoint}/users/${userId}`, {
+                            await fetch(`${client.config.endpoint}/users/${targetUser.id}`, {
                                 method: 'DELETE',
                                 headers: {
                                     'X-Appwrite-Project': client.config.project,
@@ -221,7 +253,7 @@ const AdminUsers = () => {
                     await databases.deleteDocument(
                         DATABASE_ID,
                         COLLECTIONS.PROFILES,
-                        userId
+                        targetUser.id
                     );
                     showAlert("Usuário excluído com sucesso.", 'success');
                     loadUsers();
@@ -298,7 +330,7 @@ const AdminUsers = () => {
                         <h2>Gestão de Usuários</h2>
                         <p className="section-subtitle">Gerencie perfis e acessos do sistema.</p>
                     </div>
-                    <button onClick={() => setIsCreateModalOpen(true)} className="add-btn">
+                    <button onClick={openCreateModal} className="add-btn">
                         <UserPlus size={20} /> <span className="add-text">Novo Usuário</span>
                     </button>
                 </div>
@@ -382,7 +414,7 @@ const AdminUsers = () => {
                                                     <button onClick={() => openEditModal(user)} className="icon-btn" title="Editar">
                                                         <Edit2 size={18} />
                                                     </button>
-                                                    <button onClick={() => handleDeleteUser(user.id)} className="icon-btn delete" title="Excluir">
+                                                    <button onClick={() => handleDeleteUser(user)} className="icon-btn delete" title="Excluir">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>
@@ -475,10 +507,12 @@ const AdminUsers = () => {
                                     <label>Perfil de Acesso</label>
                                     <select
                                         value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                        required
                                         style={{ width: '100%', padding: '0.8rem', background: '#121212', border: '1px solid #444', color: 'white', borderRadius: '4px' }}>
+                                        <option value="" disabled>Selecione um perfil...</option>
                                         <option value="client">Cliente</option>
                                         <option value="owner">Proprietário</option>
-                                        <option value="admin">Administrador</option>
+                                        {loggedInRole === 'admin' && <option value="admin">Administrador</option>}
                                     </select>
                                 </div>
                                 <button type="submit" className="save-btn" disabled={isCreating} style={{ justifyContent: 'center', width: '100%' }}>
@@ -522,7 +556,7 @@ const AdminUsers = () => {
                                         style={{ width: '100%', padding: '0.8rem', background: '#121212', border: '1px solid #444', color: 'white', borderRadius: '4px' }}>
                                         <option value="client">Cliente</option>
                                         <option value="owner">Proprietário</option>
-                                        <option value="admin">Administrador</option>
+                                        {loggedInRole === 'admin' && <option value="admin">Administrador</option>}
                                     </select>
                                 </div>
                                 <button type="submit" className="save-btn" disabled={isUpdating} style={{ justifyContent: 'center', width: '100%' }}>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import HeroCarousel from '../components/HeroCarousel';
-import Header from '../components/Header';
-import ProductCard from '../components/ProductCard';
+import HeroCarousel from '../components/shop/HeroCarousel';
+import Header from '../components/shop/Header';
+import ProductCard from '../components/shop/ProductCard';
 import { getProducts } from '../services/dataService';
 import './Home.css';
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8; // Aumentado um pouco para preencher telas iniciais maiores
 
 const CATEGORY_PRIORITY = {
     'carne': 1,
@@ -18,60 +18,65 @@ const CATEGORY_PRIORITY = {
 };
 
 const Home = () => {
-    // State management for server-side pagination
-    const [items, setItems] = useState([]);
-    const [displayItems, setDisplayItems] = useState([]); // Keep for compatibility if used elsewhere, or just sync
+    // Banco em cache local 
+    const [allProducts, setAllProducts] = useState([]);
+
+    // Visão atual
+    const [filteredItems, setFilteredItems] = useState([]);
+    const [displayItems, setDisplayItems] = useState([]);
     const [activeCategory, setActiveCategory] = useState('all');
     const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(false);
+
+    // Status de loading global apenas para o primeiro carregamento
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const loader = useRef(null);
 
-    const hasMore = items.length < total;
+    const hasMore = displayItems.length < filteredItems.length;
 
-    // Load data when Category or Page changes
+    // 1. Carrega todos os produtos de uma VEZ SÓ quando a tela abre.
+    // Isso economiza incontáveis requisições ao Appwrite.
     useEffect(() => {
-        const loadData = async () => {
-            // If page is 1, we show loading indicator more prominently or clear items
-            // But to avoid flash, we might keep items? 
-            // Better UX: If category changed, clear items. If just page changed, keep items.
+        const fetchInitialData = async () => {
             setLoading(true);
-            setError(null);
-
             try {
-                // If it's a new category (page 1), we might want to clear old items immediately 
-                // to avoid showing wrong products while loading.
-                // But we handle that by dependency array logic below.
-
-                const data = await getProducts(activeCategory, page, ITEMS_PER_PAGE);
-
-                if (page === 1) {
-                    setItems(data.documents);
-                } else {
-                    setItems(prev => [...prev, ...data.documents]);
-                }
-                setTotal(data.total);
-
+                // Ao passar null, o dataService nos devolve a base inteira sem filtros severos.
+                const data = await getProducts(); // dataService internamente limita a 100 itens ord. por data
+                // Filtramos produtos desativados para o cliente:
+                const activeOnly = data.documents.filter(d => d.active !== false);
+                setAllProducts(activeOnly);
             } catch (err) {
                 console.error("Home load error:", err);
-                setError("Falha ao carregar produtos.");
+                setError("Falha ao carregar o cardápio. Verifique a conexão.");
             } finally {
                 setLoading(false);
             }
         };
 
-        loadData();
-    }, [activeCategory, page]);
+        fetchInitialData();
+    }, []);
 
-    // Reset state when category changes
+    // 2. Filtra a base local (Memória) toda vez que a Categoria muda, instântaneamente.
     useEffect(() => {
-        setPage(1);
-        setItems([]);
-        setTotal(0);
-    }, [activeCategory]);
+        let newFiltered = [];
+        if (activeCategory === 'all') {
+            // Aba Promoções
+            newFiltered = allProducts.filter(d => d.is_promotion === true);
+        } else {
+            // Abas Específicas
+            newFiltered = allProducts.filter(d => (d.category || '').toLowerCase() === activeCategory.toLowerCase());
+        }
 
-    // Infinite Scroll Logic
+        setFilteredItems(newFiltered);
+        setPage(1); // Reseta a paginação (scroll) pro topo ao trocar aba
+    }, [activeCategory, allProducts]);
+
+    // 3. Gerencia o "Slice" da lista para evitar criar 100 cartões HTML de uma vez (Performance do Navegador)
+    useEffect(() => {
+        setDisplayItems(filteredItems.slice(0, page * ITEMS_PER_PAGE));
+    }, [filteredItems, page]);
+
+    // Lógica do Infinite Scroll Local (Apenas revela mais HTML, sem chamar o banco)
     const handleObserver = useCallback((entries) => {
         const target = entries[0];
         if (target.isIntersecting && !loading && hasMore) {
@@ -93,11 +98,6 @@ const Home = () => {
         }
     }, [handleObserver]);
 
-    // Sync displayItems with items (since we now fetch exactly what we display)
-    useEffect(() => {
-        setDisplayItems(items);
-    }, [items]);
-
     return (
         <div className="home-container">
             <Header
@@ -118,25 +118,27 @@ const Home = () => {
                         </div>
                     )}
 
-                    {!error && displayItems.length > 0 ? (
+                    {loading ? (
+                        <></> // Espera carregar a primeira vez para não pipocar erros
+                    ) : displayItems.length > 0 ? (
                         displayItems.map((item, index) => (
                             <ProductCard key={item.id || index} product={item} />
                         ))
                     ) : (
-                        !loading && !error && (
-                            <div className="no-products">
-                                <p>Nenhum produto encontrado neste filtro.</p>
-                                <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                                    Total de itens: {total} <br />
-                                    Categoria Ativa: {activeCategory === 'all' ? 'TODOS' : activeCategory} <br />
+                        !error && (
+                            <div className="no-products" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: '#888' }}>
+                                <h3>Nenhum produto nesta sessão!</h3>
+                                <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
+                                    Estamos abastecendo o estoque. Tente verificar outras categorias.
                                 </p>
                             </div>
                         )
                     )}
                 </div>
 
-                <div ref={loader} className="loading-indicator">
-                    {loading && <div className="spinner"></div>}
+                <div ref={loader} className="loading-indicator" style={{ height: '40px', padding: '10px' }}>
+                    {/* Se estiver arrastando a tela para baixo e ainda tiver itens locais escondidos, mostra loader */}
+                    {hasMore && !loading && <div className="spinner"></div>}
                 </div>
             </main>
         </div>

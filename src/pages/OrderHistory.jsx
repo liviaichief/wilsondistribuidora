@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Query } from 'appwrite';
 import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
+import Header from '../components/shop/Header';
 import './OrderHistory.css';
 
 import { useCart } from '../context/CartContext'; // Import useCart

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import CartSidebar from '../components/CartSidebar';
-import OrderSidebar from '../components/OrderSidebar';
-import AuthModal from '../components/AuthModal';
+import CartSidebar from '../components/shop/CartSidebar';
+import OrderSidebar from '../components/shop/OrderSidebar';
+import AuthModal from '../components/auth/AuthModal';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 

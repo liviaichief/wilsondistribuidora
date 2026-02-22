@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
-import { getImageUrl } from '../lib/imageUtils';
+import { getImageUrl } from '../../lib/imageUtils';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -106,3 +106,5 @@ const ProductCard = ({ product }) => {
 };
 
 export default ProductCard;
+
+

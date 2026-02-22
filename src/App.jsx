@@ -5,11 +5,11 @@ import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
-import Login from './components/Login.jsx';
-import Logout from './components/Logout.jsx';
+import Login from './components/auth/Login.jsx';
+import Logout from './components/auth/Logout.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
-import ProtectedRoute from './components/ProtectedRoute';
-import ProfileModal from './components/ProfileModal'; // Global Modal
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProfileModal from './components/auth/ProfileModal'; // Global Modal
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
@@ -17,8 +17,9 @@ import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import { AuthProvider } from './context/AuthContext';
 
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
+import PWAInstallPrompt from './components/common/PWAInstallPrompt';
 
 const GlobalProfileModalWrapper = () => {
   const { isProfileModalOpen, closeProfileModal, user } = useAuth();
@@ -70,6 +71,9 @@ function App() {
 
               {/* Global Modals */}
               <GlobalProfileModalWrapper />
+
+              {/* PWA Install Custom Banner */}
+              <PWAInstallPrompt />
 
             </OrderProvider>
           </CartProvider>

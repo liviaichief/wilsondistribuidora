@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { account, databases } from '../lib/appwrite';
+import { account, databases } from '../../lib/appwrite';
 import { ID, Query } from 'appwrite';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const DATABASE_ID = import.meta.env.VITE_DATABASE_ID;
 const COLLECTION_PROFILES = import.meta.env.VITE_COLLECTION_PROFILES || 'profiles';
@@ -280,3 +280,5 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         </div>
     );
 }
+
+

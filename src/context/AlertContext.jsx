@@ -66,7 +66,7 @@ export const AlertProvider = ({ children }) => {
         <AlertContext.Provider value={{ showAlert, showConfirm, closeAlert }}>
             {children}
             {alertConfig && (
-                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 max-w-sm w-full mx-4 p-8 text-center animate-fade-in-up relative">
                         <div className="flex justify-center mb-6">
                             {getIcon(alertConfig.type)}

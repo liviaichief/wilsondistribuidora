@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useOrder } from '../context/OrderContext';
+import { useCart } from '../../context/CartContext';
+import { useOrder } from '../../context/OrderContext';
 
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer } from 'lucide-react';
 import './Header.css';
 
@@ -68,7 +68,7 @@ const CharcoalIcon = ({ size = 20, className }) => (
 );
 
 
-import { APP_VERSION } from '../version';
+import { APP_VERSION } from '../../version';
 
 const Header = ({ activeCategory, onCategoryChange }) => {
     const location = useLocation();
@@ -289,3 +289,5 @@ const Header = ({ activeCategory, onCategoryChange }) => {
 };
 
 export default Header;
+
+

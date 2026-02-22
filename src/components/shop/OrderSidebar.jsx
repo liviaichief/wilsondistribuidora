@@ -1,5 +1,5 @@
 import React from 'react';
-import { useOrder } from '../context/OrderContext';
+import { useOrder } from '../../context/OrderContext';
 import { X, ShoppingBag, Clock, CheckCircle } from 'lucide-react';
 import './CartSidebar.css'; // Reusing CartSidebar styles for consistency
 
@@ -61,3 +61,5 @@ const OrderSidebar = () => {
 };
 
 export default OrderSidebar;
+
+

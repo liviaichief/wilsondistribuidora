@@ -302,18 +302,7 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Debug Section for Production Troubleshooting */}
-                <div className="debug-section">
-                    <h4>🔧 Debug Info (Admin Only)</h4>
-                    <p>App Version: {import.meta.env.VITE_APP_VERSION || 'Unknown'}</p>
-                    <p>User ID: {stats.debug?.userId || 'Not loaded'}</p>
-                    <p>User Labels: {stats.debug?.labels?.join(', ') || 'None'}</p>
-                    <p>Raw Orders Found: {stats.debug?.rawOrdersCount ?? '?'}</p>
-                    <p>Filters Used: {JSON.stringify(stats.debug?.filters || {})}</p>
-                    {stats.debug?.error && (
-                        <p style={{ color: 'red' }}>Last Error: {stats.debug.error}</p>
-                    )}
-                </div>
+
             </div>
         </div>
     );

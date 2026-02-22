@@ -1,12 +1,12 @@
 import React, { useState } from 'react'; // Added useState
-import { useCart } from '../context/CartContext';
-import { useOrder } from '../context/OrderContext';
+import { useCart } from '../../context/CartContext';
+import { useOrder } from '../../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useAlert } from '../context/AlertContext';
-import { createOrder, getSettings } from '../services/dataService';
+import { useAuth } from '../../context/AuthContext';
+import { useAlert } from '../../context/AlertContext';
+import { createOrder, getSettings } from '../../services/dataService';
 import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode, Loader2 } from 'lucide-react'; // Added icons
-import { getImageUrl } from '../lib/imageUtils';
+import { getImageUrl } from '../../lib/imageUtils';
 import './CartSidebar.css';
 
 const CartSidebar = () => {
@@ -275,3 +275,5 @@ const CartSidebar = () => {
 };
 
 export default CartSidebar;
+
+
