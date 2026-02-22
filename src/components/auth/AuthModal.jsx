@@ -103,13 +103,13 @@ const AuthModal = () => {
                 if (data?.user?.identities?.length === 0) {
                     showAlert('Este e-mail já está cadastrado.', 'error', 'Erro no Cadastro');
                 } else {
-                    showAlert('Cadastro realizado! Faça login para continuar.', 'success', 'Cadastro com Sucesso');
+                    showAlert('Cadastro realizado! Faça login para continuar.', 'success', 'Cadastro com Sucesso', 1500);
                     setTimeout(() => setAuthModalView('login'), 1500);
                 }
             } else if (authModalView === 'forgot') {
                 const { error } = await resetPassword(email);
                 if (error) throw error;
-                showAlert('E-mail de recuperação enviado.', 'success', 'Recuperação de Senha');
+                showAlert('E-mail de recuperação enviado.', 'success', 'Recuperação de Senha', 1500);
             }
         } catch (err) {
             console.error('Auth Error Details:', err);

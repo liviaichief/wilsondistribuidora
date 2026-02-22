@@ -46,6 +46,9 @@ const Admin = () => {
     const [editingPromoId, setEditingPromoId] = useState(null);
     const [tempPromoPrice, setTempPromoPrice] = useState('');
 
+    // Zoom Modal State
+    const [zoomedImage, setZoomedImage] = useState(null);
+
     useEffect(() => {
         if (activeTab === 'products') {
             loadProducts();
@@ -107,7 +110,7 @@ const Admin = () => {
             setIsModalOpen(false);
             setPreviewUrl('');
             loadProducts();
-            showAlert('Produto salvo com sucesso.', 'success', 'Sucesso!');
+            showAlert('Produto salvo com sucesso.', 'success', 'Sucesso!', 1000);
         } catch (err) {
             console.error('Save error:', err);
             showAlert(err.message, 'error', 'Erro ao salvar');
@@ -158,7 +161,7 @@ const Admin = () => {
             });
             setEditingPromoId(null);
             loadProducts(true);
-            showAlert('Preço promocional atualizado!', 'success');
+            showAlert('Preço promocional atualizado!', 'success', null, 1000);
         } catch (err) {
             showAlert('Erro ao salvar preço: ' + err.message, 'error');
         }
@@ -303,10 +306,15 @@ const Admin = () => {
                                 <tbody>
                                     {filteredProducts.length > 0 ? (
                                         filteredProducts.map((item) => (
-                                            <tr key={item.id}>
-                                                <td>
+                                            <tr key={item.id} onDoubleClick={() => handleEdit(item)} style={{ cursor: 'pointer' }} title="Clique duas vezes para editar">
+                                                <td onClick={(e) => { e.stopPropagation(); setZoomedImage(item); }}>
                                                     {item.image ? (
-                                                        <img src={getImageUrl(item.image)} alt={item.title} className="thumb-img" />
+                                                        <img
+                                                            src={getImageUrl(item.image)}
+                                                            alt={item.title}
+                                                            className="thumb-img"
+                                                            style={{ cursor: 'zoom-in' }}
+                                                        />
                                                     ) : (
                                                         <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                                                     )}
@@ -324,7 +332,7 @@ const Admin = () => {
                                                                 try {
                                                                     await saveProduct({ ...item, active: !item.active });
                                                                     loadProducts(true);
-                                                                    showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success');
+                                                                    showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success', null, 1000);
                                                                 } catch (err) {
                                                                     showAlert(err.message, 'error');
                                                                 }
@@ -612,6 +620,34 @@ const Admin = () => {
                                 )}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Zoom Modal */}
+            {zoomedImage && (
+                <div className="modal-overlay" onClick={() => setZoomedImage(null)} style={{ zIndex: 1000000 }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'transparent', border: 'none', boxShadow: 'none', maxWidth: '90vw', maxHeight: '90vh' }}>
+                        <div className="modal-header" style={{ position: 'absolute', right: '-10px', top: '-10px', zIndex: 1, padding: 0 }}>
+                            <button className="close-btn" onClick={() => setZoomedImage(null)} style={{ background: '#fff', color: '#000', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <img
+                            src={getImageUrl(zoomedImage.image)}
+                            alt={zoomedImage.title}
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '85vh',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
+                            }}
+                        />
+                        <div style={{ textAlign: 'center', marginTop: '15px', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                            {zoomedImage.title}
+                        </div>
                     </div>
                 </div>
             )}

@@ -224,7 +224,7 @@ const AdminUsers = () => {
                 }
             );
 
-            showAlert('Usuário criado com sucesso!', 'success');
+            showAlert('Usuário criado com sucesso!', 'success', null, 1000);
             setIsCreateModalOpen(false);
             setNewUser({ email: '', password: '', full_name: '', phone: '', role: 'client' });
             loadUsers();
@@ -272,7 +272,7 @@ const AdminUsers = () => {
                         COLLECTIONS.PROFILES,
                         targetUser.id
                     );
-                    showAlert("Usuário excluído com sucesso.", 'success');
+                    showAlert("Usuário excluído com sucesso.", 'success', null, 1000);
                     loadUsers();
                 } catch (error) {
                     console.error("Delete error:", error);
@@ -318,7 +318,7 @@ const AdminUsers = () => {
                     console.error("Failed to sync labels:", apiErr);
                 }
             }
-            showAlert("Dados atualizados com sucesso!", 'success');
+            showAlert("Dados atualizados com sucesso!", 'success', null, 1000);
             setIsEditModalOpen(false);
             loadUsers();
         } catch (error) {

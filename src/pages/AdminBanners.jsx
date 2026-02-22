@@ -165,7 +165,7 @@ const AdminBanners = () => {
                     editingBanner.id,
                     payload
                 );
-                showAlert('Banner atualizado com sucesso!', 'success');
+                showAlert('Banner atualizado com sucesso!', 'success', null, 1000);
             } else {
                 await databases.createDocument(
                     DATABASE_ID,
@@ -173,7 +173,7 @@ const AdminBanners = () => {
                     ID.unique(),
                     payload
                 );
-                showAlert('Banner criado com sucesso!', 'success');
+                showAlert('Banner criado com sucesso!', 'success', null, 1000);
             }
 
             setIsModalOpen(false);
@@ -196,7 +196,7 @@ const AdminBanners = () => {
                         COLLECTIONS.BANNERS,
                         id
                     );
-                    showAlert('Banner excluído com sucesso!', 'success');
+                    showAlert('Banner excluído com sucesso!', 'success', null, 1000);
                     loadData();
                 } catch (error) {
                     console.error('Error deleting banner:', error);

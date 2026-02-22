@@ -67,7 +67,7 @@ const AdminSettings = () => {
             setSaving(true);
             await updateSettings('whatsapp_number', settings.whatsapp_number);
             await updateSettings('birthday_message', settings.birthday_message);
-            showAlert("Configurações salvas com sucesso!", "success");
+            showAlert("Configurações salvas com sucesso!", "success", null, 1000);
         } catch (error) {
             console.error(error);
             showAlert("Senha incorreta. Não foi possível salvar.", "error");
