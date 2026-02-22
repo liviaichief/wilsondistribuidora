@@ -7,7 +7,9 @@ import {
     ShoppingBag,
     TrendingUp,
     Activity,
-    DollarSign
+    DollarSign,
+    Calendar,
+    Globe
 } from 'lucide-react';
 import {
     BarChart,
@@ -20,6 +22,7 @@ import {
     Cell
 } from 'recharts';
 import './Admin.css'; // Reusing admin styles
+import './AdminDashboard.css';
 import { useAlert } from '../context/AlertContext';
 
 const AdminDashboard = () => {
@@ -33,11 +36,21 @@ const AdminDashboard = () => {
         activeUsers: 0,
         topProducts: []
     });
+    // Local month helper: YYYY-MM
+    const getCurrentMonth = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    };
+
+    const [filterMode, setFilterMode] = useState('month'); // 'month' | 'all'
+    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchStats();
-    }, []);
+    }, [selectedMonth, filterMode]);
 
     const fetchStats = async () => {
         try {
@@ -51,26 +64,30 @@ const AdminDashboard = () => {
                 ]
             );
 
-            // 2. Fetch Total Orders (All Time)
+            // 2. Prepare Order Queries based on Filter
+            const orderQueries = [Query.limit(5000)]; // Appwrite limit for calculation
+
+            if (filterMode === 'month') {
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const start = new Date(year, month - 1, 1);
+                const end = new Date(year, month, 1); // Start of next month
+
+                orderQueries.push(Query.greaterThanEqual('$createdAt', start.toISOString()));
+                orderQueries.push(Query.lessThan('$createdAt', end.toISOString()));
+            }
+
+            // 3. Fetch Orders for calculations
+            const ordersRes = await databases.listDocuments(
+                DATABASE_ID,
+                COLLECTIONS.ORDERS,
+                orderQueries
+            );
+
+            // Fetch Total Orders (Lifetime - used for the last card)
             const totalOrdersRes = await databases.listDocuments(
                 DATABASE_ID,
                 COLLECTIONS.ORDERS,
                 [Query.limit(1)]
-            );
-
-            // 3. Fetch Recent Orders (Revenue Calculation - Last 30 Days)
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-            // We need to fetch all recent orders to calculate revenue
-            // Appwrite limit is 5000, usually enough for "recent" unless huge volume
-            const ordersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.ORDERS,
-                [
-                    Query.greaterThanEqual('$createdAt', thirtyDaysAgo.toISOString()),
-                    Query.limit(100)
-                ]
             );
 
             const recentOrders = ordersRes.documents;
@@ -149,14 +166,7 @@ const AdminDashboard = () => {
                 totalRevenue: 0,
                 recentRevenue: recentRevenue,
                 activeUsers: activeUsersCount,
-                topProducts: topProducts,
-                debug: {
-                    userId: currentUser.$id,
-                    labels: currentUser.labels || [],
-                    rawOrdersCount: ordersRes.total,
-                    filters: { thirtyDaysAgo: thirtyDaysAgo.toISOString() },
-                    error: null
-                }
+                topProducts: topProducts
             });
 
         } catch (error) {
@@ -209,26 +219,53 @@ const AdminDashboard = () => {
     return (
         <div className="admin-container">
             <div className="admin-content-inner">
-                <div className="admin-section-header">
+                <div className="admin-section-header dashboard-header">
                     <div>
                         <h2>Dashboard</h2>
                         <p className="section-subtitle">Visão geral da performance da loja.</p>
                     </div>
-                    <button
-                        onClick={handleBackfill}
-                        className="backfill-btn"
-                    >
-                        Atualizar SKUs (Backfill)
-                    </button>
+
+                    <div className="admin-dashboard-filters">
+                        <div className="filter-mode-toggle">
+                            <button
+                                onClick={() => setFilterMode('month')}
+                                className={`filter-btn ${filterMode === 'month' ? 'active' : ''}`}
+                            >
+                                <Calendar size={18} /> Mensal
+                            </button>
+                            <button
+                                onClick={() => setFilterMode('all')}
+                                className={`filter-btn ${filterMode === 'all' ? 'active' : ''}`}
+                            >
+                                <Globe size={18} /> Ver Tudo
+                            </button>
+                        </div>
+
+                        {filterMode === 'month' && (
+                            <input
+                                type="month"
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="month-picker"
+                            />
+                        )}
+
+                        <button
+                            onClick={handleBackfill}
+                            className="backfill-btn"
+                        >
+                            Atualizar SKUs (Backfill)
+                        </button>
+                    </div>
                 </div>
 
                 <div className="stats-grid">
                     <StatCard
-                        title="Vendas (30 dias)"
+                        title={filterMode === 'month' ? `Vendas (${selectedMonth})` : 'Vendas (Todo o Tempo)'}
                         value={`R$ ${stats.recentRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                         icon={DollarSign}
                         color="#4caf50" // Green
-                        subtext={`${stats.recentOrdersCount} pedidos recentes`}
+                        subtext={`${stats.recentOrdersCount} pedidos no período`}
                     />
                     <StatCard
                         title="Usuários Totais"
@@ -287,7 +324,7 @@ const AdminDashboard = () => {
                                     </BarChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>
+                                <div className="chart-empty-state">
                                     <p>Sem dados de vendas suficientes.</p>
                                 </div>
                             )}

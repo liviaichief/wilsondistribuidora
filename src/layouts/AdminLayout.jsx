@@ -10,6 +10,17 @@ const AdminLayout = () => {
     const location = useLocation();
     const { showConfirm, showAlert } = useAlert();
 
+    const handleHardRefresh = () => {
+        // Limpa o cache do navegador via API (útil para PWA e Service Workers) e força reload
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                for (let name of names) caches.delete(name);
+            });
+        }
+        // Força o recarregamento descartando o cache local
+        window.location.reload();
+    };
+
     return (
         <div className="admin-container">
             <header className="admin-header">
@@ -63,6 +74,32 @@ const AdminLayout = () => {
                     >
                         <LogOut size={25} />
                     </button>
+
+                    <div
+                        onClick={handleHardRefresh}
+                        style={{
+                            cursor: 'pointer',
+                            marginLeft: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            transition: 'transform 0.3s ease'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+                        title="Limpar Cache e Sair"
+                    >
+                        <img
+                            src="/logo-3r.jpeg"
+                            alt="Logo 3R"
+                            style={{
+                                width: '45px',
+                                height: '45px',
+                                borderRadius: '50%',
+                                border: '2px solid var(--primary-color)',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    </div>
                 </div>
             </header>
 

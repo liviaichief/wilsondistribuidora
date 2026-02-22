@@ -1,0 +1,60 @@
+.admin-dashboard-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-mode-toggle {
+    display: flex;
+    background: #1a1a1a;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.filter-btn {
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    transition: all 0.2s;
+    background: transparent;
+    color: #888;
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: #000;
+}
+
+.month-picker {
+    padding: 10px 15px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+}
+
+.month-picker:focus {
+    border-color: var(--primary-color);
+}
+
+.chart-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+}
+
+/* Margin adjustment for the header in dashboard */
+.admin-section-header.dashboard-header {
+    margin-bottom: 30px;
+}

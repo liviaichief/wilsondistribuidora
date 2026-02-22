@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getBanners } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
 import './HeroCarousel.css';
@@ -27,6 +28,7 @@ const DEFAULT_SLIDES = [
 ];
 
 const HeroCarousel = () => {
+    const navigate = useNavigate();
     const [slides, setSlides] = useState(DEFAULT_SLIDES);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -78,19 +80,18 @@ const HeroCarousel = () => {
     };
 
     const handleSlideClick = (slide) => {
+        // Se houver um ID de produto vinculado, rotear para a tela de Detalhes do Produto
         if (slide.product_id) {
-            const element = document.getElementById(`product-${slide.product_id}`);
-            if (element) {
-                const headerOffset = 100; // Adjust for fixed header
-                const elementPosition = element.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            navigate(`/produto/${slide.product_id}`);
+            return;
+        }
 
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
+        // Se houver um link customizado (ex: /promocoes), rotear para ele
+        if (slide.link && (slide.link.startsWith('/') || slide.link.startsWith('http'))) {
+            if (slide.link.startsWith('http')) {
+                window.open(slide.link, '_blank');
             } else {
-                console.warn(`Product element #product-${slide.product_id} not found`);
+                navigate(slide.link);
             }
         }
     };

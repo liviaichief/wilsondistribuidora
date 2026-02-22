@@ -344,27 +344,30 @@ const Admin = () => {
                                                             <span className="slider round"></span>
                                                         </label>
                                                         {item.is_promotion && (
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
-                                                                    onChange={(e) => {
-                                                                        setEditingPromoId(item.id);
-                                                                        setTempPromoPrice(e.target.value);
-                                                                    }}
-                                                                    style={{ width: '80px', padding: '4px', fontSize: '0.9rem' }}
-                                                                    placeholder="Preço"
-                                                                />
-                                                                {editingPromoId === item.id && (
-                                                                    <button
-                                                                        onClick={() => handleSavePromoPrice(item)}
-                                                                        className="icon-btn"
-                                                                        style={{ width: '24px', height: '24px', background: 'var(--primary-color)', color: '#000' }}
-                                                                    >
-                                                                        <CheckCircle size={14} />
-                                                                    </button>
-                                                                )}
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                <span style={{ fontSize: '0.7rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>EDITAR VALOR:</span>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
+                                                                        onChange={(e) => {
+                                                                            setEditingPromoId(item.id);
+                                                                            setTempPromoPrice(e.target.value);
+                                                                        }}
+                                                                        style={{ width: '80px', padding: '4px', fontSize: '0.9rem', backgroundColor: '#1a1a1a', border: '1px solid #333', color: '#fff', borderRadius: '4px' }}
+                                                                        placeholder="Preço"
+                                                                    />
+                                                                    {editingPromoId === item.id && (
+                                                                        <button
+                                                                            onClick={() => handleSavePromoPrice(item)}
+                                                                            className="icon-btn"
+                                                                            style={{ width: '24px', height: '24px', background: 'var(--primary-color)', color: '#000' }}
+                                                                        >
+                                                                            <CheckCircle size={14} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
