@@ -45,15 +45,17 @@ export const getProducts = async (category, page = 1, limit = 20) => {
             );
         }
 
-        // Apply Promotion Logic (Strict as requested)
+        // Apply Promotion Logic
         if (category === 'all') {
             // Aba Geral/Promo: Apenas o que é promoção
             filteredDocs = filteredDocs.filter(d => d.is_promotion === true);
-        } else if (category) {
-            // Abas de Categoria Específica: Apenas o que NÃO é promoção
-            filteredDocs = filteredDocs.filter(d => d.is_promotion !== true);
         }
-        // If category is undefined/null (Admin usage), return EVERYTHING.
+
+        // If category is provided (even 'all'), it implies public store view. 
+        // We MUST filter out inactive products for the public store.
+        if (category !== undefined && category !== null) {
+            filteredDocs = filteredDocs.filter(d => d.active !== false);
+        }
 
         return {
             documents: filteredDocs,
@@ -62,6 +64,20 @@ export const getProducts = async (category, page = 1, limit = 20) => {
     } catch (error) {
         console.error("Error fetching products:", error);
         return { documents: [], total: 0 };
+    }
+};
+
+export const getProductById = async (id) => {
+    try {
+        const response = await databases.getDocument(
+            DATABASE_ID,
+            COLLECTIONS.PRODUCTS,
+            id
+        );
+        return processDoc(response);
+    } catch (error) {
+        console.error("Error fetching product by id:", error);
+        return null;
     }
 };
 

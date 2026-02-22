@@ -100,6 +100,11 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const scrollDirection = React.useRef(null);
 
     React.useEffect(() => {
+        // Prevent auto-scroll logic from running on mobile/touch devices
+        if (window.innerWidth <= 768 || window.matchMedia('(hover: none)').matches) {
+            return;
+        }
+
         const handleMouseMove = (e) => {
             const { clientX } = e;
             const windowWidth = window.innerWidth;

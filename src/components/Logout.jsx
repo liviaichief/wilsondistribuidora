@@ -9,8 +9,13 @@ const Logout = () => {
     const { clearCart } = useCart();
     const navigate = useNavigate();
 
+    const hasLoggedOut = React.useRef(false);
+
     useEffect(() => {
         const doLogout = async () => {
+            if (hasLoggedOut.current) return;
+            hasLoggedOut.current = true;
+
             console.log("Forcing logout...");
 
             // Clear the shopping cart state
@@ -19,14 +24,15 @@ const Logout = () => {
             await signOut();
             // Clear known potential stale tokens
             localStorage.removeItem('sb-ofpqtmiyuffmfgeoocml-auth-token');
-            localStorage.clear(); // Nuclear option for stuck sessions
+            // We avoid localStorage.clear() here because it could wipe out cart/other preferences if they were just set.
+            // Actually CartContext uses user state to clear cart.
             console.log("Logout complete.");
 
             // Wait slightly longer so the user sees the message
             setTimeout(() => navigate('/'), 1500);
         };
         doLogout();
-    }, [signOut, clearCart, navigate]);
+    }, []);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 text-white">

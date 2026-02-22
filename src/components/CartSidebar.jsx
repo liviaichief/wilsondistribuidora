@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import { createOrder, getSettings } from '../services/dataService';
-import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode } from 'lucide-react'; // Added icons
+import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode, Loader2 } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../lib/imageUtils';
 import './CartSidebar.css';
 
@@ -27,6 +27,7 @@ const CartSidebar = () => {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Default fallback
+    const [isProcessing, setIsProcessing] = useState(false); // Added processing state
 
     const { showAlert } = useAlert(); // Moved up
     const { addOrder } = useOrder(); // Moved up
@@ -92,6 +93,8 @@ const CartSidebar = () => {
             return;
         }
 
+        setIsProcessing(true);
+
         const orderData = {
             customer_name: customerName,
             customer_phone: customerPhone,
@@ -102,13 +105,16 @@ const CartSidebar = () => {
         };
 
         // 0. Update User Profile if phone changed (Sync logic)
-        if (user && profile && customerPhone) {
-            const currentPhone = (profile.phone || profile.whatsapp || '').replace(/\D/g, '');
+        if (user && customerPhone) {
+            const currentPhone = (profile?.phone || '').replace(/\D/g, '');
             const newPhone = customerPhone.replace(/\D/g, '');
 
             if (newPhone && newPhone !== currentPhone) {
-                // Update both to be consistent
-                updateProfile({ phone: customerPhone, whatsapp: customerPhone });
+                try {
+                    await updateProfile({ phone: customerPhone });
+                } catch (e) {
+                    console.error("Warning: Could not sync phone to profile", e);
+                }
             }
         }
 
@@ -148,6 +154,11 @@ const CartSidebar = () => {
             console.warn("Using offline fallback ID for WhatsApp");
         }
 
+        if (!orderResult.success) {
+            setIsProcessing(false);
+            return;
+        }
+
 
         // 3. Construct WhatsApp Message
         const itemsList = cartItems.map(item =>
@@ -166,6 +177,7 @@ const CartSidebar = () => {
         // 4. Cleanup (Before Redirect)
         clearCart();
         toggleCart(); // Close cart sidebar
+        setIsProcessing(false);
 
         // 5. Open WhatsApp (Same Tab for smoother mobile experience)
         window.location.href = whatsappUrl;
@@ -244,10 +256,17 @@ const CartSidebar = () => {
                     </div>
                     <button
                         className="checkout-btn"
-                        disabled={cartItems.length === 0}
+                        disabled={cartItems.length === 0 || isProcessing}
                         onClick={handleCheckout}
                     >
-                        Finalizar Pedido
+                        {isProcessing ? (
+                            <>
+                                <Loader2 size={20} className="spinner" style={{ marginRight: '8px' }} />
+                                Processando...
+                            </>
+                        ) : (
+                            'Finalizar Pedido'
+                        )}
                     </button>
                 </div>
             </div>

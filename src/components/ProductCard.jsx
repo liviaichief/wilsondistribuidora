@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
@@ -7,20 +8,24 @@ import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
     const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
+    const navigate = useNavigate();
 
     // Find current quantity in global cart state
     const cartItem = cartItems.find(item => item.id === product.id);
     const quantity = cartItem ? cartItem.quantity : 0;
 
-    const handleAdd = () => {
+    const handleAdd = (e) => {
+        e.stopPropagation();
         addToCart(product, 1);
     };
 
-    const handleIncrement = () => {
+    const handleIncrement = (e) => {
+        e.stopPropagation();
         updateQuantity(product.id, quantity + 1);
     };
 
-    const handleDecrement = () => {
+    const handleDecrement = (e) => {
+        e.stopPropagation();
         if (quantity > 1) {
             updateQuantity(product.id, quantity - 1);
         } else {
@@ -28,10 +33,15 @@ const ProductCard = ({ product }) => {
         }
     };
 
+    const handleCardClick = () => {
+        navigate(`/produto/${product.id}`);
+    };
+
     return (
         <motion.div
             id={`product-${product.id}`} // [NEW] Anchor for banner navigation
-            className="product-card"
+            className={`product-card clickable-card ${product.is_promotion ? 'promo-highlight' : ''}`}
+            onClick={handleCardClick}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}

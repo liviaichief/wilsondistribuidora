@@ -11,6 +11,12 @@
     position: relative;
 }
 
+.product-card.promo-highlight {
+    border-color: #ff4444;
+    /* Vermelho para chamar atenção como promoção */
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.15);
+}
+
 .product-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
@@ -278,4 +284,8 @@
         width: 20px;
         font-size: 0.9rem;
     }
+}
+
+.clickable-card {
+    cursor: pointer;
 }

@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import Login from './components/Login.jsx';
 import Logout from './components/Logout.jsx';
+import ProductDetail from './pages/ProductDetail.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfileModal from './components/ProfileModal'; // Global Modal
 
@@ -41,6 +42,7 @@ function App() {
                 {/* Public Store Layout */}
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Home />} />
+                  <Route path="/produto/:id" element={<ProductDetail />} />
                   <Route path="/orders" element={
                     <ProtectedRoute>
                       <OrderHistory />

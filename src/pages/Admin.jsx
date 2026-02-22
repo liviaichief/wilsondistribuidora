@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
-import { ID } from 'appwrite';
+import { ID, Permission, Role } from 'appwrite';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
@@ -462,7 +462,13 @@ const Admin = () => {
                                                 const result = await storage.createFile(
                                                     BUCKET_ID,
                                                     ID.unique(),
-                                                    compressedFile
+                                                    compressedFile,
+                                                    [
+                                                        Permission.read(Role.any()),
+                                                        Permission.write(Role.users()),
+                                                        Permission.update(Role.users()),
+                                                        Permission.delete(Role.users())
+                                                    ]
                                                 );
 
                                                 setCurrentProduct(prev => ({ ...prev, image: result.$id }));
@@ -476,11 +482,37 @@ const Admin = () => {
                                     }}
                                 />
                                 {previewUrl && (
-                                    <div style={{ marginTop: '10px', position: 'relative' }}>
+                                    <div style={{ marginTop: '10px', position: 'relative', display: 'inline-block' }}>
                                         <img src={previewUrl} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #444' }} />
-                                        <span style={{ position: 'absolute', bottom: '5px', left: '5px', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', fontSize: '10px', borderRadius: '4px' }}>
+                                        <span style={{ position: 'absolute', bottom: '5px', left: '5px', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', fontSize: '10px', borderRadius: '4px', color: 'white' }}>
                                             Preview
                                         </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPreviewUrl('');
+                                                setCurrentProduct(prev => ({ ...prev, image: '' }));
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '5px',
+                                                right: '5px',
+                                                background: 'rgba(255,0,0,0.8)',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '30px',
+                                                height: '30px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                color: 'white',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                            }}
+                                            title="Remover Imagem"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 )}
                             </div>

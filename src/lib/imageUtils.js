@@ -24,14 +24,25 @@ export const getImageUrl = (imagePath) => {
         // Use the SDK method which is more reliable than manual construction
         // It automatically uses the correct endpoint and project ID from the client config
         if (storage && fileId) {
-            const url = storage.getFileView(
+            const url = storage.getFilePreview(
                 BUCKET_ID,
-                fileId
+                fileId,
+                800, // width
+                0,   // height (0 means auto)
+                undefined, // gravity
+                80,  // quality
+                undefined, // borderWidth
+                undefined, // borderColor
+                undefined, // borderRadius
+                undefined, // opacity
+                undefined, // rotation
+                undefined, // background
+                'webp' // output format
             ).toString();
 
             // Helpful debug for the user to see what's being requested
             if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-                console.debug(`[getImageUrl] Generated URL for ${fileId}:`, url);
+                console.debug(`[getFilePreview] Generated URL for ${fileId}:`, url);
             }
 
             return url;

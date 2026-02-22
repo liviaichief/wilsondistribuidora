@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
 import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload } from 'lucide-react';
-import { ID, Query } from 'appwrite';
+import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
 import './Admin.css'; // Reuse admin styles
@@ -127,7 +127,13 @@ const AdminBanners = () => {
                 const fileUpload = await storage.createFile(
                     BUCKET_ID,
                     ID.unique(),
-                    compressedFile
+                    compressedFile,
+                    [
+                        Permission.read(Role.any()),
+                        Permission.write(Role.users()),
+                        Permission.update(Role.users()),
+                        Permission.delete(Role.users())
+                    ]
                 );
 
                 // Construct URL manually to match the Product behavior and satisfy the URL format requirement
