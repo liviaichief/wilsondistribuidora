@@ -24,7 +24,33 @@ const AdminLayout = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <div className="logo" style={{ fontSize: '1.4rem', color: 'var(--primary-color)' }}>Boutique Admin</div>
+                <div className="admin-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div
+                        onClick={handleHardRefresh}
+                        style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            transition: 'transform 0.3s ease'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+                        title="Limpar Cache e Recarregar"
+                    >
+                        <img
+                            src="/logo-3r.jpeg"
+                            alt="Logo 3R"
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                border: '2px solid var(--primary-color)',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    </div>
+                    <div className="logo" style={{ fontSize: '1.4rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>Boutique Admin</div>
+                </div>
 
                 <nav className="admin-nav">
                     <Link
@@ -75,38 +101,14 @@ const AdminLayout = () => {
                         <LogOut size={25} />
                     </button>
 
-                    <div
-                        onClick={handleHardRefresh}
-                        style={{
-                            cursor: 'pointer',
-                            marginLeft: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            transition: 'transform 0.3s ease'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
-                        title="Limpar Cache e Sair"
-                    >
-                        <img
-                            src="/logo-3r.jpeg"
-                            alt="Logo 3R"
-                            style={{
-                                width: '45px',
-                                height: '45px',
-                                borderRadius: '50%',
-                                border: '2px solid var(--primary-color)',
-                                objectFit: 'cover'
-                            }}
-                        />
-                    </div>
+
                 </div>
             </header>
 
             <main className="admin-content">
                 <Outlet />
             </main>
-        </div>
+        </div >
     );
 };
 

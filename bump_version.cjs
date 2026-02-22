@@ -23,7 +23,12 @@ try {
         const newContent = content.replace(/V\d+\.\d+/, newVersion);
 
         fs.writeFileSync(versionFile, newContent);
-        console.log(`Version bumped to ${newVersion}`);
+
+        // Also write to public/version.json for client-side polling
+        const publicVersionFile = path.join(__dirname, 'public', 'version.json');
+        fs.writeFileSync(publicVersionFile, JSON.stringify({ version: newVersion, timestamp: new Date().toISOString() }));
+
+        console.log(`Version bumped to ${newVersion} (Synced with public/version.json)`);
     } else {
         console.error('Could not find version pattern in src/version.js');
         process.exit(1);

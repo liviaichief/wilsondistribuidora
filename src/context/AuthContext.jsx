@@ -36,15 +36,14 @@ export const AuthProvider = ({ children }) => {
             setRole(doc.role || 'client');
 
             // Track Last Activity (Login) for Dashboard KPIs
-            // We update this if it's missing or if the date has changed (once per day per user)
+            // We update this if it's missing or if more than 15 minutes have passed to avoid spamming DB
             const now = new Date();
             const lastLogin = doc.last_login ? new Date(doc.last_login) : null;
-            const isDifferentDay = !lastLogin ||
-                lastLogin.getDate() !== now.getDate() ||
-                lastLogin.getMonth() !== now.getMonth() ||
-                lastLogin.getFullYear() !== now.getFullYear();
+            const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
-            if (isDifferentDay) {
+            const shouldUpdateLastLogin = !lastLogin || lastLogin < fifteenMinutesAgo;
+
+            if (shouldUpdateLastLogin) {
                 // Fire and forget update to avoid blocking UI
                 databases.updateDocument(
                     DATABASE_ID,
@@ -52,7 +51,6 @@ export const AuthProvider = ({ children }) => {
                     userId,
                     { last_login: now.toISOString() }
                 ).catch(err => {
-                    // Suppress error if field doesn't exist yet in schema
                     console.warn("Could not update last_login:", err);
                 });
             }

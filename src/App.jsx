@@ -20,6 +20,7 @@ import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import PWAInstallPrompt from './components/common/PWAInstallPrompt';
+import UpdateManager from './components/common/UpdateManager';
 
 const GlobalProfileModalWrapper = () => {
   const { isProfileModalOpen, closeProfileModal, user } = useAuth();
@@ -74,6 +75,9 @@ function App() {
 
               {/* PWA Install Custom Banner */}
               <PWAInstallPrompt />
+
+              {/* Background Auto-Update Manager */}
+              <UpdateManager />
 
             </OrderProvider>
           </CartProvider>

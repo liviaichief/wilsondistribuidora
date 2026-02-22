@@ -123,7 +123,21 @@ const AdminUsers = () => {
                 setTotalPages(Math.ceil(response.total / ITEMS_PER_PAGE));
             }
 
-            setUsers(mappedUsers);
+            // 5. Enrich with Order Counts in parallel
+            const usersWithCounts = await Promise.all(mappedUsers.map(async (u) => {
+                try {
+                    const orders = await databases.listDocuments(
+                        DATABASE_ID,
+                        COLLECTIONS.ORDERS,
+                        [Query.equal('user_id', u.id), Query.limit(1)]
+                    );
+                    return { ...u, totalOrders: orders.total };
+                } catch (e) {
+                    return { ...u, totalOrders: 0 };
+                }
+            }));
+
+            setUsers(usersWithCounts);
 
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -382,6 +396,8 @@ const AdminUsers = () => {
                                         <th>Usuário</th>
                                         <th>Role</th>
                                         <th>Criado em</th>
+                                        <th>Último Acesso</th>
+                                        <th style={{ textAlign: 'center' }}>Total Pedidos</th>
                                         <th style={{ textAlign: 'right' }}>Ações</th>
                                     </tr>
                                 </thead>
@@ -396,7 +412,7 @@ const AdminUsers = () => {
                                             <td>
                                                 <span style={{
                                                     padding: '4px 8px',
-                                                    borderRadius: '4px',
+                                                    borderRadius: '44px',
                                                     fontSize: '0.75rem',
                                                     fontWeight: '600',
                                                     backgroundColor: ['admin', 'owner'].includes(user.role) ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
@@ -406,8 +422,33 @@ const AdminUsers = () => {
                                                     {user.role ? user.role.toUpperCase() : 'CLIENT'}
                                                 </span>
                                             </td>
-                                            <td style={{ color: '#888' }}>
-                                                {new Date(user.$createdAt).toLocaleDateString()}
+                                            <td style={{ color: '#888', fontSize: '0.9rem' }}>
+                                                {user.$createdAt ? new Date(user.$createdAt).toLocaleDateString('pt-BR') : '-'}
+                                            </td>
+                                            <td style={{ color: 'var(--primary-color)', fontWeight: '500', fontSize: '0.9rem' }}>
+                                                {user.last_login ? new Date(user.last_login).toLocaleString('pt-BR', {
+                                                    day: '2-digit',
+                                                    month: '2-digit',
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                }) : 'Nunca'}
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    minWidth: '35px',
+                                                    height: '35px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: user.totalOrders > 0 ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                                    color: user.totalOrders > 0 ? 'var(--primary-color)' : '#666',
+                                                    fontWeight: 'bold',
+                                                    border: user.totalOrders > 0 ? '1px solid var(--primary-color)' : '1px solid #333'
+                                                }}>
+                                                    {user.totalOrders || 0}
+                                                </div>
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <div className="actions" style={{ justifyContent: 'flex-end' }}>
