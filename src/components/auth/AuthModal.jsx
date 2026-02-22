@@ -239,7 +239,12 @@ const AuthModal = () => {
                             )}
 
                             <button type="submit" className="auth-submit-btn" disabled={loading}>
-                                {loading ? 'Processando...' : (
+                                {loading ? (
+                                    <div className="btn-loading-wrapper">
+                                        <div className="btn-spinner"></div>
+                                        <span>Processando...</span>
+                                    </div>
+                                ) : (
                                     authModalView === 'login' ? 'Entrar' :
                                         authModalView === 'register' ? 'Cadastrar' : 'Enviar Link'
                                 )}
