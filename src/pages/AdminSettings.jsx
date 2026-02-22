@@ -9,7 +9,10 @@ import { useAuth } from '../context/AuthContext';
 
 const AdminSettings = () => {
     const { role, user } = useAuth();
-    const [settings, setSettings] = useState({ whatsapp_number: '' });
+    const [settings, setSettings] = useState({
+        whatsapp_number: '',
+        birthday_message: ''
+    });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -28,7 +31,7 @@ const AdminSettings = () => {
         setLoading(true);
         try {
             const data = await getSettings();
-            setSettings(data);
+            setSettings(prev => ({ ...prev, ...data }));
         } catch (error) {
             showAlert("Erro ao carregar configurações", "error");
         } finally {
@@ -63,6 +66,7 @@ const AdminSettings = () => {
             setIsPasswordModalOpen(false);
             setSaving(true);
             await updateSettings('whatsapp_number', settings.whatsapp_number);
+            await updateSettings('birthday_message', settings.birthday_message);
             showAlert("Configurações salvas com sucesso!", "success");
         } catch (error) {
             console.error(error);
@@ -96,6 +100,32 @@ const AdminSettings = () => {
                         />
                         <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Info size={14} /> Use apenas números, com código do país (55) e DDD.
+                        </p>
+                    </div>
+
+                    <div className="form-group" style={{ marginTop: '20px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Info size={18} color="var(--primary-color)" /> Mensagem de Aniversário
+                        </label>
+                        <textarea
+                            value={settings.birthday_message}
+                            onChange={(e) => setSettings({ ...settings, birthday_message: e.target.value })}
+                            placeholder="Ex: Parabéns {nome}! A Boutique de Carne 3R te deseja um dia incrível e um presente especial esperando por você na loja."
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                background: '#121212',
+                                border: '1px solid #333',
+                                color: 'white',
+                                borderRadius: '8px',
+                                minHeight: '100px',
+                                resize: 'vertical',
+                                marginTop: '10px',
+                                outline: 'none'
+                            }}
+                        />
+                        <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '8px' }}>
+                            Dica: Use <strong>{'{nome}'}</strong> para inserir o nome do cliente automaticamente.
                         </p>
                     </div>
 

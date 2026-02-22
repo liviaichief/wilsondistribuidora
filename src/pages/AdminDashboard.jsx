@@ -9,8 +9,11 @@ import {
     Activity,
     DollarSign,
     Calendar,
-    Globe
+    Globe,
+    Cake,
+    MessageCircle
 } from 'lucide-react';
+import { getSettings } from '../services/dataService';
 import {
     BarChart,
     Bar,
@@ -34,8 +37,10 @@ const AdminDashboard = () => {
         totalRevenue: 0,
         recentRevenue: 0,
         activeUsers: 0,
-        topProducts: []
+        topProducts: [],
+        birthdaysToday: []
     });
+    const [birthdayMessage, setBirthdayMessage] = useState('');
     // Local month helper: YYYY-MM
     const getCurrentMonth = () => {
         const now = new Date();
@@ -166,8 +171,13 @@ const AdminDashboard = () => {
                 totalRevenue: 0,
                 recentRevenue: recentRevenue,
                 activeUsers: activeUsersCount,
-                topProducts: topProducts
+                topProducts: topProducts,
+                birthdaysToday: await fetchBirthdaysToday()
             });
+
+            // Fetch settings for birthday message
+            const settings = await getSettings();
+            setBirthdayMessage(settings.birthday_message || '');
 
         } catch (error) {
             console.error("Error loading dashboard stats:", error);
@@ -181,6 +191,46 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchBirthdaysToday = async () => {
+        try {
+            const today = new Date();
+            const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            // Appwrite doesn't support partial string suffix matching in Query well for MM-DD
+            // so we fetch users and filter client-side. Profiles shouldn't be massive for small boutique.
+            const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
+                Query.limit(5000),
+                Query.equal('role', 'client')
+            ]);
+
+            return res.documents.filter(doc => {
+                if (!doc.birthday) return false;
+                // birthday is YYYY-MM-DD
+                const bParts = doc.birthday.split('-');
+                if (bParts.length < 3) return false;
+                const bStr = `${bParts[1]}-${bParts[2]}`;
+                return bStr === todayStr;
+            });
+        } catch (e) {
+            console.error("Error fetching birthdays:", e);
+            return [];
+        }
+    };
+
+    const handleSendBirthdayMessage = (user) => {
+        if (!user.phone) {
+            showAlert("Este usuário não possui telefone cadastrado.", "warning");
+            return;
+        }
+
+        let msg = birthdayMessage || "Parabéns {nome}! A Boutique de Carne 3R te deseja um dia incrível!";
+        msg = msg.replace('{nome}', user.full_name || 'Amigo');
+
+        const cleanPhone = user.phone.replace(/\D/g, '');
+        const whatsappUrl = `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}?text=${encodeURIComponent(msg)}`;
+        window.open(whatsappUrl, '_blank');
     };
 
     const StatCard = ({ title, value, icon: Icon, color, subtext }) => (
@@ -336,6 +386,57 @@ const AdminDashboard = () => {
                         <div className="chart-placeholder">
                             <p>Análise detalhada em desenvolvimento</p>
                         </div>
+                    </div>
+                </div>
+
+                {/* Birthdays Section */}
+                <div className="birthdays-section" style={{ marginTop: '20px' }}>
+                    <div className="chart-container" style={{ minHeight: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <Cake className="stat-icon" style={{ color: '#D4AF37' }} />
+                            <h3 className="chart-title" style={{ margin: 0 }}>Aniversariantes de Hoje ({stats.birthdaysToday.length})</h3>
+                        </div>
+
+                        {stats.birthdaysToday.length > 0 ? (
+                            <div className="birthdays-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+                                {stats.birthdaysToday.map(u => (
+                                    <div key={u.$id} style={{
+                                        background: 'rgba(212, 175, 55, 0.05)',
+                                        border: '1px solid rgba(212, 175, 55, 0.2)',
+                                        padding: '15px',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontWeight: 'bold', color: '#fff' }}>{u.full_name}</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{u.phone || 'Sem telefone'}</div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleSendBirthdayMessage(u)}
+                                            style={{
+                                                background: '#25D366',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '5px',
+                                                fontSize: '0.85rem',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            <MessageCircle size={16} /> Enviar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p style={{ color: '#666', fontSize: '0.9rem' }}>Nenhum aniversariante hoje.</p>
+                        )}
                     </div>
                 </div>
 

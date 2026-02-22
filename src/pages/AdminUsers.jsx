@@ -30,7 +30,8 @@ const AdminUsers = () => {
         password: '',
         full_name: '',
         phone: '',
-        role: ''
+        role: '',
+        birthday: ''
     });
 
     const openCreateModal = () => {
@@ -39,7 +40,8 @@ const AdminUsers = () => {
             password: '',
             full_name: '',
             phone: '',
-            role: ''
+            role: '',
+            birthday: ''
         });
         setIsCreateModalOpen(true);
     };
@@ -217,7 +219,8 @@ const AdminUsers = () => {
                     last_name: (newUser.full_name || '').split(' ').slice(1).join(' ') || '',
                     phone: newUser.phone,
                     user_id: authId,
-                    role: newUser.role
+                    role: newUser.role,
+                    birthday: newUser.birthday
                 }
             );
 
@@ -292,7 +295,8 @@ const AdminUsers = () => {
                     first_name: (editingUser.full_name || '').split(' ')[0] || '',
                     last_name: (editingUser.full_name || '').split(' ').slice(1).join(' ') || '',
                     phone: editingUser.phone,
-                    role: editingUser.role
+                    role: editingUser.role,
+                    birthday: editingUser.birthday
                 }
             );
 
@@ -331,7 +335,8 @@ const AdminUsers = () => {
             email: user.email,
             full_name: user.full_name,
             phone: user.phone,
-            role: user.role
+            role: user.role,
+            birthday: user.birthday || ''
         });
         setIsEditModalOpen(true);
     };
@@ -397,6 +402,7 @@ const AdminUsers = () => {
                                         <th>Role</th>
                                         <th>Criado em</th>
                                         <th>Último Acesso</th>
+                                        <th>Aniversário</th>
                                         <th style={{ textAlign: 'center' }}>Total Pedidos</th>
                                         <th style={{ textAlign: 'right' }}>Ações</th>
                                     </tr>
@@ -433,6 +439,9 @@ const AdminUsers = () => {
                                                     hour: '2-digit',
                                                     minute: '2-digit'
                                                 }) : 'Nunca'}
+                                            </td>
+                                            <td style={{ color: '#888', fontSize: '0.9rem' }}>
+                                                {user.birthday ? new Date(user.birthday + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '-'}
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <div style={{
@@ -545,6 +554,11 @@ const AdminUsers = () => {
                                         placeholder="(11) 99999-9999" />
                                 </div>
                                 <div className="form-group">
+                                    <label>Data de Nascimento</label>
+                                    <input type="date"
+                                        value={newUser.birthday} onChange={e => setNewUser({ ...newUser, birthday: e.target.value })} />
+                                </div>
+                                <div className="form-group">
                                     <label>Perfil de Acesso</label>
                                     <select
                                         value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
@@ -589,6 +603,11 @@ const AdminUsers = () => {
                                     <label>Telefone</label>
                                     <input type="text"
                                         value={editingUser.phone} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Data de Nascimento</label>
+                                    <input type="date"
+                                        value={editingUser.birthday} onChange={e => setEditingUser({ ...editingUser, birthday: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Perfil de Acesso</label>
