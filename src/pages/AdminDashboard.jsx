@@ -201,8 +201,7 @@ const AdminDashboard = () => {
             // Appwrite doesn't support partial string suffix matching in Query well for MM-DD
             // so we fetch users and filter client-side. Profiles shouldn't be massive for small boutique.
             const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
-                Query.limit(5000),
-                Query.equal('role', 'client')
+                Query.limit(5000)
             ]);
 
             return res.documents.filter(doc => {
@@ -220,15 +219,15 @@ const AdminDashboard = () => {
     };
 
     const handleSendBirthdayMessage = (user) => {
-        if (!user.phone) {
-            showAlert("Este usuário não possui telefone cadastrado.", "warning");
+        if (!user.whatsapp) {
+            showAlert("Este usuário não possui WhatsApp cadastrado.", "warning");
             return;
         }
 
         let msg = birthdayMessage || "Parabéns {nome}! A Boutique de Carne 3R te deseja um dia incrível!";
         msg = msg.replace('{nome}', user.full_name || 'Amigo');
 
-        const cleanPhone = user.phone.replace(/\D/g, '');
+        const cleanPhone = user.whatsapp.replace(/\D/g, '');
         const whatsappUrl = `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}?text=${encodeURIComponent(msg)}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -411,7 +410,7 @@ const AdminDashboard = () => {
                                     }}>
                                         <div>
                                             <div style={{ fontWeight: 'bold', color: '#fff' }}>{u.full_name}</div>
-                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{u.phone || 'Sem telefone'}</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{u.whatsapp || 'Sem WhatsApp'}</div>
                                         </div>
                                         <button
                                             onClick={() => handleSendBirthdayMessage(u)}

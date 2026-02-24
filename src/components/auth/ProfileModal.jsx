@@ -2,20 +2,27 @@
 import React, { useState, useEffect } from 'react';
 import { account, databases } from '../../lib/appwrite';
 import { ID, Query } from 'appwrite';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-const DATABASE_ID = import.meta.env.VITE_DATABASE_ID;
-const COLLECTION_PROFILES = import.meta.env.VITE_COLLECTION_PROFILES || 'profiles';
+import { useAlert } from '../../context/AlertContext';
+import { X, Save, Loader2, User, Mail, Smartphone, CheckCircle, Key, Send, Calendar } from 'lucide-react';
+import '../../pages/Admin.css';
 
 export default function ProfileModal({ isOpen, onClose, user }) {
-    const { updateProfile } = useAuth();
+    const navigate = useNavigate();
+    const { updateProfile, resetPassword } = useAuth();
+    const { showAlert } = useAlert();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
+
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
-        whatsapp: ''
+        whatsapp: '',
+        birthday: ''
     });
     const [profileId, setProfileId] = useState(null);
 
@@ -24,6 +31,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         if (isOpen && user) {
             fetchProfile();
             setSuccess(false);
+            setResetSent(false);
         }
     }, [isOpen, user]);
 
@@ -38,21 +46,34 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         setFormData({ ...formData, whatsapp: formatted });
     };
 
+    const handleBirthdayChange = (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+
+        let formatted = value;
+        if (value.length > 2) formatted = `${value.slice(0, 2)}/${value.slice(2)}`;
+        if (value.length > 4) formatted = `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4)}`;
+
+        setFormData({ ...formData, birthday: formatted });
+    };
+
     const fetchProfile = async () => {
         if (!user?.$id) return;
         try {
             setLoading(true);
             let profile = null;
 
-            // Strategy: Try to get by ID
             try {
-                profile = await databases.getDocument(DATABASE_ID, COLLECTION_PROFILES, user.$id);
+                profile = await databases.getDocument(
+                    import.meta.env.VITE_DATABASE_ID,
+                    import.meta.env.VITE_COLLECTION_PROFILES || 'profiles',
+                    user.$id
+                );
             } catch (e) {
-                // If not found by ID, search by user_id field
                 try {
                     const response = await databases.listDocuments(
-                        DATABASE_ID,
-                        COLLECTION_PROFILES,
+                        import.meta.env.VITE_DATABASE_ID,
+                        import.meta.env.VITE_COLLECTION_PROFILES || 'profiles',
                         [Query.equal('user_id', user.$id)]
                     );
                     if (response.documents.length > 0) {
@@ -64,19 +85,27 @@ export default function ProfileModal({ isOpen, onClose, user }) {
             }
 
             if (profile) {
+                // Convert ISO YYYY-MM-DD to DD/MM/YYYY
+                let displayBirthday = '';
+                if (profile.birthday) {
+                    const [year, month, day] = profile.birthday.split('-');
+                    displayBirthday = `${day}/${month}/${year}`;
+                }
+
                 setFormData({
                     first_name: profile.first_name || '',
                     last_name: profile.last_name || '',
-                    whatsapp: profile.whatsapp || ''
+                    whatsapp: profile.whatsapp || '',
+                    birthday: displayBirthday
                 });
                 setProfileId(profile.$id);
             } else {
-                // Initialize from Auth User Name
                 const parts = (user?.name || user?.user_metadata?.full_name || '').split(' ');
                 setFormData({
                     first_name: parts[0] || '',
                     last_name: parts.slice(1).join(' ') || '',
-                    whatsapp: ''
+                    whatsapp: '',
+                    birthday: ''
                 });
                 setProfileId(null);
             }
@@ -87,194 +116,240 @@ export default function ProfileModal({ isOpen, onClose, user }) {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = async (e) => {
+        if (e) e.preventDefault();
         if (!user || !user.$id) return;
+
+        if (!formData.birthday) {
+            showAlert('Churrasqueiro(a), sua data de aniversário é obrigatória! 🎂', 'error', 'Campo Obrigatório');
+            return;
+        }
 
         try {
             setSaving(true);
             const fullName = `${formData.first_name} ${formData.last_name || ''}`.trim();
+
+            // Convert DD/MM/YYYY back to YYYY-MM-DD
+            let isoBirthday = null;
+            if (formData.birthday && formData.birthday.length === 10) {
+                const [day, month, year] = formData.birthday.split('/');
+                isoBirthday = `${year}-${month}-${day}`;
+            }
 
             const data = {
                 first_name: formData.first_name,
                 last_name: formData.last_name,
                 full_name: fullName,
                 whatsapp: formData.whatsapp,
-                user_id: user.$id,
-                email: user.email
+                birthday: isoBirthday
             };
 
-            if (profileId) {
-                await databases.updateDocument(DATABASE_ID, COLLECTION_PROFILES, profileId, data);
-            } else {
-                try {
-                    await databases.createDocument(DATABASE_ID, COLLECTION_PROFILES, user.$id, data);
-                    setProfileId(user.$id);
-                } catch (e) {
-                    const newDoc = await databases.createDocument(DATABASE_ID, COLLECTION_PROFILES, ID.unique(), data);
-                    setProfileId(newDoc.$id);
-                }
+            const result = await updateProfile(data, profileId);
+
+            if (result.error) {
+                throw result.error;
             }
 
-            // Sync Auth Name
+            // Sync name with Auth account (independent from profile doc)
             if (fullName) {
-                await account.updateName(fullName);
+                try {
+                    await account.updateName(fullName);
+                } catch (nameErr) {
+                    console.warn("[ProfileModal] Could not update Auth name:", nameErr);
+                }
             }
 
             setSuccess(true);
             setTimeout(() => {
+                setSuccess(false);
                 onClose();
-            }, 2000);
+                navigate('/');
+            }, 1500);
 
         } catch (error) {
             console.error("Error saving profile:", error);
-            alert(`Erro ao salvar: ${error.message}`);
+            let msg = error.message;
+            if (error.code === 403 || error.code === 401) {
+                msg = "Você ainda não tem permissão para editar este perfil. Tente deslogar e logar novamente para atualizar suas permissões.";
+            }
+            showAlert(msg, 'error', 'Erro ao Salvar');
         } finally {
             setSaving(false);
         }
     };
 
-    if (!isOpen) return null;
-
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text);
+    const handlePasswordChangeRequest = async () => {
+        if (!user?.email) return;
+        try {
+            setResetLoading(true);
+            await resetPassword(user.email);
+            setResetSent(true);
+        } catch (error) {
+            console.error("Password change error:", error);
+            showAlert("Erro ao solicitar troca de senha.", "error");
+        } finally {
+            setResetLoading(false);
+        }
     };
 
-    // Derived Display Data
-    const userName = `${formData.first_name} ${formData.last_name}`.trim() || user?.name || "Usuário";
+    if (!isOpen) return null;
+
     const userEmail = user?.email || "";
-    const userId = user?.$id || "";
-    const lastLogin = new Date().toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-            <div className="w-full max-w-4xl bg-[#121212] border border-[#2d2a1e] rounded-xl shadow-2xl p-8 relative font-display">
-
-                {/* Close Button - Enhanced Visibility */}
-                <button
-                    onClick={onClose}
-                    className="absolute -top-12 right-0 text-white hover:text-red-500 transition-colors p-2 rounded-full hover:bg-white/10"
-                    title="Fechar"
-                >
-                    <span className="material-symbols-outlined text-[32px] font-bold">close</span>
-                </button>
-
-                {/* Form Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 mt-6">
-                    {/* First Name */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest pl-1">Nome</label>
-                        <div className="relative group">
-                            <input
-                                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all placeholder-zinc-700 outline-none"
-                                type="text"
-                                value={formData.first_name}
-                                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                                placeholder="João"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Last Name */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest pl-1">Sobrenome</label>
-                        <div className="relative group">
-                            <input
-                                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all placeholder-zinc-700 outline-none"
-                                type="text"
-                                value={formData.last_name}
-                                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                                placeholder="Silva"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* WhatsApp */}
-                <div className="flex flex-col gap-2 mb-6">
-                    <label className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest pl-1">WhatsApp</label>
-                    <div className="relative group">
-                        <input
-                            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all placeholder-zinc-700 outline-none"
-                            type="text"
-                            value={formData.whatsapp}
-                            onChange={handleWhatsAppChange}
-                            placeholder="(11) 98765-4321"
-                        />
-                    </div>
-                </div>
-
-                {/* Email (Readonly) */}
-                <div className="flex flex-col gap-2 mb-2">
-                    <label className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest pl-1">Email Configurado</label>
-                    <div className="relative opacity-80">
-                        <input
-                            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-zinc-400 cursor-not-allowed outline-none"
-                            readOnly
-                            type="email"
-                            value={userEmail}
-                        />
-                    </div>
-                    <p className="text-[10px] text-zinc-600 italic px-1">O e-mail principal não pode ser alterado através deste painel.</p>
-                </div>
-
-                {/* ID (Readonly) */}
-                <div className="flex flex-col gap-2 mb-10">
-                    <label className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest pl-1">Identificador Único</label>
-                    <div className="relative group">
-                        <input
-                            className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2d2a1e] rounded-lg text-zinc-400 font-mono tracking-wider cursor-text outline-none"
-                            readOnly
-                            type="text"
-                            value={userId}
-                        />
-                        <button
-                            onClick={() => copyToClipboard(userId)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#D4AF37] hover:text-white transition-colors text-xs font-bold uppercase"
-                        >
-                            Copiar
-                        </button>
-                    </div>
-                </div>
-
-                {/* Separator Line */}
-                <div className="h-px w-full bg-[#2d2a1e] mb-8"></div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                    <button
-                        onClick={onClose}
-                        className="text-xs font-bold text-zinc-500 hover:text-white uppercase tracking-widest transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={loading || saving}
-                        className="bg-[#D4AF37] hover:bg-[#b8962a] text-black font-bold py-2 px-6 text-sm rounded-lg flex items-center gap-2 shadow-[0_4px_15px_rgba(212,175,53,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span className="uppercase tracking-widest text-[10px]">Salvar Dados</span>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '95%' }}>
+                <div className="modal-header">
+                    <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <User size={24} /> Meus Dados
+                    </h2>
+                    <button className="close-btn" onClick={onClose} title="Fechar">
+                        <X size={24} />
                     </button>
                 </div>
 
-                {/* Loading / Content Overlay */}
-                {(loading || saving || success) && (
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-                        {success ? (
-                            <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-                                <div className="w-16 h-16 bg-[#D4AF37] rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(212,175,53,0.5)]">
-                                    <span className="material-symbols-outlined text-black text-[32px]">check_circle</span>
+                {loading ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px' }}>
+                        <Loader2 className="animate-spin" size={40} color="var(--primary-color)" />
+                        <p style={{ marginTop: '15px', color: 'var(--text-muted)' }}>Buscando suas informações...</p>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSave} className="product-form">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="form-group">
+                                <label>Nome</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.first_name}
+                                    onChange={e => setFormData({ ...formData, first_name: e.target.value })}
+                                    placeholder="Ex: João"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Sobrenome</label>
+                                <input
+                                    type="text"
+                                    value={formData.last_name}
+                                    onChange={e => setFormData({ ...formData, last_name: e.target.value })}
+                                    placeholder="Ex: Silva"
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="form-group">
+                                <label>WhatsApp</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Smartphone size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                                    <input
+                                        type="tel"
+                                        style={{ paddingLeft: '40px' }}
+                                        value={formData.whatsapp}
+                                        onChange={handleWhatsAppChange}
+                                        placeholder="(11) 99999-9999"
+                                    />
                                 </div>
-                                <h3 className="text-xl font-bold text-white tracking-wide">PERFIL ATUALIZADO</h3>
                             </div>
-                        ) : (
-                            <div className="flex flex-col items-center">
-                                <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-[#D4AF37] font-bold tracking-widest text-xs animate-pulse uppercase">
-                                    {saving ? 'Salvando...' : 'Carregando...'}
+                            <div className="form-group">
+                                <label>Data de Aniversário</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                                    <input
+                                        type="text"
+                                        style={{ paddingLeft: '40px' }}
+                                        value={formData.birthday}
+                                        onChange={handleBirthdayChange}
+                                        placeholder="DD/MM/AAAA"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: '25px' }}>
+                            <label>Email (Somente Leitura)</label>
+                            <div style={{ position: 'relative' }}>
+                                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                                <input
+                                    type="email"
+                                    readOnly
+                                    value={userEmail}
+                                    style={{ paddingLeft: '40px', backgroundColor: '#1a1a1a', cursor: 'not-allowed', color: '#888' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{
+                            padding: '20px',
+                            background: 'rgba(212, 175, 55, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px dashed rgba(212, 175, 55, 0.2)',
+                            marginBottom: '25px'
+                        }}>
+                            <h4 style={{ color: 'var(--primary-color)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                <Key size={18} /> Segurança da Conta
+                            </h4>
+                            <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '15px' }}>
+                                Para sua segurança, a troca de senha exige verificação por e-mail (duplo fator). Enviaremos um link seguro para o seu e-mail cadastrado.
+                            </p>
+
+                            {resetSent ? (
+                                <div style={{ background: 'rgba(68, 255, 68, 0.1)', padding: '10px', borderRadius: '4px', textAlign: 'center' }}>
+                                    <p style={{ color: '#44ff44', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'center' }}>
+                                        <Send size={14} /> Link de verificação enviado! Confira sua caixa de entrada.
+                                    </p>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handlePasswordChangeRequest}
+                                    disabled={resetLoading}
+                                    style={{
+                                        background: 'transparent',
+                                        border: '1px solid var(--primary-color)',
+                                        color: 'var(--primary-color)',
+                                        padding: '10px 15px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        width: 'fit-content',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212, 175, 55, 0.1)' }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                                >
+                                    {resetLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    Solicitar Troca de Senha
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ height: '30px', textAlign: 'center' }}>
+                            {success && (
+                                <p style={{ color: '#44ff44', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'center' }}>
+                                    <CheckCircle size={16} /> Perfil salvo com sucesso!
                                 </p>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+
+                        <button type="submit" className="save-btn" disabled={saving} style={{ width: '100%', marginTop: '10px' }}>
+                            {saving ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={20} />
+                                    <span>Salvando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={20} />
+                                    <span>Salvar Perfil</span>
+                                </>
+                            )}
+                        </button>
+                    </form>
                 )}
             </div>
         </div>

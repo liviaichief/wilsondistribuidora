@@ -22,7 +22,7 @@ const AuthModal = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    const [phone, setPhone] = useState('');
+    const [whatsapp, setWhatsapp] = useState('');
     const [birthDate, setBirthDate] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const AuthModal = () => {
 
     if (!isAuthModalOpen) return null;
 
-    const handlePhoneChange = (e) => {
+    const handleWhatsAppChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length > 11) value = value.slice(0, 11);
 
@@ -43,7 +43,7 @@ const AuthModal = () => {
         if (value.length > 2) formatted = `(${value.slice(0, 2)}) ${value.slice(2)}`;
         if (value.length > 7) formatted = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
 
-        setPhone(formatted);
+        setWhatsapp(formatted);
     };
 
     const handleDateChange = (e) => {
@@ -67,13 +67,19 @@ const AuthModal = () => {
         if (authModalView !== 'forgot' && !password) { showAlert('O campo Senha é obrigatório.', 'error', 'Campo Obrigatório'); return; }
         if (authModalView === 'register') {
             if (!fullName) { showAlert('O campo Nome Completo é obrigatório.', 'error', 'Campo Obrigatório'); return; }
-            if (!phone) { showAlert('O campo Celular é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+            if (!whatsapp) { showAlert('O campo WhatsApp é obrigatório.', 'error', 'Campo Obrigatório'); return; }
+            if (!birthDate) { showAlert('Churrasqueiro(a), sua data de aniversário é obrigatória para garantirmos seu presente! 🎂', 'error', 'Campo Obrigatório'); return; }
         }
 
         setLoading(true);
 
         try {
             if (authModalView === 'login') {
+                if (password.length < 8) {
+                    showAlert('A senha informada contém menos de 8 caracteres. Verifique e tente novamente.', 'error', 'Senha Inválida');
+                    setLoading(false);
+                    return;
+                }
                 const { error } = await signIn(email, password);
                 if (error) throw error;
                 closeAuthModal();
@@ -94,8 +100,8 @@ const AuthModal = () => {
 
                 const { data, error } = await signUp(email, password, {
                     full_name: fullName,
-                    phone: phone,
-                    birth_date: isoDate
+                    whatsapp: whatsapp,
+                    birthday: isoDate
                 });
 
                 if (error) throw error;
@@ -121,8 +127,8 @@ const AuthModal = () => {
                 errorMsg = 'E-mail ou senha incorretos.';
             } else if (errorMsg.includes('commonly used password')) {
                 errorMsg = 'Esta senha é muito comum e fácil de descobrir. Por favor, tente uma senha mais forte.';
-            } else if (errorMsg.includes('Password must be between 8 and 265')) {
-                errorMsg = 'A senha deve ter pelo menos 8 caracteres.';
+            } else if (errorMsg.includes('Password must be between 8')) {
+                errorMsg = 'A senha deve conter no mínimo 8 caracteres.';
             } else if (errorMsg.includes('A user with the same email already exists')) {
                 errorMsg = 'Já existe uma conta com este e-mail.';
             } else if (errorMsg.includes('Invalid `email` param') || errorMsg.includes('email is invalid')) {
@@ -216,13 +222,13 @@ const AuthModal = () => {
                             {authModalView === 'register' && (
                                 <>
                                     <div className="form-group">
-                                        <label>Celular</label>
+                                        <label>WhatsApp</label>
                                         <input
                                             type="tel"
                                             className="auth-input"
                                             placeholder="(11) 99999-9999"
-                                            value={phone}
-                                            onChange={handlePhoneChange}
+                                            value={whatsapp}
+                                            onChange={handleWhatsAppChange}
                                         />
                                     </div>
                                     <div className="form-group">
@@ -259,7 +265,7 @@ const AuthModal = () => {
 
                                 <div className="or-divider">OU</div>
 
-                                <button type="button" className="google-btn" onClick={signInWithGoogle}>
+                                <button type="button" className="google-btn" onClick={() => signInWithGoogle('login')}>
                                     <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" fillRule="evenodd" />
                                         <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.716H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853" fillRule="evenodd" />
@@ -280,7 +286,7 @@ const AuthModal = () => {
 
                         {authModalView === 'register' && (
                             <div className="auth-footer">
-                                <button type="button" className="google-btn" onClick={signInWithGoogle}>
+                                <button type="button" className="google-btn" onClick={() => signInWithGoogle('register')}>
                                     <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" fillRule="evenodd" />
                                         <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.716H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853" fillRule="evenodd" />

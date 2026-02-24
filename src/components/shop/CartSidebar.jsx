@@ -60,7 +60,7 @@ const CartSidebar = () => {
         if (user) {
             // Priority: Profile (DB) > Metadata (Auth)
             const nameToUse = profile?.full_name || user.name || user.user_metadata?.full_name || user.user_metadata?.name || '';
-            const rawPhone = profile?.whatsapp || profile?.phone || user.phone || user.user_metadata?.phone || '';
+            const rawPhone = profile?.whatsapp || user.phone || user.user_metadata?.phone || '';
 
             if (nameToUse) setCustomerName(nameToUse);
             if (rawPhone) setCustomerPhone(formatPhone(rawPhone));
@@ -106,12 +106,12 @@ const CartSidebar = () => {
 
         // 0. Update User Profile if phone changed (Sync logic)
         if (user && customerPhone) {
-            const currentPhone = (profile?.phone || '').replace(/\D/g, '');
+            const currentPhone = (profile?.whatsapp || '').replace(/\D/g, '');
             const newPhone = customerPhone.replace(/\D/g, '');
 
             if (newPhone && newPhone !== currentPhone) {
                 try {
-                    await updateProfile({ phone: customerPhone });
+                    await updateProfile({ whatsapp: customerPhone });
                 } catch (e) {
                     console.error("Warning: Could not sync phone to profile", e);
                 }
@@ -169,7 +169,7 @@ const CartSidebar = () => {
             `*Itens do Pedido:*\n${itemsList}\n\n` +
             `*Dados do Cliente:*\n` +
             `Nome: ${customerName}\n` +
-            `Telefone: ${customerPhone}`;
+            `WhatsApp: ${customerPhone}`;
 
         const phoneNumber = whatsappNumber;
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;

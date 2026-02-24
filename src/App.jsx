@@ -8,6 +8,7 @@ import OrderHistory from './pages/OrderHistory.jsx';
 import Login from './components/auth/Login.jsx';
 import Logout from './components/auth/Logout.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfileModal from './components/auth/ProfileModal'; // Global Modal
 
@@ -52,6 +53,7 @@ function App() {
                   } />
                   <Route path="/login" element={<Login />} />
                   <Route path="/logout" element={<Logout />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                 </Route>
 
                 {/* Admin Layout */}

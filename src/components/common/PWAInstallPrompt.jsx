@@ -15,7 +15,18 @@ const PWAInstallPrompt = () => {
         // Verifica se já está rodando como App instalado (Standalone Mode)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-        if (isIosDevice && !isStandalone) {
+        // Verifica dismiss manual anterior
+        if (localStorage.getItem('pwa_prompt_dismissed') === 'true') {
+            setIsVisible(false);
+            return;
+        }
+
+        if (isStandalone) {
+            setIsVisible(false);
+            return;
+        }
+
+        if (isIosDevice) {
             // Em iPhones, mostramos a nossa tela de instruções (Pois a Apple bloqueia botão automático)
             setIsIOS(true);
             setIsVisible(true);
@@ -33,6 +44,7 @@ const PWAInstallPrompt = () => {
         window.addEventListener('appinstalled', () => {
             setIsVisible(false);
             setDeferredPrompt(null);
+            localStorage.setItem('pwa_prompt_dismissed', 'true');
             console.log('Aplicativo foi instalado com sucesso!');
         });
 
@@ -47,6 +59,7 @@ const PWAInstallPrompt = () => {
 
         if (outcome === 'accepted') {
             setIsVisible(false);
+            localStorage.setItem('pwa_prompt_dismissed', 'true');
         }
         setDeferredPrompt(null);
     };
@@ -71,7 +84,10 @@ const PWAInstallPrompt = () => {
                             <Download size={16} /> Instalar
                         </button>
                     )}
-                    <button onClick={() => setIsVisible(false)} className="pwa-btn-close">
+                    <button onClick={() => {
+                        localStorage.setItem('pwa_prompt_dismissed', 'true');
+                        setIsVisible(false);
+                    }} className="pwa-btn-close">
                         <X size={20} />
                     </button>
                 </div>

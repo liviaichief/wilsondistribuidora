@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { account, client, databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
-import { ID } from 'appwrite';
+import { ID, Permission, Role } from 'appwrite';
 
 const AuthContext = createContext();
 
@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
             setRole(doc.role || 'client');
 
             // Track Last Activity (Login) for Dashboard KPIs
-            // We update this if it's missing or if more than 15 minutes have passed to avoid spamming DB
             const now = new Date();
             const lastLogin = doc.last_login ? new Date(doc.last_login) : null;
             const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
@@ -44,7 +43,6 @@ export const AuthProvider = ({ children }) => {
             const shouldUpdateLastLogin = !lastLogin || lastLogin < fifteenMinutesAgo;
 
             if (shouldUpdateLastLogin) {
-                // Fire and forget update to avoid blocking UI
                 databases.updateDocument(
                     DATABASE_ID,
                     COLLECTIONS.PROFILES,
@@ -61,7 +59,7 @@ export const AuthProvider = ({ children }) => {
             }
             setProfile(null);
             setRole('client');
-            throw error; // Throw so caller knows what happened (e.g. 404)
+            throw error;
         }
     };
 
@@ -71,46 +69,123 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        const checkSession = async () => {
+        let isMounted = true;
+
+        const checkSession = async (retryCount = 0) => {
+            if (!isMounted) return;
+            console.log(`[Auth] Checking session (attempt ${retryCount + 1})...`);
+
             try {
                 const session = await account.get();
+                console.log("[Auth] Session active:", session.$id, session.email);
                 setUser(mapUser(session));
 
-                // Ensure profile document exists (especially for OAuth users)
+                // Ensure profile document exists
                 try {
+                    console.log("[Auth] Fetching profile for:", session.$id);
                     await fetchProfile(session.$id);
                 } catch (pErr) {
                     if (pErr.code === 404) {
+                        console.log("[Auth] Profile not found, creating one...");
                         const defaultRole = 'client';
-                        await databases.createDocument(
-                            DATABASE_ID,
-                            COLLECTIONS.PROFILES,
-                            session.$id,
-                            {
-                                email: session.email,
-                                full_name: session.name || '',
-                                first_name: (session.name || '').split(' ')[0] || '',
-                                last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
-                                user_id: session.$id,
-                                role: defaultRole
+                        try {
+                            await databases.createDocument(
+                                DATABASE_ID,
+                                COLLECTIONS.PROFILES,
+                                session.$id,
+                                {
+                                    email: session.email,
+                                    full_name: session.name || '',
+                                    first_name: (session.name || '').split(' ')[0] || '',
+                                    last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
+                                    user_id: session.$id,
+                                    role: defaultRole
+                                },
+                                [
+                                    Permission.read(Role.user(session.$id)),
+                                    Permission.update(Role.user(session.$id)),
+                                    Permission.read(Role.label('admin')),
+                                    Permission.update(Role.label('admin'))
+                                ]
+                            );
+                            console.log("[Auth] Profile created successfully");
+                            await fetchProfile(session.$id);
+
+                            const oauthIntent = localStorage.getItem('oauth_intent');
+                            localStorage.removeItem('oauth_intent');
+
+                            if (oauthIntent === 'login') {
+                                console.log("[Auth] OAuth Login intent but user does not have an account. Forcing to register.");
+                                // Remove session as they shouldn't just bypass the register view
+                                await account.deleteSession('current');
+                                setUser(null);
+                                setRole(null);
+                                setProfile(null);
+
+                                setTimeout(() => {
+                                    alert("Parece que você ainda não tem um cadastro. Por favor, crie sua conta para continuar!");
+                                    openAuthModal('register');
+                                }, 500);
+                                return;
                             }
-                        );
-                        await fetchProfile(session.$id);
+
+                            // Avisar o usuário e mudar o foco para o preenchimento dos dados obrigatórios (WhatsApp e Aniversário)
+                            setTimeout(() => {
+                                alert("Identificamos que este é o seu primeiro acesso! Por favor, complete as informações do seu cadastro para continuar (WhatsApp e Data de Aniversário).");
+                                setIsProfileModalOpen(true);
+                            }, 500);
+
+                        } catch (createErr) {
+                            if (createErr.code === 409) {
+                                console.log("[Auth] Profile document conflict (409), retrying fetch...");
+                                await fetchProfile(session.$id);
+                            } else {
+                                console.error("[Auth] Error creating profile document:", createErr);
+                                setRole(defaultRole);
+                            }
+                        }
                     } else {
-                        console.error("Profile check error:", pErr);
+                        console.error("[Auth] Profile fetch error (non-404):", pErr);
+                        setRole('client');
                     }
                 }
             } catch (error) {
-                // Not logged in
+                const hasOauthParams = window.location.search.includes('userId=');
+                if (hasOauthParams && retryCount < 2) {
+                    console.log("[Auth] OAuth params detected but session not ready, retrying in 1s...");
+                    setTimeout(() => checkSession(retryCount + 1), 1000);
+                    return;
+                }
+
+                console.log("[Auth] No session found:", error.message);
                 setUser(null);
                 setRole(null);
                 setProfile(null);
             } finally {
-                setLoading(false);
+                if (retryCount >= (window.location.search.includes('userId=') ? 2 : 0)) {
+                    setLoading(false);
+                }
             }
         };
 
-        checkSession();
+        if (window.location.search.includes('userId=')) {
+            setTimeout(() => checkSession(0), 500);
+        } else {
+            checkSession();
+        }
+
+        const handleStorageChange = (e) => {
+            if (e.key === 'app_auth_sync_login' || e.key === 'app_auth_sync_logout') {
+                console.log("[Auth] Cross-tab session sync triggered:", e.key);
+                checkSession();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            isMounted = false;
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const openAuthModal = (view = 'login') => {
@@ -127,8 +202,25 @@ export const AuthProvider = ({ children }) => {
             const acc = await account.get();
             setUser(mapUser(acc));
             await fetchProfile(acc.$id);
-            return { data: { user: mapUser(acc) } }; // Role is set in state
+            localStorage.setItem('app_auth_sync_login', Date.now().toString());
+            return { data: { user: mapUser(acc) } };
         } catch (error) {
+            // Se já houver uma sessão ativa, apague ela e tente logar novamente
+            if (error?.message?.includes('prohibited when a session is active') || error?.code === 401) {
+                try {
+                    await account.deleteSession('current');
+                    await account.createEmailPasswordSession(email, password);
+                    const acc = await account.get();
+                    setUser(mapUser(acc));
+                    await fetchProfile(acc.$id);
+                    localStorage.setItem('app_auth_sync_login', Date.now().toString());
+                    return { data: { user: mapUser(acc) } };
+                } catch (retryError) {
+                    console.error("Login retry error after session clear:", retryError);
+                    return { error: retryError };
+                }
+            }
+
             console.error("Login error:", error);
             return { error };
         } finally {
@@ -139,7 +231,6 @@ export const AuthProvider = ({ children }) => {
     const signUp = async (email, password, additionalData) => {
         setLoading(true);
         try {
-            // 1. Create Identity
             const userId = ID.unique();
             await account.create(
                 userId,
@@ -148,28 +239,32 @@ export const AuthProvider = ({ children }) => {
                 additionalData?.full_name || ''
             );
 
-            // 2. Auto login after signup to establish session for database write
             await account.createEmailPasswordSession(email, password);
             const acc = await account.get();
             setUser(mapUser(acc));
 
-            // 3. Create Profile Document
-            // Note: We use the SAME ID as the Auth User for easier lookup
             const defaultRole = 'client';
             try {
                 await databases.createDocument(
                     DATABASE_ID,
                     COLLECTIONS.PROFILES,
-                    acc.$id, // Use the auth user ID as the document ID
+                    acc.$id,
                     {
                         email: email,
                         full_name: additionalData?.full_name || '',
                         first_name: (additionalData?.full_name || '').split(' ')[0] || '',
                         last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
-                        phone: additionalData?.phone || '',
+                        whatsapp: additionalData?.whatsapp || '',
+                        birthday: additionalData?.birthday || '',
                         user_id: acc.$id,
                         role: defaultRole
-                    }
+                    },
+                    [
+                        Permission.read(Role.user(acc.$id)),
+                        Permission.update(Role.user(acc.$id)),
+                        Permission.read(Role.label('admin')),
+                        Permission.update(Role.label('admin'))
+                    ]
                 );
             } catch (dbError) {
                 console.error("Error creating profile document during signup:", dbError);
@@ -177,7 +272,7 @@ export const AuthProvider = ({ children }) => {
 
             setRole(defaultRole);
             await fetchProfile(acc.$id);
-
+            localStorage.setItem('app_auth_sync_login', Date.now().toString());
             return { data: { user: mapUser(acc), role: defaultRole } };
         } catch (error) {
             console.error("Signup error:", error);
@@ -193,6 +288,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setRole(null);
             setProfile(null);
+            localStorage.setItem('app_auth_sync_logout', Date.now().toString());
             return true;
         } catch (error) {
             console.error("Logout error:", error);
@@ -212,53 +308,78 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const signInWithGoogle = () => {
-        // OAuth with Appwrite
+    const confirmPasswordReset = async (userId, secret, password, passwordAgain) => {
+        try {
+            await account.updateRecovery(userId, secret, password, passwordAgain);
+            return { success: true };
+        } catch (error) {
+            console.error("Confirm password reset error:", error);
+            return { error };
+        }
+    };
+
+    const signInWithGoogle = (intent = 'login') => {
+        localStorage.setItem('oauth_intent', intent);
+
+        const currentPath = window.location.pathname;
+        const successUrl = (currentPath === '/login' || currentPath === '/logout')
+            ? window.location.origin
+            : window.location.href;
+
+        console.log("Starting Google OAuth with intent:", intent, "redirecting to:", successUrl);
+
         account.createOAuth2Session(
             'google',
-            window.location.origin,
-            window.location.origin + '/login'
+            successUrl,
+            successUrl + (successUrl.includes('?') ? '&' : '?') + 'error=oauth_failed'
         );
     };
 
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-
     const openProfileModal = () => setIsProfileModalOpen(true);
     const closeProfileModal = () => setIsProfileModalOpen(false);
 
-    const updateProfile = async (data) => {
-        if (!user || !user.$id) return;
+    const updateProfile = async (data, docId = null) => {
+        if (!user || !user.$id) {
+            console.error("[Auth] No user session found for updateProfile");
+            return { error: new Error("Sessão não encontrada. Por favor, faça login novamente.") };
+        }
+
+        const targetDocId = docId || user.$id;
+        console.log(`[Auth] Updating profile document: ${targetDocId} for user: ${user.$id}`);
+
         try {
             await databases.updateDocument(
                 DATABASE_ID,
                 COLLECTIONS.PROFILES,
-                user.$id,
+                targetDocId,
                 data
             );
-            // Refresh local user state/profile
-            const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, user.$id);
+
+            // Refresh local profile state
+            const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, targetDocId);
             setProfile(doc);
-            return { success: true };
+            return { success: true, data: doc };
         } catch (error) {
-            console.error("Failed to update profile:", error);
+            console.error("[Auth] Failed to update profile:", error);
+            // Help developer/admin understand the error
+            if (error.code === 403 || error.code === 401) {
+                console.warn(`[Auth] PERMISSION DENIED: User ${user.$id} cannot update document ${targetDocId}. Verify Document Permissions in Appwrite Console for collection ${COLLECTIONS.PROFILES}.`);
+            }
             return { error };
         }
     };
 
     const authValue = React.useMemo(() => {
-        // Appwrite Labels/Teams handles roles differently. 
-        // For simplicity in this port, we can check email or label.
-        // Assuming admin@local.com is admin for now.
-        // Check actual DB role
-        const isAdmin = user?.email?.startsWith('admin') || role === 'admin' || role === 'owner';
+        const isAdmin = role === 'admin' || role === 'owner';
 
         return {
             user,
             profile,
             role,
             isAdmin,
-            isOwner: role === 'owner' || isAdmin, // Map owner to admin for simplicity
+            isOwner: role === 'owner' || isAdmin,
             loading,
             isAuthModalOpen,
             authModalView,
@@ -267,13 +388,14 @@ export const AuthProvider = ({ children }) => {
             closeAuthModal,
             guestMode,
             continueAsGuest,
-            isProfileModalOpen, // Exported state
-            openProfileModal,   // Exported function
-            closeProfileModal,  // Exported function
+            isProfileModalOpen,
+            openProfileModal,
+            closeProfileModal,
             signIn,
             signUp,
             signOut,
             resetPassword,
+            confirmPasswordReset,
             signInWithGoogle,
             updateProfile,
             refreshProfile: async () => {

@@ -27,10 +27,9 @@ const AdminUsers = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [newUser, setNewUser] = useState({
         email: '',
-        password: '',
         full_name: '',
-        phone: '',
-        role: '',
+        whatsapp: '',
+        role: 'client',
         birthday: ''
     });
 
@@ -39,7 +38,7 @@ const AdminUsers = () => {
             email: '',
             password: '',
             full_name: '',
-            phone: '',
+            whatsapp: '',
             role: '',
             birthday: ''
         });
@@ -160,52 +159,11 @@ const AdminUsers = () => {
         setIsCreating(true);
 
         try {
-            // Check for API Key for "Admin Mode"
-            const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
+            // O gerenciamento de credenciais Auth deve ser feito via Appwrite Function por segurança
             let authId = ID.unique();
 
-            if (apiKey) {
-                try {
-                    const res = await fetch(`${client.config.endpoint}/users`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Appwrite-Project': client.config.project,
-                            'X-Appwrite-Key': apiKey,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: authId,
-                            email: newUser.email,
-                            password: newUser.password,
-                            name: newUser.full_name
-                        })
-                    });
-                    if (!res.ok) {
-                        const err = await res.json();
-                        throw new Error(err.message || 'Falha ao criar usuário Auth');
-                    }
-                    const data = await res.json();
-                    authId = data.$id;
-
-                    // Sync Label
-                    if (newUser.role === 'admin' || newUser.role === 'owner') {
-                        await fetch(`${client.config.endpoint}/users/${authId}/labels`, {
-                            method: 'PUT',
-                            headers: {
-                                'X-Appwrite-Project': client.config.project,
-                                'X-Appwrite-Key': apiKey,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ labels: ['admin'] })
-                        });
-                    }
-                } catch (apiErr) {
-                    console.error("Auth creation/label failed:", apiErr);
-                    throw apiErr;
-                }
-            } else {
-                showAlert("⚠️ Sem API Key configurada. O usuário não poderá fazer login até se registrar manualmente.", "warning");
-            }
+            // Como não usamos API Key no frontend, o usuário deve se registrar ou ser criado via Backend
+            showAlert("⚠️ Usuário criado apenas no Banco de Dados. Ele precisará se registrar com este e-mail para validar as credenciais.", "warning");
 
             // Create Profile
             await databases.createDocument(
@@ -217,7 +175,7 @@ const AdminUsers = () => {
                     full_name: newUser.full_name,
                     first_name: (newUser.full_name || '').split(' ')[0] || '',
                     last_name: (newUser.full_name || '').split(' ').slice(1).join(' ') || '',
-                    phone: newUser.phone,
+                    whatsapp: newUser.whatsapp,
                     user_id: authId,
                     role: newUser.role,
                     birthday: newUser.birthday
@@ -226,7 +184,7 @@ const AdminUsers = () => {
 
             showAlert('Usuário criado com sucesso!', 'success', null, 1000);
             setIsCreateModalOpen(false);
-            setNewUser({ email: '', password: '', full_name: '', phone: '', role: 'client' });
+            setNewUser({ email: '', full_name: '', whatsapp: '', role: 'client' });
             loadUsers();
 
         } catch (error) {
@@ -254,18 +212,9 @@ const AdminUsers = () => {
                         }
                     }
 
-                    const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
-                    if (apiKey) {
-                        try {
-                            await fetch(`${client.config.endpoint}/users/${targetUser.id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-Appwrite-Project': client.config.project,
-                                    'X-Appwrite-Key': apiKey
-                                }
-                            });
-                        } catch (e) { console.warn("Could not delete from auth", e); }
-                    }
+                    // Exclusão de Auth Account deve ser via Appwrite Function por segurança
+                    // Por enquanto removemos apenas o perfil do banco de dados (Profiles)
+
 
                     await databases.deleteDocument(
                         DATABASE_ID,
@@ -294,30 +243,13 @@ const AdminUsers = () => {
                     full_name: editingUser.full_name,
                     first_name: (editingUser.full_name || '').split(' ')[0] || '',
                     last_name: (editingUser.full_name || '').split(' ').slice(1).join(' ') || '',
-                    phone: editingUser.phone,
+                    whatsapp: editingUser.whatsapp,
                     role: editingUser.role,
                     birthday: editingUser.birthday
                 }
             );
 
-            // Sync Auth Labels
-            const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
-            if (apiKey) {
-                try {
-                    const labels = (editingUser.role === 'admin' || editingUser.role === 'owner') ? ['admin'] : [];
-                    await fetch(`${client.config.endpoint}/users/${editingUser.id}/labels`, {
-                        method: 'PUT',
-                        headers: {
-                            'X-Appwrite-Project': client.config.project,
-                            'X-Appwrite-Key': apiKey,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ labels })
-                    });
-                } catch (apiErr) {
-                    console.error("Failed to sync labels:", apiErr);
-                }
-            }
+            // O sincronismo de labels deve ser feito via Appwrite Function para segurança
             showAlert("Dados atualizados com sucesso!", 'success', null, 1000);
             setIsEditModalOpen(false);
             loadUsers();
@@ -334,7 +266,7 @@ const AdminUsers = () => {
             id: user.id,
             email: user.email,
             full_name: user.full_name,
-            phone: user.phone,
+            whatsapp: user.whatsapp,
             role: user.role,
             birthday: user.birthday || ''
         });
@@ -413,7 +345,7 @@ const AdminUsers = () => {
                                             <td>
                                                 <div style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{user.full_name || 'Sem nome'}</div>
                                                 <div style={{ fontSize: '0.9rem', color: '#888' }}>{user.email}</div>
-                                                {user.phone && <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.phone}</div>}
+                                                {user.whatsapp && <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.whatsapp}</div>}
                                             </td>
                                             <td>
                                                 <span style={{
@@ -542,15 +474,9 @@ const AdminUsers = () => {
                                         placeholder="email@exemplo.com" />
                                 </div>
                                 <div className="form-group">
-                                    <label>Senha</label>
-                                    <input type="password" required
-                                        value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                        placeholder="******" />
-                                </div>
-                                <div className="form-group">
-                                    <label>Telefone</label>
+                                    <label>WhatsApp</label>
                                     <input type="text"
-                                        value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
+                                        value={newUser.whatsapp} onChange={e => setNewUser({ ...newUser, whatsapp: e.target.value })}
                                         placeholder="(11) 99999-9999" />
                                 </div>
                                 <div className="form-group">
@@ -610,9 +536,9 @@ const AdminUsers = () => {
                                         value={editingUser.full_name} onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })} />
                                 </div>
                                 <div className="form-group">
-                                    <label>Telefone</label>
+                                    <label>WhatsApp</label>
                                     <input type="text"
-                                        value={editingUser.phone} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} />
+                                        value={editingUser.whatsapp} onChange={e => setEditingUser({ ...editingUser, whatsapp: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label>Data de Nascimento</label>

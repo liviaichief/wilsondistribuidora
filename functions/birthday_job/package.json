@@ -1,0 +1,10 @@
+{
+    "name": "birthday_job",
+    "version": "1.0.0",
+    "description": "Envia notificações de aniversário para clientes e para a loja diariamente às 08:00.",
+    "main": "src/main.js",
+    "type": "module",
+    "dependencies": {
+        "node-appwrite": "^14.1.0"
+    }
+}
