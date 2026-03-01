@@ -488,17 +488,17 @@
         padding-bottom: 0;
     }
 
-    /* Adjust "Hello User" text on mobile */
+    /* Adjust "Hello User" / Version text on mobile */
     .admin-link {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
         font-size: 1rem;
         padding: 0.3rem 0.6rem;
         margin-right: 5px;
         color: var(--primary-color);
-        max-width: 120px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        max-width: fit-content;
         background: rgba(212, 175, 55, 0.05);
         border: 1px solid rgba(212, 175, 55, 0.2);
     }
