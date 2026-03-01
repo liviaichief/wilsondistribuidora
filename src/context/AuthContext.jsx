@@ -100,13 +100,7 @@ export const AuthProvider = ({ children }) => {
                                     last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
                                     user_id: session.$id,
                                     role: defaultRole
-                                },
-                                [
-                                    Permission.read(Role.user(session.$id)),
-                                    Permission.update(Role.user(session.$id)),
-                                    Permission.read(Role.label('admin')),
-                                    Permission.update(Role.label('admin'))
-                                ]
+                                }
                             );
                             console.log("[Auth] Profile created successfully");
                             await fetchProfile(session.$id);
@@ -255,19 +249,14 @@ export const AuthProvider = ({ children }) => {
                         first_name: (additionalData?.full_name || '').split(' ')[0] || '',
                         last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
                         whatsapp: additionalData?.whatsapp || '',
-                        birthday: additionalData?.birthday || '',
+                        birthday: additionalData?.birthday || null,
                         user_id: acc.$id,
                         role: defaultRole
-                    },
-                    [
-                        Permission.read(Role.user(acc.$id)),
-                        Permission.update(Role.user(acc.$id)),
-                        Permission.read(Role.label('admin')),
-                        Permission.update(Role.label('admin'))
-                    ]
+                    }
                 );
             } catch (dbError) {
                 console.error("Error creating profile document during signup:", dbError);
+                throw new Error("Erro ao criar perfil: " + dbError.message);
             }
 
             setRole(defaultRole);
