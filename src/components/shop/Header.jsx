@@ -172,7 +172,11 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                     {/* 2. User Actions Section */}
                     <div className="header-actions">
                         {user && (
-                            <span className="admin-link">
+                            <span
+                                className="admin-link"
+                                onClick={() => { setShowVersion(true); setTimeout(() => setShowVersion(false), 5000); }}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 {`Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`}
                             </span>
                         )}
