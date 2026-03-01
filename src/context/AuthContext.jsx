@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         $id: acc.$id,
         email: acc.email,
         full_name: acc.name,
+        emailVerification: acc.emailVerification,
         user_metadata: { full_name: acc.name }
     });
 
@@ -236,6 +237,12 @@ export const AuthProvider = ({ children }) => {
             await account.createEmailPasswordSession(email, password);
             const acc = await account.get();
             setUser(mapUser(acc));
+
+            try {
+                await account.createVerification(window.location.origin + '/verify-email');
+            } catch (err) {
+                console.error("Non-fatal: Error creating verification email", err);
+            }
 
             const defaultRole = 'client';
             try {
