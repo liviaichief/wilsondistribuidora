@@ -179,8 +179,15 @@ const CartSidebar = () => {
         toggleCart(); // Close cart sidebar
         setIsProcessing(false);
 
-        // 5. Open WhatsApp (Same Tab for smoother mobile experience)
-        window.location.href = whatsappUrl;
+        // 5. Open WhatsApp (New tab for Web, same tab for Mobile)
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            window.location.href = whatsappUrl;
+        } else {
+            // Clear cart immediately on web to prevent duplicate orders
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+            // If we are on web and open a new tab, we want the current tab to refresh or close cart (handled before)
+        }
     };
 
     return (
