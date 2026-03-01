@@ -82,6 +82,24 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     // const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false); // Removed local state
     const [logoutMessage, setLogoutMessage] = React.useState(null);
     const userMenuRef = React.useRef(null);
+    const logoClicksRef = React.useRef(0);
+    const logoClickTimerRef = React.useRef(null);
+
+    const handleLogoClick = () => {
+        navigate('/');
+        logoClicksRef.current += 1;
+
+        if (logoClicksRef.current >= 3) {
+            setShowVersion(true);
+            setTimeout(() => setShowVersion(false), 5000);
+            logoClicksRef.current = 0;
+        }
+
+        if (logoClickTimerRef.current) clearTimeout(logoClickTimerRef.current);
+        logoClickTimerRef.current = setTimeout(() => {
+            logoClicksRef.current = 0;
+        }, 1500);
+    };
 
     React.useEffect(() => {
         const handleClickOutside = (event) => {
@@ -158,31 +176,15 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                 {/* Top Row: Logo and Actions */}
                 <div className="header-main-row">
                     {/* 1. Logo Section */}
-                    <div className="header-logo-section" onClick={() => {
-                        window.location.href = '/';
-                    }} style={{ cursor: 'pointer' }}>
+                    <div className="header-logo-section" onClick={handleLogoClick} style={{ cursor: 'pointer', userSelect: 'none' }}>
                         <img src="/logo-3r.jpeg" alt="3R Grill Boutique de Carnes" className="header-logo" />
                     </div>
 
                     {/* 2. User Actions Section */}
                     <div className="header-actions">
                         {user && (
-                            <span
-                                className="admin-link"
-                                onClick={() => {
-                                    setShowVersion(true);
-                                    setTimeout(() => setShowVersion(false), 3000);
-                                }}
-                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}
-                            >
-                                {showVersion ? (
-                                    <>
-                                        <span>{APP_VERSION}</span>
-                                        <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>em {BUILD_DATE}</span>
-                                    </>
-                                ) : (
-                                    `Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`
-                                )}
+                            <span className="admin-link">
+                                {`Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`}
                             </span>
                         )}
 
@@ -282,6 +284,14 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                     </div>
                 )}
             </div>
+            {
+                showVersion && (
+                    <div className="logout-toast" style={{ flexDirection: 'column', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(20,20,20,0.95)', border: '1px solid var(--primary-color)', userSelect: 'none' }}>
+                        <span style={{ color: 'var(--primary-color)', fontSize: '1.2rem', fontWeight: 'bold' }}>{APP_VERSION}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#ccc', fontWeight: 'normal' }}>Publicado em: {BUILD_DATE}</span>
+                    </div>
+                )
+            }
             {
                 logoutMessage && (
                     <div className="logout-toast">
