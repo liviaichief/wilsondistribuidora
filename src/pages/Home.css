@@ -65,5 +65,7 @@
         overflow-x: hidden;
         padding-top: 100px;
         /* Compensate for FIXED header height */
+        /* Enable pull to refresh */
+        overscroll-behavior-y: auto;
     }
 }
