@@ -27,16 +27,6 @@ const ResetPassword = () => {
         } else {
             setUserId(id);
             setSecret(sec);
-
-            // Validação instantânea (probe): Tentativa de envio com senhas propositalmente diferentes.
-            // Se o token estiver vencido/usado, o Appwrite vai retornar erro "Invalid token" antes do erro de "senhas não conferem".
-            (async () => {
-                const { error } = await confirmPasswordReset(id, sec, 'ProbePass123@', 'ProbeMismatch456#');
-                if (error && error.message && error.message.includes('Invalid token')) {
-                    showAlert('Este link de recuperação já foi utilizado ou está expirado. Por favor, solicite um novo na página de login.', 'error');
-                    navigate('/');
-                }
-            })();
         }
     }, [searchParams, navigate, showAlert]);
 
