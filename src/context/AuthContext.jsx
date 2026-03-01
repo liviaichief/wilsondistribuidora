@@ -200,7 +200,7 @@ export const AuthProvider = ({ children }) => {
             return { data: { user: mapUser(acc) } };
         } catch (error) {
             // Se já houver uma sessão ativa, apague ela e tente logar novamente
-            if (error?.message?.includes('prohibited when a session is active') || error?.code === 401) {
+            if (error?.message?.includes('prohibited when a session is active') || error?.type === 'user_session_already_exists') {
                 try {
                     await account.deleteSession('current');
                     await account.createEmailPasswordSession(email, password);
