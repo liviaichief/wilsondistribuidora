@@ -288,8 +288,20 @@ export const getSettings = async () => {
 
 export const updateSettings = async (key, value) => {
     try {
-        await databases.updateDocument(DATABASE_ID, 'settings', key, { value });
-        return true;
+        try {
+            await databases.updateDocument(DATABASE_ID, 'settings', key, { value });
+            return true;
+        } catch (e) {
+            // Se o erro for 404 (Document not found), significa que a configuração ainda não existe no banco
+            if (e.code === 404) {
+                await databases.createDocument(DATABASE_ID, 'settings', key, {
+                    key: key,
+                    value: value
+                });
+                return true;
+            }
+            throw e;
+        }
     } catch (e) {
         console.error("Error updating settings:", e);
         throw e;
