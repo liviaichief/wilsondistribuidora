@@ -5,13 +5,13 @@ import path from 'path';
 import 'dotenv/config';
 
 // Configuration from .env
-const ENDPOINT = process.env.APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
-const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;
+const ENDPOINT = process.env.APPWRITE_ENDPOINT || process.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
+const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || process.env.VITE_APPWRITE_PROJECT_ID;
 const API_KEY = process.env.APPWRITE_API_KEY;
-const DATABASE_ID = process.env.DATABASE_ID || 'boutique_carne_db';
+const DATABASE_ID = process.env.DATABASE_ID || process.env.VITE_DATABASE_ID || 'boutique_carne_db';
 
 if (!PROJECT_ID || !API_KEY) {
-    console.error('Erro: APPWRITE_PROJECT_ID e APPWRITE_API_KEY são obrigatórios no .env');
+    console.error('Erro: VITE_APPWRITE_PROJECT_ID e APPWRITE_API_KEY são obrigatórios no .env');
     process.exit(1);
 }
 

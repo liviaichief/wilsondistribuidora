@@ -1,0 +1,10 @@
+{
+    "name": "db_health_check",
+    "version": "1.0.0",
+    "description": "Appwrite Serverless Function - Database Health Monitor (12 hours)",
+    "main": "src/main.js",
+    "type": "module",
+    "dependencies": {
+        "node-appwrite": "^22.1.0"
+    }
+}

@@ -68,7 +68,7 @@ const CharcoalIcon = ({ size = 20, className }) => (
 );
 
 
-import { APP_VERSION } from '../../version';
+import { APP_VERSION, BUILD_DATE } from '../../version';
 
 const Header = ({ activeCategory, onCategoryChange }) => {
     const location = useLocation();
@@ -171,10 +171,18 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 className="admin-link"
                                 onClick={() => {
                                     setShowVersion(true);
-                                    setTimeout(() => setShowVersion(false), 2000);
+                                    setTimeout(() => setShowVersion(false), 3000);
                                 }}
+                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}
                             >
-                                {showVersion ? APP_VERSION : `Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`}
+                                {showVersion ? (
+                                    <>
+                                        <span>{APP_VERSION}</span>
+                                        <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>em {BUILD_DATE}</span>
+                                    </>
+                                ) : (
+                                    `Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`
+                                )}
                             </span>
                         )}
 

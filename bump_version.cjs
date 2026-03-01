@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 
@@ -20,7 +19,10 @@ try {
         // Format new version V0.01 -> V0.02
         const newVersion = `V${major}.${String(minor).padStart(2, '0')}`;
 
-        const newContent = content.replace(/V\d+\.\d+/, newVersion);
+        // Formata data e hora para exibição no frontend (padrão Brasil)
+        const buildDate = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+        const newContent = `export const APP_VERSION = "${newVersion}";\nexport const BUILD_DATE = "${buildDate}";\n`;
 
         fs.writeFileSync(versionFile, newContent);
 
