@@ -39,40 +39,17 @@ const AdminSettings = () => {
         }
     };
 
-    const requestSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        setConfirmPassword('');
-        setIsPasswordModalOpen(true);
-    };
-
-    const handleConfirmSave = async (e) => {
-        e.preventDefault();
-
-        if (!confirmPassword) {
-            showAlert('Digite sua senha para confirmar.', 'error');
-            return;
-        }
-
-        setIsCheckingPassword(true);
+        setSaving(true);
         try {
-            // Verify password by creating a temporary session
-            const testSession = await account.createEmailPasswordSession(user.email, confirmPassword);
-
-            // If successful, clean up the testing session (we are already logged in via main session)
-            try {
-                await account.deleteSession(testSession.$id);
-            } catch (e) { /* ignore cleanup error */ }
-
-            setIsPasswordModalOpen(false);
-            setSaving(true);
             await updateSettings('whatsapp_number', settings.whatsapp_number);
             await updateSettings('birthday_message', settings.birthday_message);
-            showAlert("Configurações salvas com sucesso!", "success", null, 1000);
+            showAlert("Configurações salvas com sucesso!", "success", null, 2000);
         } catch (error) {
             console.error(error);
-            showAlert("Senha incorreta. Não foi possível salvar.", "error");
+            showAlert("Erro ao salvar configurações.", "error");
         } finally {
-            setIsCheckingPassword(false);
             setSaving(false);
         }
     };
@@ -86,7 +63,7 @@ const AdminSettings = () => {
             </div>
 
             <div style={{ maxWidth: '600px', background: '#1a1a1a', padding: '30px', borderRadius: '12px', border: '1px solid #333' }}>
-                <form onSubmit={requestSave} className="product-form">
+                <form onSubmit={handleSave} className="product-form">
                     <div className="form-group">
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Phone size={18} color="var(--primary-color)" /> Número do WhatsApp para Pedidos
@@ -147,40 +124,6 @@ const AdminSettings = () => {
 
             {role === 'admin' && <AdminHealthDashboard />}
 
-            {/* Password Verification Modal */}
-            {isPasswordModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '400px' }}>
-                        <div className="modal-header">
-                            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <ShieldAlert color="#d4af37" size={24} /> Autenticação Necessária
-                            </h2>
-                            <button className="close-btn" onClick={() => setIsPasswordModalOpen(false)}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleConfirmSave} className="product-form" style={{ marginTop: '10px' }}>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '15px' }}>
-                                Para alterar o número de suporte do WhatsApp, por favor, insira sua senha de administrador ou proprietário.
-                            </p>
-                            <div className="form-group">
-                                <label>Senha de Confirmação</label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
-                                    placeholder="Digite sua senha..."
-                                    autoFocus
-                                />
-                            </div>
-                            <button type="submit" className="save-btn" disabled={isCheckingPassword} style={{ justifyContent: 'center', width: '100%', marginTop: '10px' }}>
-                                {isCheckingPassword ? 'Verificando...' : 'Confirmar e Salvar'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
