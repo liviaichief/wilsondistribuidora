@@ -109,7 +109,7 @@ const AuthModal = () => {
                 if (data?.user?.identities?.length === 0) {
                     showAlert('Este e-mail já está cadastrado.', 'error', 'Erro no Cadastro');
                 } else {
-                    showAlert('Cadastro realizado! Verifique sua caixa de entrada e clique no link de confirmação do e-mail para validar sua conta.', 'success', 'Confirme seu E-mail', 5000);
+                    showAlert('Cadastro realizado! Faça login para continuar.', 'success', 'Cadastro com Sucesso', 1500);
                     setTimeout(() => setAuthModalView('login'), 1500);
                 }
             } else if (authModalView === 'forgot') {
