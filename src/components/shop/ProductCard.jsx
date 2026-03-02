@@ -63,14 +63,25 @@ const ProductCard = ({ product }) => {
                 />
                 <div className={`price-tag ${product.is_promotion ? 'on-promo' : ''}`}>
                     {product.is_promotion && product.promo_price ? (
-                        <>
-                            <span className="original-price">R$ {product.price.toFixed(2)}</span>
-                            <span className="promo-price">R$ {parseFloat(product.promo_price).toFixed(2)}</span>
-                        </>
+                        <div className="promo-price-container">
+                            <span className="original-price" style={{ whiteSpace: 'nowrap' }}>
+                                R$ {product.price.toFixed(2)}
+                            </span>
+                            <div className="current-price-row">
+                                <span className="promo-price" style={{ whiteSpace: 'nowrap' }}>
+                                    R$ {parseFloat(product.promo_price).toFixed(2)}
+                                </span>
+                                <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>
+                                    / {product.uom || 'KG'}
+                                </span>
+                            </div>
+                        </div>
                     ) : (
-                        `R$ ${product.price.toFixed(2)}`
+                        <>
+                            <span style={{ whiteSpace: 'nowrap' }}>R$ {product.price.toFixed(2)}</span>
+                            <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>/ {product.uom || 'KG'}</span>
+                        </>
                     )}
-                    <span className="uom-tag">/ {product.uom || 'KG'}</span>
                 </div>
             </div>
             <div className="product-info">

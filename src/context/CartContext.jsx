@@ -39,7 +39,10 @@ export const CartProvider = ({ children }) => {
                         : item
                 );
             }
-            return [...prev, { ...product, quantity }];
+
+            const effectivePrice = product.is_promotion && product.promo_price ? parseFloat(product.promo_price) : parseFloat(product.price);
+
+            return [...prev, { ...product, quantity, price: effectivePrice, original_price: parseFloat(product.price) }];
         });
         // setIsCartOpen(true); // Changed behavior: don't auto-open
     };

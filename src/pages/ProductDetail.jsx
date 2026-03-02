@@ -4,6 +4,7 @@ import { getProductById } from '../services/dataService';
 import { useCart } from '../context/CartContext';
 import { Plus, Minus, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
+import Header from '../components/shop/Header';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -40,21 +41,27 @@ const ProductDetail = () => {
 
     if (loading) {
         return (
-            <div className="product-detail-container loading-state">
-                <Loader2 className="spinner" size={40} />
-                <p>Carregando produto...</p>
-            </div>
+            <>
+                <Header />
+                <div className="product-detail-container loading-state">
+                    <Loader2 className="spinner" size={40} />
+                    <p>Carregando produto...</p>
+                </div>
+            </>
         );
     }
 
     if (error || !product) {
         return (
-            <div className="product-detail-container error-state">
-                <p>{error || 'Produto não encontrado.'}</p>
-                <button className="btn-back" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={20} /> Voltar
-                </button>
-            </div>
+            <>
+                <Header />
+                <div className="product-detail-container error-state">
+                    <p>{error || 'Produto não encontrado.'}</p>
+                    <button className="btn-back" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={20} /> Voltar
+                    </button>
+                </div>
+            </>
         );
     }
 
@@ -79,74 +86,77 @@ const ProductDetail = () => {
     };
 
     return (
-        <div className="product-detail-container">
-            <button className="btn-back-nav" onClick={() => navigate('/')}>
-                <ArrowLeft size={20} /> Voltar para o Catálogo
-            </button>
+        <>
+            <Header />
+            <div className="product-detail-container">
+                <button className="btn-back-nav" onClick={() => navigate('/')}>
+                    <ArrowLeft size={20} /> Voltar para o Catálogo
+                </button>
 
-            <div className="product-detail-content">
-                <div className="product-detail-image-wrapper">
-                    <img
-                        src={getImageUrl(product.image)}
-                        alt={product.title}
-                        className="product-detail-image"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
-                        }}
-                    />
-                    {product.is_promotion && (
-                        <div className="promo-badge-large">PROMOÇÃO</div>
-                    )}
-                </div>
-
-                <div className="product-detail-info">
-                    <div className="product-meta">
-                        <span className="product-category-detail">{product.category}</span>
-                        <span className="product-sku">SKU: {product.product_sku || product.id}</span>
-                    </div>
-
-                    <h1 className="product-title-detail">{product.title}</h1>
-
-                    <div className="product-price-section">
-                        {product.is_promotion && product.promo_price ? (
-                            <div className="price-container">
-                                <span className="original-price-detail">R$ {product.price.toFixed(2)}</span>
-                                <span className="promo-price-detail">R$ {parseFloat(product.promo_price).toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
-                            </div>
-                        ) : (
-                            <div className="price-container">
-                                <span className="regular-price-detail">R$ {product.price.toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
-                            </div>
+                <div className="product-detail-content">
+                    <div className="product-detail-image-wrapper">
+                        <img
+                            src={getImageUrl(product.image)}
+                            alt={product.title}
+                            className="product-detail-image"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
+                            }}
+                        />
+                        {product.is_promotion && (
+                            <div className="promo-badge-large">PROMOÇÃO</div>
                         )}
                     </div>
 
-                    <div className="product-description-container">
-                        <h3>Descrição do Produto</h3>
-                        <p className="product-description-detail">
-                            {product.description || 'Nenhuma descrição detalhada disponível para este produto.'}
-                        </p>
-                    </div>
+                    <div className="product-detail-info">
+                        <div className="product-meta">
+                            <span className="product-category-detail">{product.category}</span>
+                            <span className="product-sku">SKU: {product.product_sku || product.id}</span>
+                        </div>
 
-                    <div className="product-detail-actions">
-                        {quantity === 0 ? (
-                            <button
-                                className="btn-add-large"
-                                onClick={handleAdd}
-                            >
-                                <ShoppingCart size={20} /> Adicionar ao Carrinho
-                            </button>
-                        ) : (
-                            <div className="qty-selector-large">
-                                <button onClick={handleDecrement} className="btn-qty"><Minus size={20} /></button>
-                                <span className="qty-display-large">{quantity}</span>
-                                <button onClick={handleIncrement} className="btn-qty"><Plus size={20} /></button>
-                            </div>
-                        )}
+                        <h1 className="product-title-detail">{product.title}</h1>
+
+                        <div className="product-price-section">
+                            {product.is_promotion && product.promo_price ? (
+                                <div className="price-container">
+                                    <span className="original-price-detail">R$ {product.price.toFixed(2)}</span>
+                                    <span className="promo-price-detail">R$ {parseFloat(product.promo_price).toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
+                                </div>
+                            ) : (
+                                <div className="price-container">
+                                    <span className="regular-price-detail">R$ {product.price.toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="product-description-container">
+                            <h3>Descrição do Produto</h3>
+                            <p className="product-description-detail">
+                                {product.description || 'Nenhuma descrição detalhada disponível para este produto.'}
+                            </p>
+                        </div>
+
+                        <div className="product-detail-actions">
+                            {quantity === 0 ? (
+                                <button
+                                    className="btn-add-large"
+                                    onClick={handleAdd}
+                                >
+                                    <ShoppingCart size={20} /> Adicionar ao Carrinho
+                                </button>
+                            ) : (
+                                <div className="qty-selector-large">
+                                    <button onClick={handleDecrement} className="btn-qty"><Minus size={20} /></button>
+                                    <span className="qty-display-large">{quantity}</span>
+                                    <button onClick={handleIncrement} className="btn-qty"><Plus size={20} /></button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
