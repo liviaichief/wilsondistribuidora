@@ -153,7 +153,6 @@ const Header = ({ activeCategory, onCategoryChange }) => {
         { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
         { id: 'suinos', label: 'SUÍNOS', icon: SausageIcon },
         { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
-        { id: 'embutidos', label: 'EMBUTIDOS', icon: SausageIcon },
         { id: 'acompanhamentos', label: 'ACOMPANHAMENTOS', icon: GarlicBreadIcon },
         { id: 'acessorios', label: 'ACESSÓRIOS', icon: CharcoalIcon },
         { id: 'insumos', label: 'INSUMOS', icon: Flame },

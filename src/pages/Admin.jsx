@@ -247,7 +247,6 @@ const Admin = () => {
                             <option value="carne">Carne</option>
                             <option value="suinos">Suínos</option>
                             <option value="frango">Frango</option>
-                            <option value="embutidos">Embutidos</option>
                             <option value="acompanhamentos">Acompanhamentos</option>
                             <option value="acessorios">Acessórios</option>
                             <option value="insumos">Insumos</option>
@@ -540,7 +539,6 @@ const Admin = () => {
                                     <option value="carne">Carne</option>
                                     <option value="suinos">Suínos</option>
                                     <option value="frango">Frango</option>
-                                    <option value="embutidos">Embutidos</option>
                                     <option value="acompanhamentos">Acompanhamentos</option>
                                     <option value="acessorios">Acessórios</option>
                                     <option value="insumos">Insumos</option>

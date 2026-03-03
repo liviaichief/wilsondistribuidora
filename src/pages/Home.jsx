@@ -11,11 +11,10 @@ const CATEGORY_PRIORITY = {
     'carne': 1,
     'suinos': 2,
     'frango': 3,
-    'embutidos': 4,
-    'acompanhamentos': 5,
-    'acessorios': 6,
-    'insumos': 7,
-    'bebidas': 8
+    'acompanhamentos': 4,
+    'acessorios': 5,
+    'insumos': 6,
+    'bebidas': 7
 };
 
 const Home = () => {
