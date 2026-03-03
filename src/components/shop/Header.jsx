@@ -151,6 +151,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const categories = [
         { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
         { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
+        { id: 'suinos', label: 'SUÍNOS', icon: SausageIcon },
         { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
         { id: 'embutidos', label: 'EMBUTIDOS', icon: SausageIcon },
         { id: 'acompanhamentos', label: 'ACOMPANHAMENTOS', icon: GarlicBreadIcon },

@@ -29,6 +29,12 @@ const CartSidebar = () => {
     const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Default fallback
     const [isProcessing, setIsProcessing] = useState(false); // Added processing state
 
+    const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
+    const [address, setAddress] = useState({
+        cep: '', street: '', neighborhood: '', city: '', state: '', number: '', complement: ''
+    });
+    const [isFetchingCep, setIsFetchingCep] = useState(false);
+
     const { showAlert } = useAlert(); // Moved up
     const { addOrder } = useOrder(); // Moved up
 
@@ -44,6 +50,42 @@ const CartSidebar = () => {
         }
         return numbers;
     };
+
+    const handleCepChange = async (e) => {
+        const rawCep = e.target.value.replace(/\D/g, '');
+        // Apply mask for user display XXXXX-XXX
+        let maskedCep = rawCep;
+        if (rawCep.length > 5) {
+            maskedCep = `${rawCep.slice(0, 5)}-${rawCep.slice(5, 8)}`;
+        }
+        setAddress(prev => ({ ...prev, cep: maskedCep }));
+
+        if (rawCep.length === 8) {
+            setIsFetchingCep(true);
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
+                const data = await res.json();
+                if (!data.erro) {
+                    setAddress(prev => ({
+                        ...prev,
+                        street: data.logradouro || '',
+                        neighborhood: data.bairro || '',
+                        city: data.localidade || '',
+                        state: data.uf || '',
+                        number: '',
+                        complement: ''
+                    }));
+                } else {
+                    showAlert('CEP não encontrado.', 'warning');
+                }
+            } catch (err) {
+                showAlert('Erro ao buscar o CEP.', 'error');
+            } finally {
+                setIsFetchingCep(false);
+            }
+        }
+    };
+
 
     // Auto-fill form if user is logged in
     React.useEffect(() => {
@@ -64,6 +106,19 @@ const CartSidebar = () => {
 
             if (nameToUse) setCustomerName(nameToUse);
             if (rawPhone) setCustomerPhone(formatPhone(rawPhone));
+
+            // Auto fill address from profile if it exists
+            if (profile?.address_cep) {
+                setAddress({
+                    cep: profile.address_cep || '',
+                    street: profile.address_street || '',
+                    neighborhood: profile.address_neighborhood || '',
+                    city: profile.address_city || '',
+                    state: profile.address_state || '',
+                    number: profile.address_number || '',
+                    complement: profile.address_complement || ''
+                });
+            }
         }
     }, [user, profile]);
 
@@ -93,6 +148,28 @@ const CartSidebar = () => {
             return;
         }
 
+        if (!deliveryMode) {
+            showAlert('Por favor, selecione "Retirar na Loja" ou "Entrega".', 'warning', 'Opção Inválida');
+            return;
+        }
+
+        if (deliveryMode === 'delivery') {
+            if (!address.cep || !address.street || !address.number || !address.neighborhood || !address.city) {
+                showAlert('Por favor, preencha todos os campos obrigatórios do endereço de entrega.', 'warning', 'Dados Incompletos');
+                return;
+            }
+        }
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let popupWindow = null;
+        if (!isMobile) {
+            // Abre sincronicamente para evitar o bloqueador de popups do navegador
+            popupWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
+            if (popupWindow) {
+                popupWindow.document.write('<body style="background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; text-align: center;"><h2>Aguarde, processando seu pedido<br/>e redirecionando para o WhatsApp...</h2></body>');
+            }
+        }
+
         setIsProcessing(true);
 
         const orderData = {
@@ -101,19 +178,38 @@ const CartSidebar = () => {
             paymentMethod: 'A combinar', // Default value since selection is removed
             total: cartTotal,
             user_id: user ? user.id : null,
-            items: cartItems // Sending array directly to backend function
+            items: cartItems, // Sending array directly to backend function
+            delivery_mode: deliveryMode,
+            delivery_address: deliveryMode === 'delivery' ? address : null
         };
 
         // 0. Update User Profile if phone changed (Sync logic)
-        if (user && customerPhone) {
+        if (user) {
+            const updates = {};
             const currentPhone = (profile?.whatsapp || '').replace(/\D/g, '');
             const newPhone = customerPhone.replace(/\D/g, '');
 
             if (newPhone && newPhone !== currentPhone) {
+                updates.whatsapp = customerPhone;
+            }
+
+            if (deliveryMode === 'delivery' && address.cep) {
+                if (address.cep !== profile?.address_cep || address.number !== profile?.address_number) {
+                    updates.address_cep = address.cep;
+                    updates.address_street = address.street;
+                    updates.address_neighborhood = address.neighborhood;
+                    updates.address_city = address.city;
+                    updates.address_state = address.state;
+                    updates.address_number = address.number;
+                    updates.address_complement = address.complement;
+                }
+            }
+
+            if (Object.keys(updates).length > 0) {
                 try {
-                    await updateProfile({ whatsapp: customerPhone });
+                    await updateProfile(updates);
                 } catch (e) {
-                    console.error("Warning: Could not sync phone to profile", e);
+                    console.error("Warning: Could not sync profile data", e);
                 }
             }
         }
@@ -155,6 +251,7 @@ const CartSidebar = () => {
         }
 
         if (!orderResult.success) {
+            if (popupWindow) popupWindow.close();
             setIsProcessing(false);
             return;
         }
@@ -165,14 +262,26 @@ const CartSidebar = () => {
             `• ${item.quantity}x ${item.title} - R$ ${(item.price * item.quantity).toFixed(2)}`
         ).join('\n');
 
+        let addressText = '';
+        if (deliveryMode === 'pickup') {
+            addressText = '🛵 Opção: Retirar na Loja';
+        } else {
+            addressText = `🛵 Opção: Entrega\n` +
+                `*Endereço:*\n` +
+                `${address.street}, ${address.number} ${address.complement ? `- ${address.complement}` : ''}\n` +
+                `Bairro: ${address.neighborhood}\n` +
+                `CEP: ${address.cep} - ${address.city}/${address.state}`;
+        }
+
         const message = `*NOVO PEDIDO #${orderNumDisplay} - 3R GRILL*\n\n` +
             `*Itens do Pedido:*\n${itemsList}\n\n` +
             `*Dados do Cliente:*\n` +
             `Nome: ${customerName}\n` +
-            `WhatsApp: ${customerPhone}`;
+            `WhatsApp: ${customerPhone}\n\n` +
+            `*Entrega/Retirada:*\n${addressText}`;
 
-        const phoneNumber = whatsappNumber;
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        const phoneNumber = String(whatsappNumber).replace(/\D/g, '');
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
         // 4. Cleanup (Before Redirect)
         clearCart();
@@ -180,13 +289,13 @@ const CartSidebar = () => {
         setIsProcessing(false);
 
         // 5. Open WhatsApp (New tab for Web, same tab for Mobile)
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             window.location.href = whatsappUrl;
+        } else if (popupWindow) {
+            popupWindow.location.href = whatsappUrl;
         } else {
-            // Clear cart immediately on web to prevent duplicate orders
-            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-            // If we are on web and open a new tab, we want the current tab to refresh or close cart (handled before)
+            // Fallback se o navegador bloqueou o popup sincrono
+            window.location.href = whatsappUrl;
         }
     };
 
@@ -252,6 +361,102 @@ const CartSidebar = () => {
                                 maxLength={15}
                             />
                         </div>
+
+                        <div className="delivery-options" style={{ marginTop: '15px' }}>
+                            <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Opção de Entrega</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setDeliveryMode('pickup')}
+                                    style={{
+                                        border: 'none',
+                                        background: deliveryMode === 'pickup' ? 'var(--primary-color)' : '#333',
+                                        color: deliveryMode === 'pickup' ? '#000' : '#fff',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s',
+                                        width: '100%'
+                                    }}
+                                >
+                                    Retirar na Loja
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDeliveryMode('delivery')}
+                                    style={{
+                                        border: 'none',
+                                        background: deliveryMode === 'delivery' ? 'var(--primary-color)' : '#333',
+                                        color: deliveryMode === 'delivery' ? '#000' : '#fff',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s',
+                                        width: '100%'
+                                    }}
+                                >
+                                    Entrega
+                                </button>
+                            </div>
+                        </div>
+
+                        {deliveryMode === 'delivery' && (
+                            <div className="address-form" style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div className="form-group" style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="CEP (Somente números)"
+                                        value={address.cep}
+                                        onChange={handleCepChange}
+                                        className="checkout-input"
+                                        maxLength={9}
+                                    />
+                                    {isFetchingCep && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '10px', top: '12px', color: 'var(--primary-color)' }} />}
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Rua / Logradouro"
+                                        value={address.street}
+                                        onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                                        className="checkout-input"
+                                    />
+                                </div>
+                                <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
+                                    <div className="form-group" style={{ flex: 1 }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Número"
+                                            value={address.number}
+                                            onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                                            className="checkout-input"
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ flex: 2 }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Bairro"
+                                            value={address.neighborhood}
+                                            onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
+                                            className="checkout-input"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Complemento / Ref."
+                                        value={address.complement}
+                                        onChange={(e) => setAddress({ ...address, complement: e.target.value })}
+                                        className="checkout-input"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

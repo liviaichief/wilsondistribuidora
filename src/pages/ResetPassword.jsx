@@ -50,9 +50,11 @@ const ResetPassword = () => {
 
             if (error) {
                 let msg = 'Erro ao redefinir a senha. O link pode ter expirado ou já foi utilizado.';
+                let msgType = 'error';
                 if (error.message) {
                     if (error.message.includes('Invalid token')) {
                         msg = 'Este link de recuperação já foi utilizado ou está expirado. Por favor, solicite um novo na página de login.';
+                        msgType = 'warning';
                     } else if (error.message.includes('Password must be between 8')) {
                         msg = 'A senha deve conter no mínimo 8 caracteres.';
                     } else if (error.message.includes('commonly used password')) {
@@ -61,7 +63,7 @@ const ResetPassword = () => {
                         msg = error.message;
                     }
                 }
-                showAlert(msg, 'error');
+                showAlert(msg, msgType);
             } else {
                 showAlert('Senha redefinida com sucesso! Faça login com a sua nova senha.', 'success', 'Tudo certo!', 2000);
                 navigate('/');

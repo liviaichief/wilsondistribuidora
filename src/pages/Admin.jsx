@@ -245,6 +245,7 @@ const Admin = () => {
                         >
                             <option value="all">Todas as Categorias</option>
                             <option value="carne">Carne</option>
+                            <option value="suinos">Suínos</option>
                             <option value="frango">Frango</option>
                             <option value="embutidos">Embutidos</option>
                             <option value="acompanhamentos">Acompanhamentos</option>
@@ -537,6 +538,7 @@ const Admin = () => {
                                     onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
                                 >
                                     <option value="carne">Carne</option>
+                                    <option value="suinos">Suínos</option>
                                     <option value="frango">Frango</option>
                                     <option value="embutidos">Embutidos</option>
                                     <option value="acompanhamentos">Acompanhamentos</option>

@@ -96,7 +96,14 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                     first_name: profile.first_name || '',
                     last_name: profile.last_name || '',
                     whatsapp: profile.whatsapp || '',
-                    birthday: displayBirthday
+                    birthday: displayBirthday,
+                    address_cep: profile.address_cep || '',
+                    address_street: profile.address_street || '',
+                    address_neighborhood: profile.address_neighborhood || '',
+                    address_city: profile.address_city || '',
+                    address_state: profile.address_state || '',
+                    address_number: profile.address_number || '',
+                    address_complement: profile.address_complement || ''
                 });
                 setProfileId(profile.$id);
             } else {
@@ -105,7 +112,14 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                     first_name: parts[0] || '',
                     last_name: parts.slice(1).join(' ') || '',
                     whatsapp: '',
-                    birthday: ''
+                    birthday: '',
+                    address_cep: '',
+                    address_street: '',
+                    address_neighborhood: '',
+                    address_city: '',
+                    address_state: '',
+                    address_number: '',
+                    address_complement: ''
                 });
                 setProfileId(null);
             }
@@ -141,7 +155,14 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                 last_name: formData.last_name,
                 full_name: fullName,
                 whatsapp: formData.whatsapp,
-                birthday: isoBirthday
+                birthday: isoBirthday,
+                address_cep: formData.address_cep,
+                address_street: formData.address_street,
+                address_neighborhood: formData.address_neighborhood,
+                address_city: formData.address_city,
+                address_state: formData.address_state,
+                address_number: formData.address_number,
+                address_complement: formData.address_complement
             };
 
             const result = await updateProfile(data, profileId);
@@ -263,6 +284,88 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                                         placeholder="DD/MM/AAAA"
                                     />
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Endereço Padrão (Opcional) */}
+                        <div style={{ marginTop: '5px', marginBottom: '15px' }}>
+                            <h4 style={{ color: 'var(--primary-color)', fontSize: '0.9rem', marginBottom: '10px' }}>Endereço Padrão (Opcional)</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px', marginBottom: '10px' }}>
+                                <div className="form-group">
+                                    <label>CEP</label>
+                                    <input
+                                        type="text"
+                                        value={formData.address_cep}
+                                        onChange={e => {
+                                            let rawCep = e.target.value.replace(/\D/g, '');
+                                            let maskedCep = rawCep;
+                                            if (rawCep.length > 5) {
+                                                maskedCep = `${rawCep.slice(0, 5)}-${rawCep.slice(5, 8)}`;
+                                            }
+                                            setFormData(prev => ({ ...prev, address_cep: maskedCep }));
+
+                                            // Auto fetch se chegar a 8
+                                            if (rawCep.length === 8) {
+                                                fetch(`https://viacep.com.br/ws/${rawCep}/json/`)
+                                                    .then(res => res.json())
+                                                    .then(data => {
+                                                        if (!data.erro) {
+                                                            setFormData(p => ({
+                                                                ...p,
+                                                                address_street: data.logradouro || '',
+                                                                address_neighborhood: data.bairro || '',
+                                                                address_city: data.localidade || '',
+                                                                address_state: data.uf || ''
+                                                            }));
+                                                        }
+                                                    })
+                                                    .catch(err => console.log('ViaCEP Error:', err));
+                                            }
+                                        }}
+                                        placeholder="XXXXX-XXX"
+                                        maxLength={9}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Rua/Logradouro</label>
+                                    <input
+                                        type="text"
+                                        value={formData.address_street}
+                                        onChange={e => setFormData({ ...formData, address_street: e.target.value })}
+                                        placeholder="Rua Exemplo"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '10px' }}>
+                                <div className="form-group">
+                                    <label>Número</label>
+                                    <input
+                                        type="text"
+                                        value={formData.address_number}
+                                        onChange={e => setFormData({ ...formData, address_number: e.target.value })}
+                                        placeholder="123"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Bairro</label>
+                                    <input
+                                        type="text"
+                                        value={formData.address_neighborhood}
+                                        onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
+                                        placeholder="Centro"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Complemento/Ponto de Referência</label>
+                                <input
+                                    type="text"
+                                    value={formData.address_complement}
+                                    onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+                                    placeholder="Apto 101, Ao lado da padaria..."
+                                />
                             </div>
                         </div>
 
