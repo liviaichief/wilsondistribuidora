@@ -514,11 +514,16 @@
 
 .form-group input[type="radio"],
 .form-group input[type="checkbox"] {
-    width: auto;
+    width: 20px;
+    height: 20px;
     padding: 0;
     margin: 0;
     accent-color: var(--primary-color);
     cursor: pointer;
+    background: transparent;
+    border: none;
+    -webkit-appearance: auto;
+    appearance: auto;
 }
 
 @media (max-width: 768px) {
@@ -627,10 +632,15 @@
     height: 20px;
 }
 
-.switch input {
+.switch input,
+.form-group .switch input {
     opacity: 0;
     width: 0;
     height: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    border: none;
 }
 
 .slider {
