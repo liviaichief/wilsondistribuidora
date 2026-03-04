@@ -55,7 +55,7 @@ const AdminBanners = () => {
                 ...doc,
                 id: doc.$id,
                 // Handle product relationship if expanded, or just ID
-                product_id: doc.product ? doc.product.$id : null
+                product_id: doc.product ? (typeof doc.product === 'object' ? doc.product.$id : doc.product) : null
             }));
 
             const mappedProducts = productsResponse.documents.map(doc => ({
@@ -81,7 +81,7 @@ const AdminBanners = () => {
                 title: banner.title,
                 image_url: banner.image_url,
                 link: banner.link || '',
-                product_id: banner.product ? banner.product.$id : (banner.product_id || ''),
+                product_id: banner.product_id || (banner.product ? (typeof banner.product === 'object' ? banner.product.$id : banner.product) : ''),
                 active: banner.active,
                 display_order: banner.display_order,
                 duration: banner.duration || 5
