@@ -310,155 +310,157 @@ const CartSidebar = () => {
                     </button>
                 </div>
 
-                <div className="cart-items">
-                    {cartItems.length === 0 ? (
-                        <div className="empty-cart">
-                            <ShoppingBag size={48} opacity={0.3} />
-                            <p>Seu carrinho está vazio.</p>
-                        </div>
-                    ) : (
-                        cartItems.map(item => (
-                            <div key={item.id} className="cart-item">
-                                <img src={getImageUrl(item.image)} alt={item.title} className="cart-item-img" />
-                                <div className="cart-item-info">
-                                    <h4>{item.title}</h4>
-                                    <p className="cart-item-price">R$ {item.price.toFixed(2)}</p>
-                                    <div className="cart-item-controls">
-                                        <div className="qty-selector small">
-                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
-                                            <span>{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
+                <div className="cart-scrollable-area" style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    <div className="cart-items" style={{ flexGrow: 1, overflowY: 'visible', paddingBottom: cartItems.length > 0 ? '0' : '1rem' }}>
+                        {cartItems.length === 0 ? (
+                            <div className="empty-cart">
+                                <ShoppingBag size={48} opacity={0.3} />
+                                <p>Seu carrinho está vazio.</p>
+                            </div>
+                        ) : (
+                            cartItems.map(item => (
+                                <div key={item.id} className="cart-item">
+                                    <img src={getImageUrl(item.image)} alt={item.title} className="cart-item-img" />
+                                    <div className="cart-item-info">
+                                        <h4>{item.title}</h4>
+                                        <p className="cart-item-price">R$ {item.price.toFixed(2)}</p>
+                                        <div className="cart-item-controls">
+                                            <div className="qty-selector small">
+                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
+                                                <span>{item.quantity}</span>
+                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
+                                            </div>
+                                            <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
-                                        <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
-                                            <Trash2 size={16} />
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {cartItems.length > 0 && (
-                    <div className="checkout-form">
-                        <h3><ShoppingBag size={16} style={{ marginBottom: -2 }} /> Cliente</h3>
-                        <div className="form-group">
-                            <input
-                                type="text"
-                                placeholder="Seu Nome"
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                                className="checkout-input"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <input
-                                type="tel"
-                                placeholder="Seu WhatsApp"
-                                value={customerPhone}
-                                onChange={handlePhoneChange}
-                                className="checkout-input"
-                                maxLength={15}
-                            />
-                        </div>
-
-                        <div className="delivery-options" style={{ marginTop: '15px' }}>
-                            <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Opção de Entrega</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setDeliveryMode('pickup')}
-                                    style={{
-                                        border: 'none',
-                                        background: deliveryMode === 'pickup' ? 'var(--primary-color)' : '#333',
-                                        color: deliveryMode === 'pickup' ? '#000' : '#fff',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        fontWeight: 'bold',
-                                        fontSize: '1rem',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s',
-                                        width: '100%'
-                                    }}
-                                >
-                                    Retirar na Loja
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDeliveryMode('delivery')}
-                                    style={{
-                                        border: 'none',
-                                        background: deliveryMode === 'delivery' ? 'var(--primary-color)' : '#333',
-                                        color: deliveryMode === 'delivery' ? '#000' : '#fff',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        fontWeight: 'bold',
-                                        fontSize: '1rem',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s',
-                                        width: '100%'
-                                    }}
-                                >
-                                    Entrega
-                                </button>
-                            </div>
-                        </div>
-
-                        {deliveryMode === 'delivery' && (
-                            <div className="address-form" style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <div className="form-group" style={{ position: 'relative' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="CEP (Somente números)"
-                                        value={address.cep}
-                                        onChange={handleCepChange}
-                                        className="checkout-input"
-                                        maxLength={9}
-                                    />
-                                    {isFetchingCep && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '10px', top: '12px', color: 'var(--primary-color)' }} />}
-                                </div>
-                                <div className="form-group">
-                                    <input
-                                        type="text"
-                                        placeholder="Rua / Logradouro"
-                                        value={address.street}
-                                        onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                                        className="checkout-input"
-                                    />
-                                </div>
-                                <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Número"
-                                            value={address.number}
-                                            onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                                            className="checkout-input"
-                                        />
-                                    </div>
-                                    <div className="form-group" style={{ flex: 2 }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Bairro"
-                                            value={address.neighborhood}
-                                            onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
-                                            className="checkout-input"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <input
-                                        type="text"
-                                        placeholder="Complemento / Ref."
-                                        value={address.complement}
-                                        onChange={(e) => setAddress({ ...address, complement: e.target.value })}
-                                        className="checkout-input"
-                                    />
-                                </div>
-                            </div>
+                            ))
                         )}
                     </div>
-                )}
+
+                    {cartItems.length > 0 && (
+                        <div className="checkout-form" style={{ marginTop: 'auto' }}>
+                            <h3><ShoppingBag size={16} style={{ marginBottom: -2 }} /> Cliente</h3>
+                            <div className="form-group">
+                                <input
+                                    type="text"
+                                    placeholder="Seu Nome"
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    className="checkout-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <input
+                                    type="tel"
+                                    placeholder="Seu WhatsApp"
+                                    value={customerPhone}
+                                    onChange={handlePhoneChange}
+                                    className="checkout-input"
+                                    maxLength={15}
+                                />
+                            </div>
+
+                            <div className="delivery-options" style={{ marginTop: '15px' }}>
+                                <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Opção de Entrega</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeliveryMode('pickup')}
+                                        style={{
+                                            border: 'none',
+                                            background: deliveryMode === 'pickup' ? 'var(--primary-color)' : '#333',
+                                            color: deliveryMode === 'pickup' ? '#000' : '#fff',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            fontWeight: 'bold',
+                                            fontSize: '1rem',
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        Retirar na Loja
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeliveryMode('delivery')}
+                                        style={{
+                                            border: 'none',
+                                            background: deliveryMode === 'delivery' ? 'var(--primary-color)' : '#333',
+                                            color: deliveryMode === 'delivery' ? '#000' : '#fff',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            fontWeight: 'bold',
+                                            fontSize: '1rem',
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        Entrega
+                                    </button>
+                                </div>
+                            </div>
+
+                            {deliveryMode === 'delivery' && (
+                                <div className="address-form" style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div className="form-group" style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="CEP (Somente números)"
+                                            value={address.cep}
+                                            onChange={handleCepChange}
+                                            className="checkout-input"
+                                            maxLength={9}
+                                        />
+                                        {isFetchingCep && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '10px', top: '12px', color: 'var(--primary-color)' }} />}
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            placeholder="Rua / Logradouro"
+                                            value={address.street}
+                                            onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                                            className="checkout-input"
+                                        />
+                                    </div>
+                                    <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
+                                        <div className="form-group" style={{ flex: 1 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Número"
+                                                value={address.number}
+                                                onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                                                className="checkout-input"
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ flex: 2 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Bairro"
+                                                value={address.neighborhood}
+                                                onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
+                                                className="checkout-input"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            placeholder="Complemento / Ref."
+                                            value={address.complement}
+                                            onChange={(e) => setAddress({ ...address, complement: e.target.value })}
+                                            className="checkout-input"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <div className="cart-footer">
                     <div className="cart-summary">
