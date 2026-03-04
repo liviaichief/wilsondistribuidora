@@ -244,6 +244,7 @@ const Admin = () => {
                             className="filter-select-main"
                         >
                             <option value="all">Todas as Categorias</option>
+                            <option value="kit">Kit</option>
                             <option value="carne">Carne</option>
                             <option value="suinos">Suínos</option>
                             <option value="frango">Frango</option>
@@ -536,6 +537,7 @@ const Admin = () => {
                                     value={currentProduct.category}
                                     onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
                                 >
+                                    <option value="kit">Kit</option>
                                     <option value="carne">Carne</option>
                                     <option value="suinos">Suínos</option>
                                     <option value="frango">Frango</option>

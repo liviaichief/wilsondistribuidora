@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useOrder } from '../../context/OrderContext';
 
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer } from 'lucide-react';
+import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package } from 'lucide-react';
 import './Header.css';
 
 // Custom Icons - Doodle Style
@@ -150,6 +150,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
 
     const categories = [
         { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
+        { id: 'kit', label: 'KIT', icon: Package },
         { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
         { id: 'suinos', label: 'SUÍNOS', icon: SausageIcon },
         { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
