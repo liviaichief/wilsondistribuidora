@@ -11,6 +11,7 @@ import ProductDetail from './pages/ProductDetail.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfileModal from './components/auth/ProfileModal'; // Global Modal
+import AdminSettings from './pages/AdminSettings.jsx';
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
@@ -67,6 +68,11 @@ function App() {
                   <Route path="users" element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <AdminUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="settings" element={
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                      <AdminSettings />
                     </ProtectedRoute>
                   } />
                 </Route>

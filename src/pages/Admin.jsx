@@ -6,7 +6,6 @@ import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter
 import { getImageUrl } from '../lib/imageUtils';
 import AdminBanners from './AdminBanners';
 import AdminOrders from './AdminOrders';
-import AdminSettings from './AdminSettings';
 import { useAlert } from '../context/AlertContext';
 import imageCompression from 'browser-image-compression';
 import './Admin.css';
@@ -199,20 +198,12 @@ const Admin = () => {
                 >
                     <ClipboardList size={18} /> <span>Pedidos</span>
                 </button>
-                <button
-                    className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('settings')}
-                >
-                    <Settings size={18} /> <span>Configurações</span>
-                </button>
             </div>
 
             {activeTab === 'banners' ? (
                 <AdminBanners />
             ) : activeTab === 'orders' ? (
                 <AdminOrders />
-            ) : activeTab === 'settings' ? (
-                <AdminSettings />
             ) : (
                 <div className="admin-content-inner">
                     <div className="admin-section-header">

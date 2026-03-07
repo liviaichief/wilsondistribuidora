@@ -61,8 +61,31 @@ const Home = () => {
     useEffect(() => {
         let newFiltered = [];
         if (activeCategory === 'all') {
-            // Aba Promoções
-            newFiltered = allProducts.filter(d => d.is_promotion === true);
+            // Aba Promoções: Mostrar promoções + Cópia de todos os outros produtos ordenados por categoria
+            const promoProducts = allProducts.filter(d => d.is_promotion === true);
+            const otherProducts = allProducts.filter(d => d.is_promotion !== true);
+
+            // Ordem das categorias solicitada: da esquerda para a direita, começando pela carne
+            const PROMO_CATEGORY_PRIORITY = {
+                'carne': 1,
+                'suinos': 2,
+                'frango': 3,
+                'acompanhamentos': 4,
+                'acessorios': 5,
+                'insumos': 6,
+                'bebidas': 7,
+                'kit': 8
+            };
+
+            otherProducts.sort((a, b) => {
+                const catA = (a.category || '').toLowerCase();
+                const catB = (b.category || '').toLowerCase();
+                const prioA = PROMO_CATEGORY_PRIORITY[catA] || 99;
+                const prioB = PROMO_CATEGORY_PRIORITY[catB] || 99;
+                return prioA - prioB;
+            });
+
+            newFiltered = [...promoProducts, ...otherProducts];
         } else {
             // Abas Específicas
             newFiltered = allProducts.filter(d => (d.category || '').toLowerCase() === activeCategory.toLowerCase());

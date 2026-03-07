@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../services/dataService';
 import { useCart } from '../context/CartContext';
-import { Plus, Minus, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, ArrowLeft, Loader2, X } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import Header from '../components/shop/Header';
 import './ProductDetail.css';
@@ -17,6 +17,8 @@ const ProductDetail = () => {
     const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
 
     useEffect(() => {
+        window.scrollTo(0, 0); // Força a tela a começar no topo
+
         const fetchProduct = async () => {
             setLoading(true);
             try {
@@ -89,9 +91,14 @@ const ProductDetail = () => {
         <>
             <Header />
             <div className="product-detail-container">
-                <button className="btn-back-nav" onClick={() => navigate('/')}>
-                    <ArrowLeft size={20} /> Voltar para o Catálogo
-                </button>
+                <div className="product-detail-top-bar">
+                    <button className="btn-back-nav" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={20} /> Voltar
+                    </button>
+                    <button className="btn-close-nav" onClick={() => navigate('/')} title="Fechar e ir para o início">
+                        <X size={24} />
+                    </button>
+                </div>
 
                 <div className="product-detail-content">
                     <div className="product-detail-image-wrapper">

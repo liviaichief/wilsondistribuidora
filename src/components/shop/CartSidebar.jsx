@@ -27,6 +27,7 @@ const CartSidebar = () => {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Default fallback
+    const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - 3R GRILL*'); // Default fallback message
     const [isProcessing, setIsProcessing] = useState(false); // Added processing state
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
@@ -94,6 +95,7 @@ const CartSidebar = () => {
             // Fetch system settings for WhatsApp number
             getSettings().then(data => {
                 if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
+                if (data.whatsapp_message) setWhatsappMessage(data.whatsapp_message);
             });
         }
     }, [isCartOpen, user]);
@@ -273,7 +275,14 @@ const CartSidebar = () => {
                 `CEP: ${address.cep} - ${address.city}/${address.state}`;
         }
 
-        const message = `*NOVO PEDIDO #${orderNumDisplay} - 3R GRILL*\n\n` +
+        let headerText = whatsappMessage || '*NOVO PEDIDO - 3R GRILL*';
+        if (headerText.includes('{pedido}')) {
+            headerText = headerText.replace('{pedido}', `#${orderNumDisplay}`);
+        } else {
+            headerText = `${headerText} #${orderNumDisplay}`;
+        }
+
+        const message = `${headerText}\n\n` +
             `*Itens do Pedido:*\n${itemsList}\n\n` +
             `*Dados do Cliente:*\n` +
             `Nome: ${customerName}\n` +

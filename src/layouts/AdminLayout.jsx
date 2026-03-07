@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import '../pages/Admin.css';
@@ -70,6 +70,12 @@ const AdminLayout = () => {
                         className={`nav-link ${location.pathname.startsWith('/admin/users') ? 'active' : ''}`}
                     >
                         <Users size={28} /> <span className="nav-text">Usuários</span>
+                    </Link>
+                    <Link
+                        to="/admin/settings"
+                        className={`nav-link ${location.pathname.startsWith('/admin/settings') ? 'active' : ''}`}
+                    >
+                        <Settings size={28} /> <span className="nav-text">Configurações</span>
                     </Link>
                 </nav>
 
