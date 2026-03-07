@@ -20,7 +20,6 @@ const AdminBanners = () => {
     const [formData, setFormData] = useState({
         title: '',
         image_url: '',
-        link: '',
         product_id: '',
         active: true,
         display_order: 0,
@@ -80,7 +79,6 @@ const AdminBanners = () => {
             setFormData({
                 title: banner.title,
                 image_url: banner.image_url,
-                link: banner.link || '',
                 product_id: banner.product_id || (banner.product ? (typeof banner.product === 'object' ? banner.product.$id : banner.product) : ''),
                 active: banner.active,
                 display_order: banner.display_order,
@@ -91,7 +89,6 @@ const AdminBanners = () => {
             setFormData({
                 title: '',
                 image_url: '',
-                link: '',
                 product_id: '',
                 active: true,
                 display_order: banners.length + 1,
@@ -151,7 +148,6 @@ const AdminBanners = () => {
             const payload = {
                 title: formData.title,
                 image_url: finalImageUrl,
-                link: formData.link || null,
                 product: formData.product_id || null, // Appwrite relationship expects ID
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
@@ -267,7 +263,7 @@ const AdminBanners = () => {
                                 </div>
                                 <div className="banner-info" style={{ padding: '15px' }}>
                                     <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>{banner.title}</h3>
-                                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#888' }}>Link: {banner.link || 'Sem link'}</p>
+                                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#888' }}>Produto: {products.find(p => p.id === banner.product_id)?.title || 'Nenhum'}</p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                                         <span style={{ fontSize: '0.8rem', color: '#666' }}>Ordem: {banner.display_order}</span>
                                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -372,16 +368,6 @@ const AdminBanners = () => {
                                             </div>
                                         )}
                                     </div>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Link (Opcional)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.link}
-                                        onChange={e => setFormData({ ...formData, link: e.target.value })}
-                                        placeholder="Ex: /promocoes"
-                                    />
                                 </div>
 
                                 <div className="form-group">
