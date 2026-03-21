@@ -13,6 +13,18 @@ const processDoc = (doc) => ({
 
 export const getProducts = async (category, page = 1, limit = 20) => {
     try {
+        // --- TESTE DE BLOQUEIO DE SISTEMA ---
+        try {
+            const blockDoc = await databases.getDocument(DATABASE_ID, 'settings', 'system_blocked');
+            if (blockDoc && blockDoc.value === 'true') {
+                console.warn("[SECURITY] Sistema Bloqueado. Ocultando produtos.");
+                return { documents: [], total: 0, system_blocked: true };
+            }
+        } catch (e) {
+            // Ignorar se a configuração não existir
+        }
+        // ------------------------------------
+
         // REMOVED server-side category filter temporarily to diagnose index/case issues
         // We will fetch more items and filter in memory to ensure visibility.
         const queries = []; // Initialize queries array

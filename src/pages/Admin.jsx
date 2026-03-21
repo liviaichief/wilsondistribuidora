@@ -81,12 +81,22 @@ const Admin = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (product) => {
         showConfirm(
             'Tem certeza que deseja excluir este produto?',
             async () => {
                 try {
-                    await deleteProduct(id);
+                    // First delete the file if it exists
+                    if (product.image) {
+                        try {
+                            await storage.deleteFile(BUCKET_ID, product.image);
+                        } catch (e) {
+                            console.warn('Failed to delete product image:', e);
+                        }
+                    }
+                    
+                    // Then delete the document
+                    await deleteProduct(product.id || product.$id);
                     loadProducts();
                     showAlert('O produto foi removido com sucesso.', 'success', 'Produto excluído');
                 } catch (err) {
@@ -377,7 +387,7 @@ const Admin = () => {
                                                         <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
                                                             <Edit2 size={18} />
                                                         </button>
-                                                        <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
+                                                        <button className="icon-btn delete" onClick={() => handleDelete(item)} title="Excluir">
                                                             <Trash2 size={18} />
                                                         </button>
                                                     </div>
@@ -476,6 +486,16 @@ const Admin = () => {
                                                         Permission.delete(Role.users())
                                                     ]
                                                 );
+
+                                                // Cleanup previous image if it exists and is different
+                                                if (currentProduct.image && currentProduct.image !== result.$id) {
+                                                    try {
+                                                        await storage.deleteFile(BUCKET_ID, currentProduct.image);
+                                                        console.log('Old product image deleted:', currentProduct.image);
+                                                    } catch (e) {
+                                                        console.warn('Failed to delete old image:', e);
+                                                    }
+                                                }
 
                                                 setCurrentProduct(prev => ({ ...prev, image: result.$id }));
                                             } catch (err) {

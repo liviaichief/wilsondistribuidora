@@ -136,9 +136,21 @@ const AdminBanners = () => {
                     ]
                 );
 
-                // Construct URL manually to match the Product behavior and satisfy the URL format requirement
                 const url = storage.getFileView(BUCKET_ID, fileUpload.$id);
-                finalImageUrl = url.href || url; // Handle if it returns object or string
+                finalImageUrl = url.href || url;
+
+                // Cleanup previous image if editing
+                if (editingBanner && editingBanner.image_url) {
+                    try {
+                        const oldFileId = editingBanner.image_url.split('/files/')[1]?.split('/')[0];
+                        if (oldFileId) {
+                            await storage.deleteFile(BUCKET_ID, oldFileId);
+                            console.log('Old banner file deleted:', oldFileId);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to delete old image:', e);
+                    }
+                }
             }
 
             // Ensure we don't send an empty string if it's required as URL, but if it's optional it should be null?
@@ -182,16 +194,31 @@ const AdminBanners = () => {
         }
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = (banner) => {
         showConfirm(
             'Tem certeza que deseja excluir este banner?',
             async () => {
                 try {
+                    // Delete document
                     await databases.deleteDocument(
                         DATABASE_ID,
                         COLLECTIONS.BANNERS,
-                        id
+                        banner.id
                     );
+
+                    // Delete file from storage if it exists
+                    if (banner.image_url) {
+                        try {
+                            const fileId = banner.image_url.split('/files/')[1]?.split('/')[0];
+                            if (fileId) {
+                                await storage.deleteFile(BUCKET_ID, fileId);
+                                console.log('Banner file deleted:', fileId);
+                            }
+                        } catch (e) {
+                            console.warn('Could not delete banner file:', e);
+                        }
+                    }
+
                     showAlert('Banner excluído com sucesso!', 'success', null, 1000);
                     loadData();
                 } catch (error) {
@@ -282,7 +309,7 @@ const AdminBanners = () => {
                                                 <Edit size={18} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(banner.id)}
+                                                onClick={() => handleDelete(banner)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff4444' }}
                                                 title="Excluir"
                                             >
