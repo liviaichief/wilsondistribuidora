@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { account, databases } from '../../lib/appwrite';
 import { ID, Query } from 'appwrite';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAlert } from '../../context/AlertContext';
 import { X, Save, Loader2, User, Mail, Smartphone, CheckCircle, Key, Send, Calendar } from 'lucide-react';
@@ -10,6 +10,7 @@ import '../../pages/Admin.css';
 
 export default function ProfileModal({ isOpen, onClose, user }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const { updateProfile, resetPassword } = useAuth();
     const { showAlert } = useAlert();
     const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
     });
     const [profileId, setProfileId] = useState(null);
 
-    // Initial Load
+    // Initial Load e Trava de Scroll
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -43,6 +44,13 @@ export default function ProfileModal({ isOpen, onClose, user }) {
             document.body.style.overflow = 'auto';
         };
     }, [isOpen, user]);
+
+    // Fechar automaticamente caso a pessoa navegue no background
+    useEffect(() => {
+        if (isOpen) {
+            onClose();
+        }
+    }, [location.pathname]);
 
     const handleWhatsAppChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
