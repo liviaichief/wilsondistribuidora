@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
@@ -67,7 +68,7 @@ const Login = () => {
                     onClick={() => navigate('/')}
                     className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
                 >
-                    <span className="material-symbols-outlined">close</span>
+                    <X size={24} />
                 </button>
 
                 <div className="login-header">

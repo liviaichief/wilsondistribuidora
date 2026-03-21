@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import ProductCard from '../ProductCard';
+import ProductCard from '../shop/ProductCard';
 import { CartProvider } from '../../context/CartContext';
 import { AuthProvider } from '../../context/AuthContext';
 import { BrowserRouter } from 'react-router-dom';

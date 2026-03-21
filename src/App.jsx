@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
@@ -76,6 +76,9 @@ function App() {
                     </ProtectedRoute>
                   } />
                 </Route>
+                
+                {/* Fallback para rotas inexistentes (evita tela em branco e becos sem saída) */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
 
               {/* Global Modals */}
