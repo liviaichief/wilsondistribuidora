@@ -86,8 +86,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const logoClickTimerRef = React.useRef(null);
 
     const handleLogoClick = () => {
-        // Refresh with cache clear (hard reload)
-        window.location.reload(true);
+        navigate('/');
     };
 
     React.useEffect(() => {

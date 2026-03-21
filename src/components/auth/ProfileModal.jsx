@@ -28,11 +28,20 @@ export default function ProfileModal({ isOpen, onClose, user }) {
 
     // Initial Load
     useEffect(() => {
-        if (isOpen && user) {
-            fetchProfile();
-            setSuccess(false);
-            setResetSent(false);
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            if (user) {
+                fetchProfile();
+                setSuccess(false);
+                setResetSent(false);
+            }
+        } else {
+            document.body.style.overflow = 'auto';
         }
+        
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
     }, [isOpen, user]);
 
     const handleWhatsAppChange = (e) => {
