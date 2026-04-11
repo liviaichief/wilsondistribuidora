@@ -7,16 +7,7 @@ import './Home.css';
 
 const ITEMS_PER_PAGE = 8; // Aumentado um pouco para preencher telas iniciais maiores
 
-const CATEGORY_PRIORITY = {
-    'kit': 1,
-    'carne': 2,
-    'suinos': 3,
-    'frango': 4,
-    'acompanhamentos': 5,
-    'acessorios': 6,
-    'insumos': 7,
-    'bebidas': 8
-};
+
 
 const Home = () => {
     // Banco em cache local 
@@ -43,15 +34,27 @@ const Home = () => {
         const fetchInitialData = async () => {
             setLoading(true);
             try {
-                // Ao passar null, o dataService nos devolve a base inteira sem filtros severos.
-                const data = await getProducts(); // dataService internamente limita a 100 itens ord. por data
+                const { getCategories } = await import('../services/dataService');
+                const [data, categoriesList] = await Promise.all([
+                    getProducts(),
+                    getCategories()
+                ]);
+
                 if (data.system_blocked) {
                     setIsSystemBlocked(true);
                 } else {
                     setIsSystemBlocked(false);
                 }
-                // Filtramos produtos desativados para o cliente:
-                const activeOnly = data.documents.filter(d => d.active !== false);
+
+                // Lista de IDs de categorias ativas
+                const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
+
+                // Filtramos produtos desativados E produtos de categorias desativadas para o cliente:
+                const activeOnly = data.documents.filter(d => 
+                    d.active !== false && 
+                    activeCatIds.includes(d.category)
+                );
+                
                 setAllProducts(activeOnly);
             } catch (err) {
                 console.error("Home load error:", err);
@@ -80,26 +83,6 @@ const Home = () => {
             // Aba Promoções: Mostrar promoções + Cópia de todos os outros produtos ordenados por categoria
             const promoProducts = allProducts.filter(d => d.is_promotion === true);
             const otherProducts = allProducts.filter(d => d.is_promotion !== true);
-
-            // Ordem das categorias solicitada: da esquerda para a direita, começando pela carne
-            const PROMO_CATEGORY_PRIORITY = {
-                'carne': 1,
-                'suinos': 2,
-                'frango': 3,
-                'acompanhamentos': 4,
-                'acessorios': 5,
-                'insumos': 6,
-                'bebidas': 7,
-                'kit': 8
-            };
-
-            otherProducts.sort((a, b) => {
-                const catA = (a.category || '').toLowerCase();
-                const catB = (b.category || '').toLowerCase();
-                const prioA = PROMO_CATEGORY_PRIORITY[catA] || 99;
-                const prioB = PROMO_CATEGORY_PRIORITY[catB] || 99;
-                return prioA - prioB;
-            });
 
             newFiltered = [...promoProducts, ...otherProducts];
         } else {

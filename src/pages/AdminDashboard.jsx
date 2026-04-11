@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS, account } from '../lib/appwrite';
 import { Query } from 'appwrite';
-import { backfillSKUs } from '../services/dataService';
+import { backfillSKUs, getSettings, sendWhatsAppMessage } from '../services/dataService';
 import {
     Users,
     ShoppingBag,
@@ -13,7 +13,6 @@ import {
     Cake,
     MessageCircle
 } from 'lucide-react';
-import { getSettings } from '../services/dataService';
 import {
     BarChart,
     Bar,
@@ -218,15 +217,23 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleSendBirthdayMessage = (user) => {
+    const handleSendBirthdayMessage = async (user) => {
         if (!user.whatsapp) {
             showAlert("Este usuário não possui WhatsApp cadastrado.", "warning");
             return;
         }
 
-        let msg = birthdayMessage || "Parabéns {nome}! A Boutique de Carne 3R te deseja um dia incrível!";
+        let msg = birthdayMessage || "Parabéns {nome}! A Base App te deseja um dia incrível!";
         msg = msg.replace('{nome}', user.full_name || 'Amigo');
 
+        // 1. Try Direct Send via API
+        const didSend = await sendWhatsAppMessage(user.whatsapp, msg);
+        if (didSend) {
+            showAlert(`Parabéns para ${user.full_name} enviado com sucesso! 🎉`, 'success');
+            return;
+        }
+
+        // 2. Fallback to manual
         const cleanPhone = user.whatsapp.replace(/\D/g, '');
         const whatsappUrl = `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}?text=${encodeURIComponent(msg)}`;
         window.open(whatsappUrl, '_blank');

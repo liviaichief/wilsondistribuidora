@@ -58,3 +58,15 @@
 .admin-section-header.dashboard-header {
     margin-bottom: 30px;
 }
+
+.dashboard-header h2 {
+    color: #ffffff !important;
+}
+
+.chart-title {
+    color: #ffffff !important;
+}
+
+h2, h3 {
+    color: #ffffff;
+}

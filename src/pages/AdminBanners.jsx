@@ -23,9 +23,11 @@ const AdminBanners = () => {
         product_id: '',
         active: true,
         display_order: 0,
-        duration: 5
+        duration: 5,
+        thumbnail_url: ''
     });
     const [imageFile, setImageFile] = useState(null);
+    const [thumbFile, setThumbFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -73,7 +75,8 @@ const AdminBanners = () => {
     };
 
     const handleOpenModal = (banner = null) => {
-        setImageFile(null); // Reset file input
+        setImageFile(null);
+        setThumbFile(null);
         if (banner) {
             setEditingBanner(banner);
             setFormData({
@@ -82,7 +85,8 @@ const AdminBanners = () => {
                 product_id: banner.product_id || (banner.product ? (typeof banner.product === 'object' ? banner.product.$id : banner.product) : ''),
                 active: banner.active,
                 display_order: banner.display_order,
-                duration: banner.duration || 5
+                duration: banner.duration || 5,
+                thumbnail_url: banner.thumbnail_url || ''
             });
         } else {
             setEditingBanner(null);
@@ -92,7 +96,8 @@ const AdminBanners = () => {
                 product_id: '',
                 active: true,
                 display_order: banners.length + 1,
-                duration: 5
+                duration: 5,
+                thumbnail_url: ''
             });
         }
         setIsModalOpen(true);
@@ -110,85 +115,104 @@ const AdminBanners = () => {
 
         try {
             let finalImageUrl = formData.image_url;
+            let finalThumbUrl = formData.thumbnail_url;
 
-            // Upload image if selected
-            if (imageFile) {
-                const options = {
-                    maxSizeMB: 0.25, // ~250KB max
-                    maxWidthOrHeight: 1920,
-                    useWebWorker: true,
-                };
-                const compressedBlob = await imageCompression(imageFile, options);
-                console.log(`Comprimiu banner: ${(imageFile.size / 1024).toFixed(0)}KB para ${(compressedBlob.size / 1024).toFixed(0)}KB`);
+            // Helper for uploading
+            const uploadFile = async (file, isVideo = false) => {
+                let fileToUpload = file;
+                if (!isVideo && file.type.startsWith('image/')) {
+                    const options = {
+                        maxSizeMB: 0.15, // Reduzido drasticamente para 150KB (antes 1MB)
+                        maxWidthOrHeight: 1280, // Reduzido para HD (antes 1920px)
+                        useWebWorker: true,
+                        initialQuality: 0.75
+                    };
+                    const compressedBlob = await imageCompression(file, options);
+                    fileToUpload = new File([compressedBlob], file.name, { type: file.type });
+                }
 
-                // Appwrite requires a File object with a name in some SDK versions/environments
-                const compressedFile = new File([compressedBlob], imageFile.name, { type: imageFile.type });
-
-                const fileUpload = await storage.createFile(
+                const fileId = isVideo ? `v_${ID.unique()}` : ID.unique();
+                const result = await storage.createFile(
                     BUCKET_ID,
-                    ID.unique(),
-                    compressedFile,
+                    fileId,
+                    fileToUpload,
                     [
                         Permission.read(Role.any()),
-                        Permission.write(Role.users()),
-                        Permission.update(Role.users()),
-                        Permission.delete(Role.users())
+                        Permission.write(Role.users())
                     ]
                 );
+                return storage.getFileView(BUCKET_ID, result.$id).href;
+            };
 
-                const url = storage.getFileView(BUCKET_ID, fileUpload.$id);
-                finalImageUrl = url.href || url;
-
-                // Cleanup previous image if editing
-                if (editingBanner && editingBanner.image_url) {
+            // Upload Main File if selected
+            if (imageFile) {
+                finalImageUrl = await uploadFile(imageFile, imageFile.type.startsWith('video/'));
+                
+                // Cleanup previous image
+                if (editingBanner?.image_url) {
                     try {
-                        const oldFileId = editingBanner.image_url.split('/files/')[1]?.split('/')[0];
-                        if (oldFileId) {
-                            await storage.deleteFile(BUCKET_ID, oldFileId);
-                            console.log('Old banner file deleted:', oldFileId);
-                        }
-                    } catch (e) {
-                        console.warn('Failed to delete old image:', e);
-                    }
+                        const oldId = editingBanner.image_url.split('/files/')[1]?.split('/')[0];
+                        if (oldId) await storage.deleteFile(BUCKET_ID, oldId);
+                    } catch (e) { console.warn(e); }
                 }
             }
 
-            // Ensure we don't send an empty string if it's required as URL, but if it's optional it should be null?
-            // If the schema says URL and it's required, we must have one.
-            // If logic relies on either file or external URL, we should have one by now.
+            // Upload Thumbnail if selected
+            if (thumbFile) {
+                finalThumbUrl = await uploadFile(thumbFile, false);
+                
+                // Cleanup previous thumb
+                if (editingBanner?.thumbnail_url) {
+                    try {
+                        const oldId = editingBanner.thumbnail_url.split('/files/')[1]?.split('/')[0];
+                        if (oldId) await storage.deleteFile(BUCKET_ID, oldId);
+                    } catch (e) { console.warn(e); }
+                }
+            }
 
             const payload = {
                 title: formData.title,
                 image_url: finalImageUrl,
-                product: formData.product_id || null, // Appwrite relationship expects ID
+                thumbnail_url: finalThumbUrl,
+                product: formData.product_id || null,
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
                 duration: parseInt(formData.duration)
             };
 
             if (editingBanner) {
-                await databases.updateDocument(
-                    DATABASE_ID,
-                    COLLECTIONS.BANNERS,
-                    editingBanner.id,
-                    payload
-                );
-                showAlert('Banner atualizado com sucesso!', 'success', null, 1000);
+                try {
+                    await databases.updateDocument(
+                        DATABASE_ID,
+                        COLLECTIONS.BANNERS,
+                        editingBanner.id,
+                        payload,
+                        [Permission.read(Role.any()), Permission.write(Role.users())]
+                    );
+                    showAlert('Banner atualizado com sucesso!', 'success', null, 1000);
+                } catch (err) {
+                    throw new Error(`DATABASE (Update): ${err.message}`);
+                }
             } else {
-                await databases.createDocument(
-                    DATABASE_ID,
-                    COLLECTIONS.BANNERS,
-                    ID.unique(),
-                    payload
-                );
-                showAlert('Banner criado com sucesso!', 'success', null, 1000);
+                try {
+                    await databases.createDocument(
+                        DATABASE_ID,
+                        COLLECTIONS.BANNERS,
+                        ID.unique(),
+                        payload,
+                        [Permission.read(Role.any()), Permission.write(Role.users())]
+                    );
+                    showAlert('Banner criado com sucesso!', 'success', null, 1000);
+                } catch (err) {
+                    throw new Error(`DATABASE (Create): ${err.message}`);
+                }
             }
 
             setIsModalOpen(false);
             loadData();
         } catch (error) {
             console.error('Error saving banner:', error);
-            showAlert('Erro ao salvar banner: ' + error.message, 'error');
+            showAlert('ERRO IDENTIFICADO: ' + error.message, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -269,11 +293,32 @@ const AdminBanners = () => {
                         {banners.map((banner) => (
                             <div key={banner.id} className="banner-card" style={{ background: '#1e1e1e', borderRadius: '8px', overflow: 'hidden', border: '1px solid #333' }}>
                                 <div className="banner-image" style={{ height: '150px', position: 'relative', backgroundColor: '#000' }}>
-                                    <img
-                                        src={getImageUrl(banner.image_url)}
-                                        alt={banner.title}
-                                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                    />
+                                    {(() => {
+                                        const mediaUrl = getImageUrl(banner.image_url);
+                                        const isVideo = mediaUrl && (
+                                            mediaUrl.toLowerCase().includes('/files/v_') ||
+                                            mediaUrl.toLowerCase().includes('.mp4') ||
+                                            mediaUrl.toLowerCase().includes('.webm')
+                                        );
+
+                                        if (banner.thumbnail_url) {
+                                            return <img src={getImageUrl(banner.thumbnail_url)} alt="Thumbnail" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                                        }
+
+                                        if (isVideo) {
+                                            return (
+                                                <video 
+                                                    src={mediaUrl} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                                    muted 
+                                                    onMouseOver={e => e.target.play()} 
+                                                    onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                />
+                                            );
+                                        }
+
+                                        return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                                    })()}
                                     <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}>
                                         <div style={{ background: 'rgba(0,0,0,0.7)', borderRadius: '4px', padding: '4px 8px' }}>
                                             <span style={{ color: banner.active ? '#4CAF50' : '#888', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
@@ -336,7 +381,7 @@ const AdminBanners = () => {
 
                             <div className="info-banner" style={{
                                 backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                                border: '1px solid var(--primary-color)',
+                                border: '1px solid #fff',
                                 borderRadius: '4px',
                                 padding: '10px',
                                 marginBottom: '15px',
@@ -351,10 +396,9 @@ const AdminBanners = () => {
                                     <label>Título</label>
                                     <input
                                         type="text"
-                                        required
                                         value={formData.title}
                                         onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                        placeholder="Ex: Promoção de Picanha"
+                                        placeholder="Ex: Promoção de Picanha (Opcional)"
                                     />
                                 </div>
 
@@ -364,7 +408,7 @@ const AdminBanners = () => {
                                         <div style={{ position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
                                             <input
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/*,video/*"
                                                 onChange={handleImageChange}
                                                 style={{
                                                     padding: '10px',
@@ -379,23 +423,64 @@ const AdminBanners = () => {
                                         {(imageFile || formData.image_url) && (
                                             <div style={{
                                                 marginTop: '10px',
-                                                height: '150px',
+                                                height: '250px',
                                                 background: '#000',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 border: '1px solid #444',
-                                                borderRadius: '4px'
+                                                borderRadius: '4px',
+                                                overflow: 'hidden'
                                             }}>
-                                                <img
-                                                    src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)}
-                                                    alt="Preview"
-                                                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                                                />
+                                                {((imageFile?.type.startsWith('video/')) || (formData.image_url && (formData.image_url.includes('/files/v_') || formData.image_url.includes('.mp4') || formData.image_url.includes('.webm')))) ? (
+                                                    <video 
+                                                        src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)} 
+                                                        controls 
+                                                        muted
+                                                        poster={formData.thumbnail_url ? getImageUrl(formData.thumbnail_url) : undefined}
+                                                        style={{ maxHeight: '100%', maxWidth: '100%' }}
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)}
+                                                        alt="Preview"
+                                                        style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                                    />
+                                                )}
                                             </div>
                                         )}
                                     </div>
                                 </div>
+                                {(imageFile?.type.startsWith('video/') || (formData.image_url && (formData.image_url.includes('/files/v_') || formData.image_url.includes('.mp4') || formData.image_url.includes('.webm')))) && (
+                                    <div className="form-group" style={{ marginTop: '10px', backgroundColor: 'rgba(212, 175, 55, 0.05)', padding: '15px', borderRadius: '8px', border: '1px dashed rgba(212, 175, 55, 0.3)' }}>
+                                        <label style={{ color: '#D4AF37', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                            <ImageIcon size={18} /> IMAGEM DE CAPA DO VÍDEO
+                                        </label>
+                                        <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>Esta imagem será exibida enquanto o vídeo carrega no site.</p>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => e.target.files[0] && setThumbFile(e.target.files[0])}
+                                            style={{
+                                                padding: '10px',
+                                                background: '#1a1a1a',
+                                                border: '1px solid #333',
+                                                borderRadius: '4px',
+                                                width: '100%',
+                                                color: '#fff'
+                                            }}
+                                        />
+                                        {(thumbFile || formData.thumbnail_url) && (
+                                            <div style={{ marginTop: '10px', height: '100px', width: '180px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #444' }}>
+                                                <img 
+                                                    src={thumbFile ? URL.createObjectURL(thumbFile) : getImageUrl(formData.thumbnail_url)} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                    alt="Thumbnail Preview"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="form-group">
                                     <label>Vincular Produto (Opcional)</label>

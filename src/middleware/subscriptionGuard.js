@@ -16,12 +16,12 @@ const SUBSCRIPTION_GUARD = async (context, next) => {
         .setKey(process.env.APPWRITE_API_KEY);
 
     const databases = new Databases(client);
-    const dbId = process.env.VITE_DATABASE_ID || 'boutique_carne_db';
+    const dbId = process.env.VITE_DATABASE_ID || '';
     const subCollection = 'subscriptions';
 
     // 2. Identificação do Usuário (via Header de Auth do Appwrite)
     const userId = req.headers['x-appwrite-user-id'];
-    const systemId = process.env.SYSTEM_ID || 'BOUTIQUE_CARNE_SAAS';
+    const systemId = process.env.SYSTEM_ID || 'BASE_APP_SAAS';
 
     if (!userId) {
         log('Unauthorized: No user ID in headers');

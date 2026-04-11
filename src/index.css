@@ -1,25 +1,22 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
-    /* Existing Colors */
-    --primary-color: #D4AF37;
-    --primary-hover: #FFE57C;
-    --secondary-color: #121212;
-    --surface-color: #1E1E1E;
-    --text-color: #E0E0E0;
-    --text-muted: #A0A0A0;
-    --accent-color: #FFFFFF;
+    /* Obsidian Butcher Constants */
+    --primary-color: #800020;
+    --primary-light: #ffb3b5;
+    --accent-color: #D4AF37; /* Gold accent for readability on dark backgrounds */
+    --secondary-color: #131313;
+    --surface-lowest: #0e0e0e;
+    --surface-highest: #2a2a2a;
+    --text-color: #e5e2e1;
+    --text-muted: #e0bfbf;
 
-    /* New Redesign Colors */
-    --color-primary: #d4af35;
-    --color-background-light: #f8f7f6;
-    --color-background-dark: #0a0a0a;
-    --color-surface-dark: #1a1a1a;
-    --color-border-dark: #2d2a1e;
-    --color-security-green: #10b981;
-
-    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+    --font-heading: 'Newsreader', serif;
+    --font-family: 'Work Sans', sans-serif;
+    
+    --ghost-border: rgba(255, 255, 255, 0.15);
+    --ambient-shadow: 0 20px 40px rgba(128, 0, 32, 0.08);
 }
 
 @theme {

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Manrope:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#313030",
+                    "primary-container": "#d40000",
+                    "background": "#131313",
+                    "on-surface": "#e5e2e1",
+                    "outline": "#af8781",
+                    "on-tertiary": "#402d00",
+                    "error-container": "#93000a",
+                    "surface-dim": "#131313",
+                    "on-tertiary-container": "#ffe6b9",
+                    "outline-variant": "#5e3f3a",
+                    "primary": "#ffb4a8",
+                    "tertiary-fixed": "#ffdfa0",
+                    "tertiary": "#fbbc00",
+                    "surface-variant": "#353534",
+                    "primary-fixed-dim": "#ffb4a8",
+                    "surface-container": "#201f1f",
+                    "surface-container-high": "#2a2a2a",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-surface-variant": "#e8bcb5",
+                    "primary-fixed": "#ffdad4",
+                    "on-primary-container": "#ffe3de",
+                    "inverse-surface": "#e5e2e1",
+                    "inverse-primary": "#c00000",
+                    "secondary-container": "#474746",
+                    "on-primary": "#690000",
+                    "on-tertiary-fixed-variant": "#5c4300",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-secondary-container": "#b7b5b4",
+                    "on-secondary-fixed-variant": "#474746",
+                    "on-primary-fixed-variant": "#930000",
+                    "on-background": "#e5e2e1",
+                    "surface-bright": "#3a3939",
+                    "on-error": "#690005",
+                    "secondary": "#c8c6c5",
+                    "tertiary-fixed-dim": "#fbbc00",
+                    "error": "#ffb4ab",
+                    "on-primary-fixed": "#410000",
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "surface-tint": "#ffb4a8",
+                    "surface": "#131313",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-secondary": "#313030",
+                    "surface-container-highest": "#353534",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary-container": "#866300",
+                    "on-secondary-fixed": "#1c1b1b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #131313; color: #e5e2e1; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(53, 53, 52, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(94, 63, 58, 0.15); }
+        .ember-glow { background: linear-gradient(45deg, #d40000, #930000); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #353534; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- Root Layout Wrapper -->
+<div class="flex h-screen w-full">
+<!-- NavigationDrawer Implementation -->
+<aside class="hidden md:flex flex-col h-full w-80 bg-neutral-950 border-r border-white/10 shadow-[50px_0_100px_rgba(0,0,0,0.9)] z-40">
+<div class="flex flex-col h-full py-8">
+<!-- Brand Identity -->
+<div class="px-8 mb-12">
+<h1 class="text-amber-500 font-serif italic text-2xl tracking-tight">THE BOUTIQUE</h1>
+<p class="text-[10px] uppercase tracking-[0.3em] text-neutral-500 mt-1">Administrative Terminal</p>
+</div>
+<!-- Navigation Items -->
+<nav class="flex-1 space-y-1">
+<a class="flex items-center bg-red-950/30 text-red-500 border-l-4 border-red-600 px-6 py-4 transition-all duration-500" href="#">
+<span class="material-symbols-outlined mr-4">dashboard</span>
+<span class="font-serif text-lg">Dashboard</span>
+</a>
+<a class="flex items-center text-neutral-400 px-6 py-4 hover:bg-neutral-900 hover:text-white transition-all duration-500" href="#">
+<span class="material-symbols-outlined mr-4">restaurant_menu</span>
+<span class="font-serif text-lg">Products</span>
+</a>
+<a class="flex items-center text-neutral-400 px-6 py-4 hover:bg-neutral-900 hover:text-white transition-all duration-500" href="#">
+<span class="material-symbols-outlined mr-4">group</span>
+<span class="font-serif text-lg">Users</span>
+</a>
+<a class="flex items-center text-neutral-400 px-6 py-4 hover:bg-neutral-900 hover:text-white transition-all duration-500" href="#">
+<span class="material-symbols-outlined mr-4">payments</span>
+<span class="font-serif text-lg">Financial</span>
+</a>
+<a class="flex items-center text-neutral-400 px-6 py-4 hover:bg-neutral-900 hover:text-white transition-all duration-500" href="#">
+<span class="material-symbols-outlined mr-4">settings</span>
+<span class="font-serif text-lg">Settings</span>
+</a>
+</nav>
+<!-- Footer Section in Sidebar -->
+<div class="px-8 mt-auto pt-8 border-t border-white/5">
+<div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low">
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover grayscale" data-alt="Portrait of a professional man in a dark suit with moody lighting and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdUn7BQMYw9cjpWNExD3LiZATzghoMOcuy_087_OCJtg7NuKAQ77iTARz4kCRp33vN8IHi5Z_dkCB73pMtwqcYy0OXrtdY4hosnaGb3XyKW1t6i88PKCKgZO-1lX5-qHwIq2N5Aq6bti_tacYvmxshNzKwi3G_KDCy6omVsrFvXkk8lqxP2dlRft-7vMwpzLDjWUmyaYdpFx3BXMcVmUyPFJSEbNET2fmr5H-EAF4pNgKpmyFXUxEeacFNlFoX8DFfQcvFXJBWjqL4"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Jean-Luc Alchemist</p>
+<p class="text-[10px] text-neutral-500 uppercase">Head Purveyor</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col relative overflow-hidden bg-background">
+<!-- TopAppBar Implementation -->
+<header class="fixed top-0 right-0 left-0 md:left-80 z-50 bg-neutral-950/60 backdrop-blur-2xl shadow-2xl shadow-black/50">
+<div class="flex items-center justify-between px-8 py-4 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-neutral-400 md:hidden">menu</span>
+<h2 class="text-xl font-bold tracking-widest text-neutral-100 uppercase font-serif">PRIMAL NOIR</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container-lowest px-4 py-2 rounded-full border border-outline-variant/15">
+<span class="material-symbols-outlined text-neutral-500 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-on-surface w-64 placeholder:text-neutral-600" placeholder="Search orders, clients..." type="text"/>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined text-neutral-400 hover:text-amber-400 cursor-pointer transition-colors duration-500">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-neutral-400 hover:text-amber-400 cursor-pointer transition-colors duration-500">help_outline</span>
+</div>
+</div>
+</header>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto pt-24 pb-12 px-8">
+<!-- Page Title -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<h3 class="text-4xl font-serif font-bold text-on-surface leading-tight">Terminal Overview</h3>
+<p class="text-neutral-500 font-body mt-2">Curating excellence since 1984. Your operational hearth is warm.</p>
+</div>
+<button class="ember-glow px-6 py-3 rounded-lg text-white font-bold flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-red-900/20">
+<span class="material-symbols-outlined">add</span>
+                        NEW SHIPMENT
+                    </button>
+</div>
+<!-- Statistics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<!-- Revenue Card -->
+<div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">payments</span>
+</div>
+<p class="text-neutral-500 text-xs uppercase tracking-widest font-bold mb-4">Total Revenue</p>
+<h4 class="text-3xl font-serif text-on-surface">$124,802.50</h4>
+<div class="mt-4 flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-xs font-bold">+12.4% from last moon</span>
+</div>
+</div>
+<!-- Orders Card -->
+<div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">shopping_bag</span>
+</div>
+<p class="text-neutral-500 text-xs uppercase tracking-widest font-bold mb-4">Active Orders</p>
+<h4 class="text-3xl font-serif text-on-surface">342</h4>
+<div class="mt-4 flex items-center gap-2 text-red-500">
+<span class="material-symbols-outlined text-sm">pending_actions</span>
+<span class="text-xs font-bold">18 requiring priority sear</span>
+</div>
+</div>
+<!-- Customers Card -->
+<div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">star</span>
+</div>
+<p class="text-neutral-500 text-xs uppercase tracking-widest font-bold mb-4">Vip Patrons</p>
+<h4 class="text-3xl font-serif text-on-surface">1,204</h4>
+<div class="mt-4 flex items-center gap-2 text-amber-500">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-xs font-bold">42 new elite members</span>
+</div>
+</div>
+<!-- Inventory Card -->
+<div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">ac_unit</span>
+</div>
+<p class="text-neutral-500 text-xs uppercase tracking-widest font-bold mb-4">Aging Cellar</p>
+<h4 class="text-3xl font-serif text-on-surface">84%</h4>
+<div class="mt-4 flex items-center gap-2 text-neutral-400">
+<span class="material-symbols-outlined text-sm">inventory_2</span>
+<span class="text-xs font-bold">Optimal temperature holding</span>
+</div>
+</div>
+</div>
+<!-- Recent Activity Table Section -->
+<div class="glass-card rounded-2xl overflow-hidden mb-12">
+<div class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+<h4 class="text-xl font-serif font-bold">Recent Acquisitions</h4>
+<button class="text-tertiary-fixed-dim text-xs font-bold tracking-widest uppercase hover:text-amber-400 transition-colors">Export Ledger</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest">
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Order ID</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Patron</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Selection</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Valuation</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Status</th>
+<th class="px-8 py-4 text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-8 py-6 font-mono text-sm text-neutral-400">#PX-9928</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold">AW</div>
+<span class="font-bold text-on-surface">Alexander Wagner</span>
+</div>
+</td>
+<td class="px-8 py-6 text-sm">Wagyu A5 Miyazaki Sirloin (400g)</td>
+<td class="px-8 py-6 font-serif">$420.00</td>
+<td class="px-8 py-6">
+<span class="bg-tertiary-container/30 text-tertiary px-3 py-1 rounded-full text-[10px] font-bold uppercase border border-tertiary/20">In Transit</span>
+</td>
+<td class="px-8 py-6">
+<button class="text-neutral-500 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-8 py-6 font-mono text-sm text-neutral-400">#PX-9929</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold">EM</div>
+<span class="font-bold text-on-surface">Elena Moretti</span>
+</div>
+</td>
+<td class="px-8 py-6 text-sm">Dry-Aged Tomahawk Prime (1.2kg)</td>
+<td class="px-8 py-6 font-serif">$285.00</td>
+<td class="px-8 py-6">
+<span class="bg-red-950/40 text-red-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase border border-red-900/30">Curing</span>
+</td>
+<td class="px-8 py-6">
+<button class="text-neutral-500 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-8 py-6 font-mono text-sm text-neutral-400">#PX-9930</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs font-bold">RB</div>
+<span class="font-bold text-on-surface">Richard Branson</span>
+</div>
+</td>
+<td class="px-8 py-6 text-sm">Cellar Selection: 2015 Cabernet</td>
+<td class="px-8 py-6 font-serif">$1,150.00</td>
+<td class="px-8 py-6">
+<span class="bg-neutral-800 text-neutral-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase border border-white/5">Fulfilled</span>
+</td>
+<td class="px-8 py-6">
+<button class="text-neutral-500 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Product Spotlight / Visual Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 glass-card rounded-2xl p-8 flex flex-col md:flex-row gap-8 items-center bg-surface-container-lowest/50 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-red-600/5 blur-[100px] rounded-full"></div>
+<div class="flex-1 z-10">
+<h5 class="text-amber-500 font-serif italic text-lg mb-2">Inventory Spotlight</h5>
+<h4 class="text-3xl font-serif font-bold text-on-surface mb-4">Miyazaki A5 Wagyu</h4>
+<p class="text-neutral-400 mb-6 text-sm leading-relaxed">Stock levels are depleting for the current shipment. Consider an emergency procurement or adjust dynamic pricing to preserve margin integrity.</p>
+<div class="flex gap-4">
+<button class="bg-surface-container-high px-4 py-2 rounded text-xs font-bold tracking-widest uppercase hover:bg-surface-variant transition-all">VIEW STOCK</button>
+<button class="text-red-500 px-4 py-2 rounded text-xs font-bold tracking-widest uppercase flex items-center gap-2">RAISE ALERT <span class="material-symbols-outlined text-sm">error</span></button>
+</div>
+</div>
+<div class="w-full md:w-48 h-48 rounded-2xl overflow-hidden z-10 border border-white/10 grayscale hover:grayscale-0 transition-all duration-700">
+<img alt="Prime Steak" class="w-full h-full object-cover" data-alt="Close-up of raw highly marbled A5 wagyu beef on a dark slate board with professional moody culinary lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2dOV0dkxPosPS-ZGSDWtR0SE5cMZvTBtxTFOcGLiK7-7iq79YfyVArFJTib-3gMwJTFfdfr6ypdHBqkpgt-nyABJL6MyZNnC51UE2afY6Lvn0r2SjIjvgoTBipOMVlHOdzK9lODSQ5j9RK2coYo2f8FbyaaEk6kvHEEBVcDRUw0-hvRwrWuHvkq-yc3PE807zgmSS5pEahlFzHbhjpr9oYF2VlHLMoVijmgjqEvui5TdAA4RHXr1NErT5MqpqNWf2NVXByWzG0znj"/>
+</div>
+</div>
+<div class="glass-card rounded-2xl p-8 flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-4xl text-amber-500 mb-4" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<h4 class="text-xl font-serif font-bold text-on-surface mb-2">Boutique Health</h4>
+<div class="w-24 h-24 rounded-full border-4 border-amber-500/20 flex items-center justify-center relative my-4">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle cx="48" cy="48" fill="transparent" r="44" stroke="#fbbc00" stroke-dasharray="276" stroke-dashoffset="20" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<span class="text-2xl font-serif font-bold">94%</span>
+</div>
+<p class="text-xs text-neutral-500 uppercase tracking-widest mt-4">Operational Efficiency</p>
+</div>
+</div>
+</div>
+<!-- Contextual FAB Suppression: Hide on Admin screens as per protocol, but adding illustrative subtle help button -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-surface-container-highest text-on-surface rounded-full shadow-2xl flex items-center justify-center border border-white/10 hover:border-red-500/50 transition-all md:hidden">
+<span class="material-symbols-outlined">support_agent</span>
+</button>
+</main>
+</div>
+<!-- Mobile Navigation Shell (BottomNavBar Fallback) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-3xl bg-neutral-900/70 backdrop-blur-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] border-t border-white/5">
+<div class="flex justify-around items-center h-20 px-4 pb-safe">
+<a class="flex flex-col items-center justify-center text-red-500 font-bold active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-sans text-[10px] uppercase tracking-widest mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-neutral-500 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-sans text-[10px] uppercase tracking-widest mt-1">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-neutral-500 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-sans text-[10px] uppercase tracking-widest mt-1">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-neutral-500 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-sans text-[10px] uppercase tracking-widest mt-1">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

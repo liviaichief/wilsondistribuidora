@@ -94,7 +94,7 @@ const AdminOrders = () => {
                                 <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
                                     <div>
                                         <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Pedido</div>
-                                        <div style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>#{order.order_number || order.$id.slice(-6).toUpperCase()}</div>
+                                        <div style={{ fontWeight: 'bold', color: '#fff' }}>#{order.order_number || order.$id.slice(-6).toUpperCase()}</div>
                                     </div>
                                     <div>
                                         <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Cliente</div>
@@ -122,7 +122,7 @@ const AdminOrders = () => {
                                 <div className="order-details-expanded" style={{ padding: '20px', borderTop: '1px solid #333', background: '#121212' }}>
                                     <div className="order-details-grid">
                                         <div>
-                                            <h4 style={{ color: 'var(--primary-color)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <h4 style={{ color: '#fff', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <User size={16} /> Dados do Cliente
                                             </h4>
                                             <p><strong>Nome:</strong> {order.customer_name}</p>
@@ -130,7 +130,7 @@ const AdminOrders = () => {
                                             <p><strong>Pagamento:</strong> {order.payment_method || 'A combinar'}</p>
                                         </div>
                                         <div>
-                                            <h4 style={{ color: 'var(--primary-color)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <h4 style={{ color: '#fff', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <Package size={16} /> Itens do Pedido
                                             </h4>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -155,7 +155,7 @@ const AdminOrders = () => {
                                                                     padding: '2px 8px',
                                                                     borderRadius: '4px',
                                                                     fontSize: '0.8rem',
-                                                                    color: 'var(--primary-color)',
+                                                                    color: '#fff',
                                                                     fontWeight: 'bold'
                                                                 }}>
                                                                     {item.quantity}x

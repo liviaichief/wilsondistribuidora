@@ -6,30 +6,9 @@ import { getBanners } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
 import './HeroCarousel.css';
 
-const DEFAULT_SLIDES = [
-    {
-        id: 1,
-        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1920&auto=format&fit=crop',
-        title: 'Churrasco Premium',
-        link: 'Cortes selecionados para momentos especiais' // Using link as subtitle based on existing UI or just title
-    },
-    {
-        id: 2,
-        image_url: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=1920&auto=format&fit=crop',
-        title: 'Kits Completos',
-        link: 'Tudo o que você precisa em um só lugar'
-    },
-    {
-        id: 3,
-        image_url: 'https://images.unsplash.com/photo-1544025162-d76690b67f61?q=80&w=1920&auto=format&fit=crop',
-        title: 'Novos Acessórios',
-        link: 'Equipamentos profissionais para seu churrasco'
-    }
-];
-
 const HeroCarousel = () => {
     const navigate = useNavigate();
-    const [slides, setSlides] = useState(DEFAULT_SLIDES);
+    const [slides, setSlides] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
@@ -96,7 +75,9 @@ const HeroCarousel = () => {
         }
     };
 
-    if (slides.length === 0) return null;
+    if (slides.length === 0) {
+        return <div className="hero-carousel" style={{ backgroundColor: '#121212' }}></div>;
+    }
 
     return (
         <div className="hero-carousel">
@@ -111,12 +92,40 @@ const HeroCarousel = () => {
                     onClick={() => handleSlideClick(slides[currentIndex])}
                     style={{ cursor: slides[currentIndex].product_id ? 'pointer' : 'default', backgroundColor: '#121212' }}
                 >
-                    <img
-                        src={getImageUrl(slides[currentIndex].image_url || slides[currentIndex].image)} // Handle both db (image_url) and legacy (image)
-                        alt={slides[currentIndex].title}
-                        className="carousel-image"
-                        style={{ objectFit: 'contain' }}
-                    />
+                    {(() => {
+                        const mediaUrl = getImageUrl(slides[currentIndex].image_url || slides[currentIndex].image, { width: 1200 });
+                        // Appwrite serves files by ID in the URL. If the ID starts with v_, it's our video flag.
+                        const isVideo = mediaUrl && (
+                            mediaUrl.toLowerCase().includes('/files/v_') ||
+                            mediaUrl.toLowerCase().includes('.mp4') || 
+                            mediaUrl.toLowerCase().includes('.webm') || 
+                            mediaUrl.toLowerCase().includes('.mov')
+                        );
+
+                        if (isVideo) {
+                            return (
+                                <video
+                                    src={mediaUrl}
+                                    poster={slides[currentIndex].thumbnail_url ? getImageUrl(slides[currentIndex].thumbnail_url) : undefined}
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                    className="carousel-image"
+                                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                                />
+                            );
+                        }
+
+                        return (
+                            <img
+                                src={mediaUrl}
+                                alt={slides[currentIndex].title}
+                                className="carousel-image"
+                                style={{ objectFit: 'cover' }}
+                            />
+                        );
+                    })()}
 
                     <div className="carousel-overlay">
                         <motion.h2

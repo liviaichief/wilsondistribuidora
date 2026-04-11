@@ -119,7 +119,7 @@ const ProductDetail = () => {
                     <div className="product-detail-info">
                         <div className="product-meta">
                             <span className="product-category-detail">{product.category}</span>
-                            <span className="product-sku">SKU: {product.product_sku || product.id}</span>
+                            <span className="product-sku">SKU: {product.sku || product.id}</span>
                         </div>
 
                         <h1 className="product-title-detail">{product.title}</h1>
@@ -127,12 +127,20 @@ const ProductDetail = () => {
                         <div className="product-price-section">
                             {product.is_promotion && product.promo_price ? (
                                 <div className="price-container">
-                                    <span className="original-price-detail">R$ {product.price.toFixed(2)}</span>
-                                    <span className="promo-price-detail">R$ {parseFloat(product.promo_price).toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
+                                    <span className="original-price-detail">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                                    </span>
+                                    <span className="promo-price-detail">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.promo_price))}
+                                        <span className="uom"> / {product.uom || 'KG'}</span>
+                                    </span>
                                 </div>
                             ) : (
                                 <div className="price-container">
-                                    <span className="regular-price-detail">R$ {product.price.toFixed(2)} <span className="uom">/ {product.uom || 'KG'}</span></span>
+                                    <span className="regular-price-detail">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                                        <span className="uom"> / {product.uom || 'KG'}</span>
+                                    </span>
                                 </div>
                             )}
                         </div>

@@ -8,27 +8,27 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.png', 'logo.png'],
       manifest: {
-        name: 'Boutique de Carne 3R',
-        short_name: 'Boutique 3R',
-        description: 'Qualidade em carnes ao seu alcance',
+        name: 'Wilson Distribuidora',
+        short_name: 'Wilson',
+        description: 'Wilson Distribuidora - Carnes e Eventos',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'favicon.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'favicon.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'favicon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

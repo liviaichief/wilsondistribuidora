@@ -1,47 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag, Settings, Database, AlertTriangle, Bell, X, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowLeft, LogOut, ShoppingBag, Settings, Database, AlertTriangle, Bell, X, MessageSquare, Image as ImageIcon, ClipboardList, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import { databases, DATABASE_ID } from '../lib/appwrite';
+import { Client as AppwriteClient, Databases as AppwriteDatabases, Query as AppwriteQuery } from 'appwrite';
 import '../pages/Admin.css';
 
+const orchestratorClient = new AppwriteClient().setEndpoint('https://sfo.cloud.appwrite.io/v1').setProject('69c600d700288be4f750');
+const orchestratorDb = new AppwriteDatabases(orchestratorClient);
+
 const AdminLayout = () => {
-    const { signOut } = useAuth();
+    const { signOut, user, profile } = useAuth();
     const location = useLocation();
     const { showConfirm, showAlert } = useAlert();
     const navigate = useNavigate();
 
     const [isSystemBlocked, setIsSystemBlocked] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-    const [hasUnread, setHasUnread] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [modalNotification, setModalNotification] = useState(null);
 
     useEffect(() => {
-        // Simulando o recebimento de uma notificação do Billing Admin após 3 segundos
-        const timer = setTimeout(() => {
-            const mockNotif = {
-                $id: 'notif-' + new Date().getFullYear(),
-                title: 'Aviso de Vencimento',
-                message: 'Olá! Lembramos que sua fatura vence em breve. Evite interrupções no serviço!',
-                date: new Date().toISOString()
-            };
-            
-            const shownModals = JSON.parse(localStorage.getItem('shown_billing_modals') || '[]');
-            const viewedNotifs = JSON.parse(localStorage.getItem('viewed_notifications') || '[]');
-            setNotifications([mockNotif]);
-            
-            if (!viewedNotifs.includes(mockNotif.$id)) {
-                setHasUnread(true);
+        const fetchNotifs = async () => {
+            try {
+                const res = await orchestratorDb.listDocuments('admin_billing_db', 'notifications', [
+                    AppwriteQuery.equal('system_id', 'boutique'),
+                    AppwriteQuery.orderDesc('$createdAt'),
+                    AppwriteQuery.limit(20)
+                ]);
+                const notifs = res.documents.map(n => ({
+                    $id: n.$id,
+                    title: n.title,
+                    message: n.message,
+                    date: n.$createdAt
+                }));
+                
+                setNotifications(notifs);
+                
+                const viewedNotifs = JSON.parse(localStorage.getItem('viewed_notifications') || '[]');
+                const shownModals = JSON.parse(localStorage.getItem('shown_billing_modals') || '[]');
+                
+                const unread = notifs.filter(n => !viewedNotifs.includes(n.$id));
+                setUnreadCount(unread.length);
+                
+                // Só mostra o modal se a notificação MAIS RECENTE ainda não foi vista
+                // Isso evita que o usuário tenha que fechar 10 modais seguidos se tiver muitas pendências
+                if (notifs.length > 0) {
+                    const latest = notifs[0];
+                    if (!shownModals.includes(latest.$id) && !modalNotification && !isNotificationsOpen) {
+                        setModalNotification(latest);
+                    }
+                }
+            } catch (e) {
+                console.warn("Nao foi possivel sincronizar as notificações in-app: ", e);
             }
+        };
 
-            if (!shownModals.includes(mockNotif.$id)) {
-                setModalNotification(mockNotif);
-            }
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, []);
+        fetchNotifs();
+        const interval = setInterval(fetchNotifs, 60000); // Poll a cada 1 minuto (billing não muda tão rápido)
+        return () => clearInterval(interval);
+    }, [isNotificationsOpen]); // Removido modalNotification das dependências para evitar re-trigger ao fechar
 
     const closeNotificationModal = () => {
         if (modalNotification) {
@@ -56,7 +76,7 @@ const AdminLayout = () => {
         setIsNotificationsOpen(newState);
         
         if (newState && notifications.length > 0) {
-            setHasUnread(false);
+            setUnreadCount(0);
             const viewedNotifs = JSON.parse(localStorage.getItem('viewed_notifications') || '[]');
             const newViewed = [...new Set([...viewedNotifs, ...notifications.map(n => n.$id)])];
             localStorage.setItem('viewed_notifications', JSON.stringify(newViewed));
@@ -91,33 +111,24 @@ const AdminLayout = () => {
 
     return (
         <div className="admin-container">
-            <header className="admin-header">
-                <div className="admin-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <aside className="admin-sidebar" style={{ zIndex: 100 }}>
+                <div className="admin-brand-group" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '20px 0' }}>
                     <div
-                        onClick={handleHardRefresh}
+                        onClick={() => navigate('/')}
                         style={{
                             cursor: 'pointer',
                             display: 'flex',
+                            justifyContent: 'center',
                             alignItems: 'center',
-                            transition: 'transform 0.3s ease'
+                            transition: 'transform 0.3s ease',
+                            width: '100%'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
-                        title="Limpar Cache e Recarregar"
+                        title="Voltar para a Loja"
                     >
-                        <img
-                            src="/logo-3r.jpeg"
-                            alt="Logo 3R"
-                            style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                border: '2px solid var(--primary-color)',
-                                objectFit: 'cover'
-                            }}
-                        />
+                        <img src="/logo.png" alt="Wilson Distribuidora" style={{ height: '127px', maxWidth: '90%', objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }} />
                     </div>
-                    <div className="logo" style={{ fontSize: '1.4rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>Boutique Admin</div>
                 </div>
 
                 <nav className="admin-nav">
@@ -134,6 +145,24 @@ const AdminLayout = () => {
                         <ShoppingBag size={28} /> <span className="nav-text">Produtos</span>
                     </Link>
                     <Link
+                        to="/admin/catalogo"
+                        className={`nav-link ${location.pathname.startsWith('/admin/catalogo') ? 'active' : ''}`}
+                    >
+                        <BookOpen size={28} /> <span className="nav-text">Catálogo</span>
+                    </Link>
+                    <Link
+                        to="/admin/banners"
+                        className={`nav-link ${location.pathname.startsWith('/admin/banners') ? 'active' : ''}`}
+                    >
+                        <ImageIcon size={28} /> <span className="nav-text">Banners</span>
+                    </Link>
+                    <Link
+                        to="/admin/pedidos"
+                        className={`nav-link ${location.pathname.startsWith('/admin/pedidos') ? 'active' : ''}`}
+                    >
+                        <ClipboardList size={28} /> <span className="nav-text">Pedidos</span>
+                    </Link>
+                    <Link
                         to="/admin/users"
                         className={`nav-link ${location.pathname.startsWith('/admin/users') ? 'active' : ''}`}
                     >
@@ -146,10 +175,10 @@ const AdminLayout = () => {
                         <Settings size={28} /> <span className="nav-text">Configurações</span>
                     </Link>
                     <Link
-                        to="/admin/platform"
-                        className={`nav-link ${location.pathname.startsWith('/admin/platform') ? 'active' : ''}`}
+                        to="/admin/financeiro"
+                        className={`nav-link ${location.pathname.startsWith('/admin/financeiro') ? 'active' : ''}`}
                     >
-                        <Database size={28} /> <span className="nav-text">Plataforma</span>
+                        <Database size={28} /> <span className="nav-text">Financeiro</span>
                     </Link>
                 </nav>
 
@@ -157,47 +186,135 @@ const AdminLayout = () => {
                     <Link to="/" className="nav-link" title="Voltar para Loja">
                         <ArrowLeft size={25} /> <span className="nav-text">Loja</span>
                     </Link>
-                    <button
-                        onClick={toggleNotifications}
-                        className={`nav-link ${isNotificationsOpen ? 'active' : ''}`}
-                        title="Notificações"
-                        style={{ cursor: 'pointer', background: 'transparent', border: 'none', position: 'relative' }}
-                    >
-                        <Bell size={25} />
-                        {hasUnread && (
-                            <span style={{ position: 'absolute', top: '5px', right: '5px', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>
-                        )}
-                    </button>
-                    <button
-                        onClick={() => {
-                            showConfirm(
-                                'Tem certeza que deseja sair do sistema?',
-                                async () => {
-                                    await signOut();
-                                    showAlert('Sessão finalizada com sucesso! 👋', 'success');
-                                    // Use navigate or window.location - signOut might handle redirect, usually
-                                    // But typically we want to redirect to login.
-                                    // Let's use standard redirect
-                                    setTimeout(() => window.location.href = '/login', 1500);
-                                },
-                                'Sair do Sistema',
-                                'Sair',
-                                'Cancelar'
-                            );
-                        }}
-                        className="icon-btn"
-                        title="Sair"
-                        style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}
-                    >
-                        <LogOut size={25} />
-                    </button>
 
 
                 </div>
-            </header>
+            </aside>
 
             <main className="admin-content" style={{ position: 'relative' }}>
-                {isSystemBlocked && location.pathname !== '/admin/platform' && (
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '25px', 
+                    right: '40px', 
+                    zIndex: 150,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px'
+                }}>
+                    <button
+                        onClick={toggleNotifications}
+                        style={{ 
+                            cursor: 'pointer', 
+                            background: 'rgba(255, 255, 255, 0.05)', 
+                            border: '1px solid rgba(255, 255, 255, 0.1)', 
+                            borderRadius: '12px',
+                            width: '45px',
+                            height: '45px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: isNotificationsOpen ? '#a855f7' : '#fff',
+                            position: 'relative',
+                            transition: 'all 0.3s ease',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.borderColor = '#a855f7';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                        }}
+                        title="Notificações"
+                    >
+                        <Bell size={22} />
+                        {unreadCount > 0 && (
+                            <span style={{ 
+                                position: 'absolute', 
+                                top: '-5px', 
+                                right: '-5px', 
+                                backgroundColor: '#ef4444', 
+                                borderRadius: '10px', 
+                                color: 'white', 
+                                fontSize: '10px', 
+                                fontWeight: 'bold', 
+                                padding: '2px 6px', 
+                                minWidth: '18px', 
+                                textAlign: 'center',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                            }}>
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '15px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        padding: '8px 15px',
+                        borderRadius: '15px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#fff', letterSpacing: '0.5px' }}>
+                                {profile?.full_name || user?.full_name || 'Administrador'}
+                            </span>
+                            <span style={{ fontSize: '0.6rem', color: '#a855f7', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '1.5px' }}>
+                                Acesso Online
+                            </span>
+                        </div>
+                        
+                        <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }} />
+
+                        <button
+                            onClick={() => {
+                                showConfirm(
+                                    'Tem certeza que deseja sair do sistema agora?',
+                                    async () => {
+                                        await signOut();
+                                        showAlert('Sessão finalizada com sucesso! 👋', 'success');
+                                        setTimeout(() => window.location.href = '/login', 1500);
+                                    },
+                                    'Sair do Sistema',
+                                    'Sim, Sair',
+                                    'Cancelar'
+                                );
+                            }}
+                            style={{ 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                border: '1px solid rgba(239, 68, 68, 0.2)', 
+                                color: '#ef4444', 
+                                cursor: 'pointer',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = '#ef4444';
+                                e.currentTarget.style.color = '#fff';
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                e.currentTarget.style.color = '#ef4444';
+                                e.currentTarget.style.transform = 'scale(1.0)';
+                            }}
+                            title="Sair do Sistema"
+                        >
+                            <LogOut size={18} />
+                        </button>
+                    </div>
+                </div>
+                {isSystemBlocked && location.pathname !== '/admin/financeiro' && (
                     <div style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', padding: '20px', borderRadius: '8px' }}>
                         <div style={{ backgroundColor: '#141414', border: '1px solid #ff4444', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(255,0,0,0.2)' }}>
                             <div style={{ color: '#ff4444', marginBottom: '20px', display: 'flex', justifyContent: 'center', animation: 'pulse 2s infinite' }}>
@@ -208,7 +325,7 @@ const AdminLayout = () => {
                                 A gestão da Boutique foi interrompida automaticamente devido a pendências financeiras em seu plano.
                             </p>
                             <button 
-                                onClick={() => navigate('/admin/platform?highlight=true')}
+                                onClick={() => navigate('/admin/financeiro?highlight=true')}
                                 style={{ width: '100%', padding: '15px', borderRadius: '15px', backgroundColor: '#ef4444', color: '#fff', fontWeight: 'bold', fontSize: '1.1rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px 0 rgba(239, 68, 68, 0.39)', transition: 'transform 0.2s', display: 'block' }}
                                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -229,7 +346,7 @@ const AdminLayout = () => {
                             onClick={() => setIsNotificationsOpen(false)}
                             style={{ position: 'fixed', inset: 0, zIndex: 85, backgroundColor: 'transparent', cursor: 'default' }}
                         />
-                        <div style={{ position: 'absolute', top: 0, right: 0, width: '380px', height: '100%', backgroundColor: '#0a0a0a', borderLeft: '1px solid #222', zIndex: 90, display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 25px rgba(0,0,0,0.5)', transition: 'transform 0.3s ease-in-out' }}>
+                        <div style={{ position: 'fixed', top: 0, right: 0, width: '380px', height: '100vh', backgroundColor: '#0a0a0a', borderLeft: '1px solid #222', zIndex: 90, display: 'flex', flexDirection: 'column', boxShadow: '-10px 0 25px rgba(0,0,0,0.5)', transition: 'transform 0.3s ease-in-out' }}>
                             <div style={{ padding: '20px', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Bell size={20} color="#a855f7" />
@@ -242,7 +359,13 @@ const AdminLayout = () => {
                                     <p style={{ color: '#666', textAlign: 'center', marginTop: '40px' }}>Nenhuma notificação no momento.</p>
                                 ) : (
                                     notifications.map(notif => (
-                                        <div key={notif.$id} style={{ backgroundColor: '#141414', border: '1px solid #222', borderRadius: '15px', padding: '15px' }}>
+                                        <div 
+                                            key={notif.$id} 
+                                            onClick={() => setModalNotification(notif)}
+                                            style={{ backgroundColor: '#141414', border: '1px solid #222', borderRadius: '15px', padding: '15px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1f1f1f'}
+                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#141414'}
+                                        >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                                 <MessageSquare size={16} color="#a855f7" />
                                                 <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem', fontWeight: 'bold' }}>{notif.title}</h4>

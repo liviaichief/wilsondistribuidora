@@ -42,10 +42,11 @@
 .auth-header h2 {
     margin: 0;
     font-size: 1.2rem;
-    color: var(--primary-color);
+    color: var(--accent-color);
     display: flex;
     align-items: center;
     gap: 8px;
+    font-family: var(--font-heading);
 }
 
 .close-auth {
@@ -87,8 +88,8 @@
 }
 
 .auth-tab.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
     background: rgba(212, 175, 55, 0.05);
 }
 
@@ -191,7 +192,7 @@
 }
 
 .auth-link {
-    color: var(--primary-color);
+    color: var(--accent-color);
     background: none;
     border: none;
     cursor: pointer;

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wilson Distribuição de Carnes | Excelência em Cortes Nobres</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#201f1f",
+                    "surface-dim": "#131313",
+                    "surface-tint": "#ffb3b5",
+                    "on-tertiary-fixed": "#001f26",
+                    "tertiary-fixed": "#b6ebfb",
+                    "surface-container-high": "#2a2a2a",
+                    "on-primary-fixed-variant": "#8e0f28",
+                    "error": "#ffb4ab",
+                    "outline": "#a78a8a",
+                    "on-primary-fixed": "#40000b",
+                    "tertiary-fixed-dim": "#9acfde",
+                    "error-container": "#93000a",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-bright": "#393939",
+                    "inverse-primary": "#af2b3e",
+                    "secondary": "#c8c6c5",
+                    "on-surface-variant": "#e0bfbf",
+                    "on-secondary": "#303030",
+                    "on-primary": "#680018",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-primary-container": "#ff828a",
+                    "on-tertiary-fixed-variant": "#114d5b",
+                    "on-surface": "#e5e2e1",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-tertiary": "#003640",
+                    "primary-fixed-dim": "#ffb3b5",
+                    "surface": "#131313",
+                    "background": "#131313",
+                    "on-tertiary-container": "#7cb0c0",
+                    "surface-variant": "#353534",
+                    "on-secondary-container": "#b6b5b4",
+                    "surface-container-highest": "#353534",
+                    "tertiary": "#9acfde",
+                    "surface-container-low": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "outline-variant": "#584141",
+                    "primary-container": "#800020",
+                    "secondary-fixed": "#e4e2e1",
+                    "tertiary-container": "#004451",
+                    "secondary-container": "#474746",
+                    "primary": "#ffb3b5",
+                    "on-error": "#690005",
+                    "on-background": "#e5e2e1",
+                    "on-secondary-fixed-variant": "#474746",
+                    "primary-fixed": "#ffdada",
+                    "inverse-on-surface": "#313030"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader", "serif"],
+                    "body": ["Work Sans", "sans-serif"],
+                    "label": ["Work Sans", "sans-serif"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, .font-serif { font-family: 'Newsreader', serif; }
+        .active-pill {
+            box-shadow: 0 4px 20px rgba(128, 0, 32, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-[#131313] border-b border-[#2a2a2a] shadow-[0_20px_40px_rgba(128,0,32,0.08)]">
+<div class="flex justify-between items-center px-12 py-6 max-w-[1920px] mx-auto">
+<div class="font-headline text-2xl italic font-bold text-[#800020] uppercase tracking-tighter">WILSON</div>
+<div class="hidden md:flex items-center space-x-10">
+<a class="text-[#e5e2e1] font-medium hover:text-[#ffb3b5] hover:opacity-80 transition-all font-headline italic" href="#">Cortes</a>
+<a class="text-[#e5e2e1] font-medium hover:text-[#ffb3b5] hover:opacity-80 transition-all font-headline italic" href="#">Kits</a>
+<a class="text-[#e5e2e1] font-medium hover:text-[#ffb3b5] hover:opacity-80 transition-all font-headline italic" href="#">Acessórios</a>
+<a class="text-[#e5e2e1] font-medium hover:text-[#ffb3b5] hover:opacity-80 transition-all font-headline italic" href="#">Sobre</a>
+</div>
+<div class="flex items-center space-x-8 text-[#e5e2e1]">
+<div class="relative flex items-center bg-[#2a2a2a] px-4 py-2 rounded-lg border border-outline-variant/20 focus-within:border-primary-container/50 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant pr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-on-surface-variant/50 font-body" placeholder="Buscar cortes..." type="text"/>
+</div>
+<button class="hover:text-primary transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+</button>
+<button class="hover:text-primary transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative h-screen min-h-[800px] w-full flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Wilson Delivery Truck" class="w-full h-full object-cover grayscale brightness-40" data-alt="high-end editorial shot of a classic black wilson delivery truck parked in front of a modern boutique butchery at twilight, dramatic moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBafVfkYhUbPcjhBwkYIayS4iWdwH4N4ajClTqQ6FbwAKNGJhSXtDGlCK4j2N4pqlUVU76XuYMW3OiM-GckaMT37Y1RhhGF7Dgx19UXIGqpbRKvS9IswJA-dgKycujuxDhJEuUYMT32kTHJovOl-B2XbnAJFvnXwFuXCtwWror_82Jt3DPhfacMcTO1qxL5qI5UJF1jM93Sl0lCZQyt_Yi9nJU8lFZTbfYPbC8P5VU8-XlFjraqf4dDNeACJ1NdMPIzqN_-QIbFh58O"/>
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent"></div>
+</div>
+<div class="relative z-10 px-12 md:px-24 max-w-7xl">
+<div class="mb-6 flex items-center space-x-4">
+<span class="h-px w-12 bg-primary-container"></span>
+<span class="font-headline italic text-primary-container text-xl">Destaque da Semana</span>
+</div>
+<h1 class="text-7xl md:text-8xl font-headline font-extrabold leading-[1] tracking-tight mb-8 text-on-surface uppercase">
+                Picanha<br/>
+<span class="text-primary-container">Premium</span><br/>
+<span class="italic font-light text-on-surface-variant text-4xl md:text-5xl lowercase">— A joia da coroa da Wilson</span>
+</h1>
+<p class="text-xl md:text-2xl text-on-surface-variant/80 max-w-2xl font-body font-light leading-relaxed mb-12">
+                Experiência sensorial inigualável, selecionada à mão pelos nossos mestres açougueiros para paladares que não aceitam menos que a perfeição.
+            </p>
+<div class="flex space-x-6">
+<button class="bg-primary-container text-white px-10 py-5 rounded-lg font-headline italic text-lg hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl shadow-primary-container/20">
+                    Explorar Seleção
+                </button>
+<button class="border border-outline-variant text-on-surface px-10 py-5 rounded-lg font-headline italic text-lg hover:bg-surface-container-high transition-all">
+                    Nossa História
+                </button>
+</div>
+</div>
+</section>
+<!-- Premium Cuts Grid -->
+<section class="py-32 px-12 max-w-[1920px] mx-auto bg-surface-dim">
+<div class="flex flex-col md:flex-row justify-between items-end mb-20">
+<div class="max-w-2xl">
+<h2 class="text-5xl font-headline italic text-on-surface mb-6">Cortes Selecionados</h2>
+<p class="text-on-surface-variant text-sm uppercase tracking-[0.2em]">Nossa Curadoria do Dia</p>
+</div>
+<div class="hidden md:block">
+<a class="font-headline italic text-primary-container border-b border-primary-container text-xl pb-1 hover:opacity-70 transition-opacity" href="#">Ver catálogo completo</a>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Product 1 -->
+<div class="group relative bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-500">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Ribeye Angus" class="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-110" data-alt="close-up of raw ribeye angus steak with beautiful marbling on a dark slate background, professional culinary photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdWq221pGbyuCh3lkxRucrz6zfYYZKRQeds5Or0KO0BseZ39jnWOd7Ch3jdW9ryoaSoCeERpswVCcGtPdJw0mgvl4vI5Dz5NVJ6H0aEDoDP4R-1Jxv3qtzH9w2sU0LEM-DT2nPKgfbKjxrqQnVnS1UqOTXXwXAugD36TyCwxm4eVDpdXmxknvADFj6jB64Oe7UoPAZidqTa78gQsC3_HecKi_wEuFSmbMOzJcvNVRQP7BbqMAvZzPJgwM_jdSYy2LSS_90hfg1zPxS"/>
+</div>
+<div class="pt-6 space-y-2">
+<h3 class="text-2xl font-headline italic">Ribeye Angus</h3>
+<p class="text-on-surface-variant text-sm font-body">Aproximadamente 400g</p>
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-headline font-bold text-primary-container">R$ 189,90</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="group relative bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-500">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Porterhouse" class="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-110" data-alt="large porterhouse steak on a wooden cutting board with coarse salt and rosemary, dramatic top-down lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD29ln2OGqLedUUU8vkxxI3vxdfjNIXXS6RfVr5ThVp0jtYeN7FfT0g9sbck56VPLCnZ00Tvkl9Ww0IbyOez-SgeFJPhDUwHBmUJEWQnRs-OiktjPwGkNwh2p5iiALSGX3KG4Cy5bx78ZMC05N2hO5mNVhCIw6rI5-s9UZZCuE2P3uCYiHJcy7cMBSBL6QEn84nqh7slAxEALWNm6bcoZV8Hk0t_WaYKlwJZ4RoLST1eB4gFyYhtYjPTgVbFTUVms8IeJxfydAItNgC"/>
+</div>
+<div class="pt-6 space-y-2">
+<h3 class="text-2xl font-headline italic">Porterhouse</h3>
+<p class="text-on-surface-variant text-sm font-body">Aproximadamente 600g</p>
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-headline font-bold text-primary-container">R$ 245,00</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 3 -->
+<div class="group relative bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-500">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Filet Mignon" class="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-110" data-alt="tender raw filet mignon medallions on dark surface, soft focus background with spices" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtffGf0V-qeYDkZaQFQp5QFqGkOla3TuqANAxBzndRMbfg-AlVgEwudnFOYpW3szNcNLlI9Yk1f7XP4vi50SRB2hQ1Hx8zavJJxF8QVr8o3hBc5IxOa9RC9TiL931sqRSkWB4oxViN91lURanXJiio5wu_AWuYedgYctQkc0tlt-S07_J_NXr7keFaHuTUgNey_vLqORfGv1cX4bvUgwmkMixGqKmUQjPKKEKNhGfEeXwuwZ5qmXgJ49qivinfk6QjBQlHPHz7jN4-"/>
+</div>
+<div class="pt-6 space-y-2">
+<h3 class="text-2xl font-headline italic">Filet Mignon</h3>
+<p class="text-on-surface-variant text-sm font-body">Aproximadamente 500g</p>
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-headline font-bold text-primary-container">R$ 165,00</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product 4 -->
+<div class="group relative bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-500">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Costela Premium" class="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-110" data-alt="brazilian style prime rib costela on a dark background, raw meat with sea salt crystals" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP8Zqup8NBaQPXmoZ-N1DV_HKxW5EwkeOhRlZ_eIsLY6PqkrBqgN0Vn9-6f0256jZisiDW0qqzR8rCYLZse0sC8XYW8MOGAO67Eu5cSqcaC5hYwBrG1ZMLz-J2Aq6UDD7WlfGvsv1livTZtXws3UTSlkjT68p8UqhlHdmwiyX2anz3Y1kIbMqmKRbvCcKo234Qs0ePcQjV1mz-wngRkc4K1MUEU25HO2l9dJ3RNM1-NAk-8nheR_Kmi4AzsXXfM4LNkZVksfMy1g0U"/>
+</div>
+<div class="pt-6 space-y-2">
+<h3 class="text-2xl font-headline italic">Costela Premium</h3>
+<p class="text-on-surface-variant text-sm font-body">Vendido por kg</p>
+<div class="flex justify-between items-center pt-2">
+<span class="text-xl font-headline font-bold text-primary-container">R$ 120,00</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Butcher's Ledger (Newsletter) Section -->
+<section class="py-32 bg-surface-container-high rounded-3xl mx-12 mb-32 relative overflow-hidden">
+<div class="max-w-6xl mx-auto px-12 grid grid-cols-1 md:grid-cols-2 gap-24 items-center relative z-10">
+<div class="order-2 md:order-1">
+<h2 class="text-6xl font-headline italic leading-tight mb-8">O Ledger do Açougueiro</h2>
+<p class="text-xl text-on-surface-variant font-body mb-10 font-light leading-relaxed">
+                    Receba insights semanais sobre cortes raros, técnicas de maturação e ofertas exclusivas para membros do Ledger.
+                </p>
+<form class="space-y-6">
+<div class="flex flex-col sm:flex-row gap-4">
+<input class="flex-grow bg-surface-container-highest border-none focus:ring-1 focus:ring-primary-container rounded-lg px-6 py-4 text-on-surface font-headline italic placeholder:text-outline transition-all outline-none" placeholder="Seu melhor e-mail" type="email"/>
+<button class="bg-primary-container text-white px-10 py-4 rounded-lg font-headline italic text-lg hover:bg-on-primary-fixed-variant transition-all shadow-xl" type="submit">
+                            Assinar
+                        </button>
+</div>
+<p class="text-[10px] uppercase tracking-widest text-outline">Respeitamos sua privacidade como respeitamos o tempo de maturação.</p>
+</form>
+</div>
+<div class="order-1 md:order-2">
+<div class="relative aspect-[3/4] p-12 border-2 border-primary-container/30 rounded-lg flex flex-col justify-center items-center text-center bg-surface shadow-2xl rotate-3">
+<div class="absolute inset-0 opacity-5 pointer-events-none overflow-hidden">
+<span class="text-[200px] font-headline font-extrabold italic text-primary-container absolute -top-20 -left-10">W</span>
+</div>
+<h3 class="text-3xl font-headline italic mb-6">"O segredo do bom assado não está no fogo, mas na paciência de quem espera e na qualidade de quem corta."</h3>
+<div class="w-12 h-px bg-primary-container mb-6"></div>
+<p class="font-body text-xs tracking-[0.3em] uppercase text-on-surface-variant">Wilson G. — Fundador</p>
+<div class="mt-8">
+<span class="material-symbols-outlined text-primary-container text-6xl opacity-30">menu_book</span>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary-container/10 rounded-full blur-[120px] -mr-48 -mt-48"></div>
+</section>
+<!-- Values / Features Asymmetric Bento -->
+<section class="py-32 px-12 max-w-[1920px] mx-auto bg-surface-dim">
+<div class="grid grid-cols-1 md:grid-cols-12 grid-rows-2 gap-8 h-auto md:min-h-[600px]">
+<div class="md:col-span-8 bg-surface-container-low p-12 rounded-lg flex flex-col justify-between border border-outline-variant/10">
+<span class="material-symbols-outlined text-5xl text-primary-container" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<div>
+<h3 class="text-4xl font-headline italic mb-4">Rastreabilidade Total</h3>
+<p class="text-on-surface-variant max-w-xl text-lg font-body font-light">Acompanhamos cada lote desde a fazenda até sua porta. QR codes em cada embalagem garantem a origem e a idade do animal.</p>
+</div>
+</div>
+<div class="md:col-span-4 bg-primary-container p-12 rounded-lg flex flex-col justify-end text-white shadow-2xl shadow-primary-container/20">
+<h3 class="text-3xl font-headline font-bold mb-4 italic">Corte Customizado</h3>
+<p class="text-white/80 font-body font-light">Precisa de uma espessura específica para seu churrasco? Nossos açougueiros cortam exatamente como você deseja.</p>
+</div>
+<div class="md:col-span-4 bg-surface-container-high p-12 rounded-lg flex flex-col justify-between border border-outline-variant/10">
+<span class="material-symbols-outlined text-4xl text-primary-container">local_shipping</span>
+<h3 class="text-2xl font-headline italic">Entrega Refrigerada</h3>
+</div>
+<div class="md:col-span-8 bg-[#1a1a1a] p-12 rounded-lg flex items-center space-x-12 border border-outline-variant/10">
+<div class="flex-1">
+<h3 class="text-3xl font-headline italic mb-4">Wilson Experience</h3>
+<p class="text-on-surface-variant font-body font-light">Transforme seu jantar em um evento gastronômico com nossas consultorias de harmonização.</p>
+</div>
+<div class="hidden lg:block w-48 h-48 rounded-full border-2 border-primary-container/20 p-2">
+<div class="w-full h-full rounded-full bg-surface-container-lowest flex items-center justify-center border border-primary-container/40">
+<span class="font-headline italic text-primary-container text-2xl">Premium</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-[#0e0e0e] w-full border-t border-[#2a2a2a]">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 px-12 py-20 max-w-7xl mx-auto font-body text-sm tracking-wide">
+<div>
+<span class="font-headline text-3xl text-[#800020] italic font-bold mb-4 block">WILSON</span>
+<p class="text-[#e5e2e1]/60 leading-relaxed font-light">
+                    Elevando o padrão do churrasco brasileiro através da seleção rigorosa e respeito ao produto.
+                </p>
+</div>
+<div>
+<h4 class="text-primary-container font-bold mb-6 uppercase tracking-widest text-xs font-body">Menu</h4>
+<ul class="space-y-4">
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Nossa História</a></li>
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Rastreabilidade</a></li>
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Produtos</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-primary-container font-bold mb-6 uppercase tracking-widest text-xs font-body">Suporte</h4>
+<ul class="space-y-4">
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Política de Privacidade</a></li>
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Termos de Serviço</a></li>
+<li><a class="text-[#e5e2e1]/60 hover:text-[#ffb3b5] transition-colors" href="#">Contato</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-primary-container font-bold mb-6 uppercase tracking-widest text-xs font-body">Contato</h4>
+<address class="not-italic text-[#e5e2e1]/60 leading-relaxed font-light">
+                    Av. das Nações Unidas, 12901<br/>
+                    São Paulo - SP<br/><br/>
+                    atendimento@wilsondistribuicao.com.br<br/>
+                    (11) 99999-9999
+                </address>
+</div>
+</div>
+<div class="px-12 py-8 border-t border-[#2a2a2a] text-center text-[#e5e2e1]/40 text-xs font-body">
+            © 2024 Wilson Distribuição de Carnes. Excelência em Cortes Nobres.
+        </div>
+</footer>
+</body></html>

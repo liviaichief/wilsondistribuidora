@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import { databases, DATABASE_ID, COLLECTIONS, client } from '../lib/appwrite';
-import { ID, Query } from 'appwrite';
+import { ID, Query, Permission, Role } from 'appwrite';
 import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User, Loader2, Save } from 'lucide-react';
 import './Admin.css';
 
@@ -179,7 +179,11 @@ const AdminUsers = () => {
                     user_id: authId,
                     role: newUser.role,
                     birthday: newUser.birthday
-                }
+                },
+                [
+                    Permission.read(Role.any()),
+                    Permission.write(Role.users())
+                ]
             );
 
             showAlert('Usuário criado com sucesso!', 'success', null, 1000);
@@ -363,7 +367,7 @@ const AdminUsers = () => {
                                             <td style={{ color: '#888', fontSize: '0.9rem' }}>
                                                 {user.$createdAt ? new Date(user.$createdAt).toLocaleDateString('pt-BR') : '-'}
                                             </td>
-                                            <td style={{ color: 'var(--primary-color)', fontWeight: '500', fontSize: '0.9rem' }}>
+                                            <td style={{ color: '#fff', fontWeight: '500', fontSize: '0.9rem' }}>
                                                 {user.last_login ? new Date(user.last_login).toLocaleString('pt-BR', {
                                                     day: '2-digit',
                                                     month: '2-digit',
@@ -384,9 +388,9 @@ const AdminUsers = () => {
                                                     height: '35px',
                                                     borderRadius: '50%',
                                                     backgroundColor: user.totalOrders > 0 ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                                                    color: user.totalOrders > 0 ? 'var(--primary-color)' : '#666',
+                                                    color: user.totalOrders > 0 ? '#fff' : '#666',
                                                     fontWeight: 'bold',
-                                                    border: user.totalOrders > 0 ? '1px solid var(--primary-color)' : '1px solid #333'
+                                                    border: user.totalOrders > 0 ? '1px solid #fff' : '1px solid #333'
                                                 }}>
                                                     {user.totalOrders || 0}
                                                 </div>
