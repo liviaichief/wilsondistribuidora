@@ -1,21 +1,21 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import Admin from './pages/Admin.jsx';
-import AdminUsers from './pages/AdminUsers.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import OrderHistory from './pages/OrderHistory.jsx';
-import Login from './components/auth/Login.jsx';
-import Logout from './components/auth/Logout.jsx';
-import ProductDetail from './pages/ProductDetail.jsx';
-import ResetPassword from './pages/ResetPassword.jsx';
+import Admin from './pages/Admin';
+import AdminUsers from './pages/AdminUsers';
+import AdminDashboard from './pages/AdminDashboard';
+import OrderHistory from './pages/OrderHistory';
+import Login from './components/auth/Login';
+import Logout from './components/auth/Logout';
+import ProductDetail from './pages/ProductDetail';
+import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ProfileModal from './components/auth/ProfileModal'; // Global Modal
-import AdminSettings from './pages/AdminSettings.jsx';
-import AdminFinance from './pages/AdminFinance.jsx';
-import AdminBanners from './pages/AdminBanners.jsx';
-import AdminOrders from './pages/AdminOrders.jsx';
-import AdminCatalog from './pages/AdminCatalog.jsx';
+import ProfileModal from './components/auth/ProfileModal';
+import AdminSettings from './pages/AdminSettings';
+import AdminFinance from './pages/AdminFinance';
+import AdminBanners from './pages/AdminBanners';
+import AdminOrders from './pages/AdminOrders';
+import AdminCatalog from './pages/AdminCatalog';
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';

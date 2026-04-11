@@ -36,6 +36,42 @@ const AdminOrders = () => {
         }
     };
 
+    const updateOrderStatus = async (orderId, status) => {
+        try {
+            await databases.updateDocument(
+                DATABASE_ID,
+                COLLECTIONS.ORDERS,
+                orderId,
+                { status: status }
+            );
+            showAlert(`Pedido ${status === 'completed' ? 'concluído' : 'cancelado'} com sucesso!`, "success");
+            loadOrders();
+        } catch (error) {
+            console.error("Error updating order:", error);
+            showAlert("Erro ao atualizar pedido", "error");
+        }
+    };
+
+    const deleteOrder = async (orderId) => {
+        const { showConfirm } = await import('../context/AlertContext').then(m => m.useAlert());
+        // Since useAlert is already called at top level, we use showAlert
+        // but for high risk we use window.confirm if showConfirm is not available here
+        if (window.confirm("Tem certeza que deseja excluir permanentemente este registro de pedido?")) {
+            try {
+                await databases.deleteDocument(
+                    DATABASE_ID,
+                    COLLECTIONS.ORDERS,
+                    orderId
+                );
+                showAlert("Registro excluído com sucesso!", "success");
+                loadOrders();
+            } catch (error) {
+                console.error("Error deleting order:", error);
+                showAlert("Erro ao excluir pedido", "error");
+            }
+        }
+    };
+
     const filteredOrders = orders.filter(order => {
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
         const matchesSearch = !search ||
@@ -169,8 +205,30 @@ const AdminOrders = () => {
                                                     ));
                                                 })()}
                                             </div>
-                                            <div style={{ marginTop: '15px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            <div style={{ marginTop: '15px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.2rem', color: '#fff' }}>
                                                 TOTAL: R$ {parseFloat(order.total || 0).toFixed(2)}
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end', borderTop: '1px solid #333', paddingTop: '20px' }}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.$id, 'completed'); }}
+                                                    style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                                                >
+                                                    Concluir Pedido
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.$id, 'cancelled'); }}
+                                                    style={{ backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                                                >
+                                                    Cancelar
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteOrder(order.$id); }}
+                                                    style={{ backgroundColor: 'transparent', color: '#666', border: '1px solid #333', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                >
+                                                    Excluir Registro
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

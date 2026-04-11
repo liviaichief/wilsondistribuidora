@@ -400,7 +400,13 @@ const AdminUsers = () => {
                                                     <button onClick={() => openEditModal(user)} className="icon-btn" title="Editar">
                                                         <Edit2 size={18} />
                                                     </button>
-                                                    <button onClick={() => handleDeleteUser(user)} className="icon-btn delete" title="Excluir">
+                                                    <button 
+                                                        onClick={() => handleDeleteUser(user)} 
+                                                        className="icon-btn delete" 
+                                                        title={user.id === (useAuth().user?.id) ? "Você não pode excluir seu próprio perfil" : "Excluir"}
+                                                        disabled={user.id === (useAuth().user?.id)}
+                                                        style={{ opacity: user.id === (useAuth().user?.id) ? 0.3 : 1, cursor: user.id === (useAuth().user?.id) ? 'not-allowed' : 'pointer' }}
+                                                    >
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>

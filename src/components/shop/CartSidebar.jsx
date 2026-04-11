@@ -26,8 +26,8 @@ const CartSidebar = () => {
 
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
-    const [whatsappNumber, setWhatsappNumber] = useState(''); // Default fallback
-    const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - BASE APP*'); // Default fallback message
+    const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Fallback Wilson Distribuidora
+    const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - WILSON DISTRIBUIDORA*');
     const [isProcessing, setIsProcessing] = useState(false); // Added processing state
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'

@@ -50,8 +50,8 @@ export const getProducts = async (category, page = 1, limit = 20) => {
 
         // Apply Promotion Logic
         if (category === 'all') {
-            // Aba Geral/Promo: Apenas o que é promoção
-            filteredDocs = filteredDocs.filter(d => d.is_promotion === true);
+            // Aba Geral/Promo: Prioriza o que é promoção no topo, mas mostra tudo
+            filteredDocs.sort((a, b) => (b.is_promotion ? 1 : 0) - (a.is_promotion ? 1 : 0));
         }
 
         // If category is provided (even 'all'), it implies public store view. 
