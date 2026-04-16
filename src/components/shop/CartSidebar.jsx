@@ -28,7 +28,9 @@ const CartSidebar = () => {
     const [customerPhone, setCustomerPhone] = useState('');
     const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Fallback Wilson Distribuidora
     const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - WILSON DISTRIBUIDORA*');
-    const [isProcessing, setIsProcessing] = useState(false); // Added processing state
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [lastOrderNum, setLastOrderNum] = useState('');
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
     const [address, setAddress] = useState({
@@ -297,32 +299,45 @@ const CartSidebar = () => {
         toggleCart(); // Close cart sidebar
         setIsProcessing(false);
 
-        // 5. Try Direct Send via API (if enabled)
-        let didSendDirectly = false;
-        try {
-            didSendDirectly = await sendWhatsAppMessage(phoneNumber, message);
-            if (didSendDirectly) {
-                console.log("Order message sent directly via API!");
-                // Optionally send a confirmation to the customer too
-                const customerMsg = `Olá *${customerName}*! Recebemos seu pedido *#${orderNumDisplay}* com sucesso. Em breve entraremos em contato para finalizar os detalhes. Agradecemos a preferência! 🥩🔥`;
-                await sendWhatsAppMessage(customerPhone, customerMsg);
+        // 5. Determine if we need manual redirect
+        // Priority: didSendDirectly (legacy/client-side) OR orderResult.whatsapp_sent (new/server-side)
+        let didSendDirectly = orderResult.whatsapp_sent || false;
+
+        if (!didSendDirectly) {
+            // Se o backend não enviou, tentamos enviar via client-side (pode falhar por CORS)
+            try {
+                const clientSuccess = await sendWhatsAppMessage(phoneNumber, message);
+                if (clientSuccess) didSendDirectly = true;
+            } catch (apiErr) {
+                console.warn("Direct Send failed, will use manual redirect:", apiErr);
             }
-        } catch (apiErr) {
-            console.warn("Direct Send failed, will use manual redirect:", apiErr);
         }
 
-        // 6. Open WhatsApp redirect (Manually as fallback or confirmation)
-        if (isMobile) {
-            window.location.href = whatsappUrl;
-        } else if (didSendDirectly) {
-            // Se já enviou diretamente e não é mobile, não precisa abrir o popup do WhatsApp Web
+        // 6. Invisible Send Logic
+        if (didSendDirectly) {
+            // Sucesso Total: Envio invisível funcionou (ou via backend ou via client sem CORS)
             if (popupWindow) popupWindow.close();
-            showAlert(`Pedido #${orderNumDisplay} enviado com sucesso! ✅`, 'success');
-        } else if (popupWindow) {
-            popupWindow.location.href = whatsappUrl;
+            setLastOrderNum(orderNumDisplay);
+            setOrderSuccess(true);
+            clearCart();
         } else {
-            // Fallback se o navegador bloqueou o popup sincrono
-            window.location.href = whatsappUrl;
+            // Fallback Máximo: Redirecionamento Manual (Nova Janela / App Externo)
+            if (popupWindow) {
+                popupWindow.location.href = whatsappUrl;
+            } else {
+                // Tenta abrir em nova aba/app (se o browser/pwa permitir)
+                const newWin = window.open(whatsappUrl, '_blank');
+                // Se for bloqueado por política de pop-up, o cliente clica para abrir (opcional), mas vamos forçar a re-renderização visual
+                if (!newWin) {
+                   console.warn("Pop-up block impediu window.open, mas manteremos o PWA na tela."); 
+                   window.location.href = whatsappUrl; // Último recurso se falhar mesmo a nova tab
+                }
+            }
+
+            // Mostramos o sucesso na aba/PWA atual IMEDIATAMENTE (e não mais oculto)
+            setLastOrderNum(orderNumDisplay);
+            setOrderSuccess(true);
+            clearCart();
         }
     };
 
@@ -338,14 +353,35 @@ const CartSidebar = () => {
                 </div>
 
                 <div className="cart-scrollable-area" style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                    <div className="cart-items" style={{ flexGrow: 1, overflowY: 'visible', paddingBottom: cartItems.length > 0 ? '0' : '1rem' }}>
-                        {cartItems.length === 0 ? (
-                            <div className="empty-cart">
-                                <ShoppingBag size={48} opacity={0.3} />
-                                <p>Seu carrinho está vazio.</p>
+                    
+                    {orderSuccess ? (
+                        <div className="order-success-container" style={{ padding: '40px 20px', textAlign: 'center', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '2px solid var(--primary-color)' }}>
+                                <ShoppingBag size={40} color="var(--primary-color)" />
                             </div>
-                        ) : (
-                            cartItems.map(item => (
+                            <div>
+                                <h2 style={{ color: 'var(--primary-color)', fontSize: '1.8rem', marginBottom: '10px' }}>Pedido Enviado!</h2>
+                                <p style={{ opacity: 0.8, fontSize: '1.1rem' }}>Sua solicitação <strong>#{lastOrderNum}</strong> foi processada com sucesso.</p>
+                            </div>
+                            <p style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                                O estabelecimento já foi notificado e entrará em contato com você via WhatsApp em instantes!
+                            </p>
+                            <button 
+                                onClick={() => { setOrderSuccess(false); toggleCart(); }} 
+                                className="checkout-btn" 
+                                style={{ marginTop: '20px' }}
+                            >
+                                Voltar à Loja
+                            </button>
+                        </div>
+                    ) : cartItems.length === 0 ? (
+                        <div className="empty-cart">
+                            <ShoppingBag size={48} opacity={0.3} />
+                            <p>Seu carrinho está vazio.</p>
+                        </div>
+                    ) : (
+                        <div className="cart-items" style={{ flexGrow: 1, overflowY: 'visible', paddingBottom: '0' }}>
+                            {cartItems.map(item => (
                                 <div key={item.id} className="cart-item">
                                     <img src={getImageUrl(item.image)} alt={item.title} className="cart-item-img" />
                                     <div className="cart-item-info">
@@ -365,9 +401,9 @@ const CartSidebar = () => {
                                         </div>
                                     </div>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                    )}
 
                     {cartItems.length > 0 && (
                         <div className="cart-total-display" style={{ padding: '15px', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderTop: '1px solid rgba(212, 175, 55, 0.1)', marginBottom: '10px' }}>
@@ -500,27 +536,29 @@ const CartSidebar = () => {
                     )}
                 </div>
 
-                <div className="cart-footer">
-                    <div className="cart-summary">
+                {!orderSuccess && (
+                    <div className="cart-footer">
                         <div className="cart-summary">
-                            <span className="summary-total" style={{ width: '100%', textAlign: 'center' }}>Total: {cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
+                            <div className="cart-summary">
+                                <span className="summary-total" style={{ width: '100%', textAlign: 'center' }}>Total: {cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
+                            </div>
                         </div>
+                        <button
+                            className="checkout-btn"
+                            disabled={cartItems.length === 0 || isProcessing}
+                            onClick={handleCheckout}
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 size={20} className="spinner" style={{ marginRight: '8px' }} />
+                                    Processando...
+                                </>
+                            ) : (
+                                'Finalizar Pedido'
+                            )}
+                        </button>
                     </div>
-                    <button
-                        className="checkout-btn"
-                        disabled={cartItems.length === 0 || isProcessing}
-                        onClick={handleCheckout}
-                    >
-                        {isProcessing ? (
-                            <>
-                                <Loader2 size={20} className="spinner" style={{ marginRight: '8px' }} />
-                                Processando...
-                            </>
-                        ) : (
-                            'Finalizar Pedido'
-                        )}
-                    </button>
-                </div>
+                )}
             </div>
         </>
     );

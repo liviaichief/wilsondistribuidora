@@ -46,18 +46,19 @@ const Home = () => {
                     setIsSystemBlocked(false);
                 }
 
-                // Lista de IDs de categorias ativas
-                const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
+                // Lista de IDs de categorias ativas (Convertidos para string para comparação segura)
+                const activeCatIds = categoriesList
+                    .filter(c => c.active !== false)
+                    .map(c => String(c.id));
 
                 // Filtramos produtos desativados E produtos de categorias desativadas para o cliente:
                 const activeOnly = data.documents.filter(d => 
                     d.active !== false && 
-                    activeCatIds.includes(d.category)
+                    activeCatIds.includes(String(d.category))
                 );
                 
                 setAllProducts(activeOnly);
             } catch (err) {
-                console.error("Home load error:", err);
                 setError("Falha ao carregar o cardápio. Verifique a conexão.");
             } finally {
                 setLoading(false);
@@ -87,7 +88,7 @@ const Home = () => {
             newFiltered = [...promoProducts, ...otherProducts];
         } else {
             // Abas Específicas
-            newFiltered = allProducts.filter(d => (d.category || '').toLowerCase() === activeCategory.toLowerCase());
+            newFiltered = allProducts.filter(d => String(d.category || '').toLowerCase() === String(activeCategory).toLowerCase());
         }
 
         setFilteredItems(newFiltered);

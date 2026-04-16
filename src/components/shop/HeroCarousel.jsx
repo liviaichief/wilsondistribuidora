@@ -122,7 +122,7 @@ const HeroCarousel = () => {
                                 src={mediaUrl}
                                 alt={slides[currentIndex].title}
                                 className="carousel-image"
-                                style={{ objectFit: 'cover' }}
+                                style={{ objectFit: 'contain' }}
                             />
                         );
                     })()}

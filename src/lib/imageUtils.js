@@ -6,7 +6,7 @@ import { storage, BUCKET_ID, client } from './appwrite';
  * @param {string} imagePath - The image reference from the database (URL, Path, or ID).
  * @returns {string} - The fully qualified URL to display.
  */
-export const getImageUrl = (imagePath) => {
+export const getImageUrl = (imagePath, options = {}) => {
     if (!imagePath) {
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
     }
@@ -24,34 +24,14 @@ export const getImageUrl = (imagePath) => {
         // Use the SDK method which is more reliable than manual construction
         // It automatically uses the correct endpoint and project ID from the client config
         if (storage && fileId) {
-            // Se for um item especial ou GIF, visualização direta
-            if (fileId.toLowerCase().endsWith('.gif') || fileId.startsWith('v_')) {
-                return storage.getFileView(BUCKET_ID, fileId).toString();
-            }
-
-            // Para produtos e banners, usamos o preview com redimensionamento inteligente
-            // Isso reduz drasticamente o tempo de carregamento da Home
-            try {
-                const width = options.width || undefined;
-                const height = options.height || undefined;
-                const quality = options.quality || 80;
-
-                return storage.getFilePreview(
-                    BUCKET_ID, 
-                    fileId, 
-                    width, 
-                    height, 
-                    undefined, // gravity
-                    quality
-                ).toString();
-            } catch (e) {
-                return storage.getFileView(BUCKET_ID, fileId).toString();
-            }
+            // No Appwrite Cloud (plano Free), transformações via preview são bloqueadas.
+            // Usamos getFileView para garantir que a imagem seja exibida independente do plano.
+            return storage.getFileView(BUCKET_ID, fileId).toString();
         }
 
         // Fallback to manual construction if storage is not available (unlikely)
         const endpoint = client?.config?.endpoint || 'https://cloud.appwrite.io/v1';
-        const project = client?.config?.project || '698e695d001d446b21d9';
+        const project = client?.config?.project || '69d59db800358cca9f27';
 
         return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
     } catch (error) {

@@ -3,10 +3,28 @@ import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useOrder } from '../../context/OrderContext';
-
+import { getSettings } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package, Fish, PartyPopper, Store, Box } from 'lucide-react';
+import { ShoppingBag, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Store, Box } from 'lucide-react';
 import './Header.css';
+
+// Ícone Instagram SVG inline (gradiente oficial)
+const InstagramIcon = ({ size = 24 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#f09433" />
+                <stop offset="25%" stopColor="#e6683c" />
+                <stop offset="50%" stopColor="#dc2743" />
+                <stop offset="75%" stopColor="#cc2366" />
+                <stop offset="100%" stopColor="#bc1888" />
+            </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#ig-grad)" />
+        <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8" fill="none" />
+        <circle cx="17.5" cy="6.5" r="1.2" fill="white" />
+    </svg>
+);
 
 // Custom Icons - Doodle Style
 const OssobucoIcon = ({ size = 20, className }) => (
@@ -76,17 +94,31 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const navigate = useNavigate();
     const { toggleCart, cartCount, cartTotal } = useCart();
     const { toggleOrderSidebar } = useOrder();
-    const { user, openAuthModal, signOut, isAdmin, isOwner, openProfileModal } = useAuth();
+    const { user, openAuthModal, signOut, isAdmin, isOwner, openProfileModal, closeProfileModal } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
-    const [showVersion, setShowVersion] = React.useState(false); // Version display state
-    // const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false); // Removed local state
+    const [showVersion, setShowVersion] = React.useState(false);
     const [logoutMessage, setLogoutMessage] = React.useState(null);
+    const [instagramUrl, setInstagramUrl] = React.useState('');
     const userMenuRef = React.useRef(null);
     const logoClicksRef = React.useRef(0);
     const logoClickTimerRef = React.useRef(null);
 
+    // Carrega URL do Instagram das configurações
+    React.useEffect(() => {
+        getSettings().then(s => {
+            if (s.instagram_url) setInstagramUrl(s.instagram_url);
+        }).catch(() => {});
+    }, []);
+
     const handleLogoClick = () => {
-        navigate('/');
+        // Limpa o cache do navegador via API e força o recarregamento na home
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                for (let name of names) caches.delete(name);
+            });
+        }
+        // Redireciona para a home e recarrega limpando cache
+        window.location.href = '/';
     };
 
     React.useEffect(() => {
@@ -178,7 +210,6 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                 ];
                 setCategories(formatted);
             } catch (e) {
-                console.error("Error loading header categories:", e);
             }
         };
         loadCats();
@@ -208,6 +239,18 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                             </span>
                         )}
 
+                        {instagramUrl && (
+                            <a
+                                href={instagramUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="instagram-btn"
+                                title="Siga-nos no Instagram"
+                            >
+                                <InstagramIcon size={29} />
+                            </a>
+                        )}
+
                         <button className="cart-btn" onClick={toggleCart}>
                             <ShoppingBag size={31} />
                             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -219,7 +262,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 title="Minha Conta"
                             >
-                                <User size={31} color={user ? "var(--primary-color)" : "white"} />
+                                <User size={31} color="white" fill="white" />
                             </button>
 
                             {isUserMenuOpen && (
@@ -228,7 +271,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                         <>
 
                                             {(isAdmin || isOwner) && (
-                                                <Link to="/admin" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
+                                                <Link to="/admin" className="user-menu-item" onClick={() => { setIsUserMenuOpen(false); closeProfileModal(); }}>
                                                     <Shield size={16} />
                                                     <span>Área Restrita</span>
                                                 </Link>
@@ -243,11 +286,12 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                                 <User size={16} />
                                                 <span>Meus Dados</span>
                                             </button>
-                                            <Link to="/orders" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
+                                            <Link to="/orders" className="user-menu-item" onClick={() => { setIsUserMenuOpen(false); closeProfileModal(); }}>
                                                 <ClipboardList size={16} /> <span>Meus Pedidos</span>
                                             </Link>
                                             <button className="user-menu-item" onClick={() => {
                                                 setIsUserMenuOpen(false);
+                                                closeProfileModal();
                                                 navigate('/logout');
                                             }}>
                                                 <LogOut size={16} /> Sair
@@ -292,7 +336,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
-                                        className={`category-item ${activeCategory === cat.id ? 'active' : ''}`}
+                                        className={`category-item${cat.id === 'all' ? ' promo' : ''}${activeCategory === cat.id ? ' active' : ''}`}
                                         onClick={() => onCategoryChange(cat.id)}
                                     >
                                         {cat.id === 'all' && <cat.icon size={25} className="category-icon" />}

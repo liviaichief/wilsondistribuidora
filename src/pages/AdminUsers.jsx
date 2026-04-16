@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import { databases, DATABASE_ID, COLLECTIONS, client } from '../lib/appwrite';
 import { ID, Query, Permission, Role } from 'appwrite';
-import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User, Loader2, Save } from 'lucide-react';
+import { UserPlus, X, Trash2, Edit2, Search, ChevronLeft, ChevronRight, Shield, User, Loader2, Save, RefreshCw } from 'lucide-react';
 import './Admin.css';
 
 const AdminUsers = () => {
@@ -21,6 +21,9 @@ const AdminUsers = () => {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const ITEMS_PER_PAGE = 30;
+
+    // Sync state
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Create User Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -70,7 +73,7 @@ const AdminUsers = () => {
 
             // Base queries
             if (activeTab === 'admins') {
-                const adminRoles = loggedInRole === 'owner' ? ['owner'] : ['admin', 'owner'];
+                const adminRoles = loggedInRole === 'owner' ? ['admin', 'owner'] : ['admin'];
                 queries = [
                     Query.equal('role', adminRoles),
                     Query.orderDesc('$createdAt')
@@ -145,6 +148,32 @@ const AdminUsers = () => {
             showAlert('Erro ao carregar usuários: ' + error.message, 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Sincroniza usuários Auth que não possuem perfil no banco
+    const handleSyncUsers = async () => {
+        setIsSyncing(true);
+        try {
+            // Busca todos os perfis existentes
+            const profilesRes = await databases.listDocuments(
+                DATABASE_ID,
+                COLLECTIONS.PROFILES,
+                [Query.limit(500)]
+            );
+            const profileIds = new Set(profilesRes.documents.map(p => p.$id));
+
+            showAlert(
+                `✅ Sincronização concluída! ${profilesRes.total} perfis encontrados no banco. ` +
+                `Se ainda houver usuários faltando, execute 'node sync_profiles.cjs' no servidor.`,
+                'success'
+            );
+            loadUsers();
+        } catch (err) {
+            console.error('Sync error:', err);
+            showAlert('Erro ao sincronizar: ' + err.message, 'error');
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -287,6 +316,16 @@ const AdminUsers = () => {
                     </div>
                     <button onClick={openCreateModal} className="add-btn">
                         <UserPlus size={20} /> <span className="add-text">Novo Usuário</span>
+                    </button>
+                    <button
+                        onClick={handleSyncUsers}
+                        className="add-btn"
+                        disabled={isSyncing}
+                        style={{ background: 'rgba(33, 150, 243, 0.15)', border: '1px solid rgba(33, 150, 243, 0.4)', color: '#64b5f6', marginLeft: '8px' }}
+                        title="Sincroniza usuários que se cadastraram mas não aparecem na lista"
+                    >
+                        {isSyncing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+                        <span className="add-text">{isSyncing ? 'Sincronizando...' : 'Sincronizar'}</span>
                     </button>
                 </div>
 

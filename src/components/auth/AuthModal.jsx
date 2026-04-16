@@ -277,7 +277,6 @@ const AuthModal = () => {
                                 <div className="modal-guest-option">
                                     <button className="guest-btn" onClick={continueAsGuest}>
                                         Continuar sem cadastro
-                                        <ArrowRight size={14} style={{ marginLeft: 5, verticalAlign: 'middle' }} />
                                     </button>
                                 </div>
                             </div>

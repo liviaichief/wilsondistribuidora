@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Phone, Info, X, ShieldAlert, Loader2 } from 'lucide-react';
+import { Save, Phone, Info, X, ShieldAlert, Loader2, Instagram } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { account } from '../lib/appwrite';
@@ -16,11 +16,13 @@ const AdminSettings = () => {
         whatsapp_message: '*NOVO PEDIDO {pedido} - BASE APP*',
         birthday_message: '',
         whatsapp_use_api: false,
-        whatsapp_api_provider: 'evolution', // 'evolution' | 'zapi'
+        whatsapp_api_provider: 'evolution',
         whatsapp_api_url: '',
         whatsapp_api_key: '',
         whatsapp_instance: '',
-        whatsapp_client_token: ''
+        whatsapp_client_token: '',
+        instagram_url: '',
+        system_blocked: false
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -43,7 +45,8 @@ const AdminSettings = () => {
             setSettings(prev => ({
                 ...prev,
                 ...data,
-                whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*'
+                whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*',
+                system_blocked: !!data.system_blocked
             }));
         } catch (error) {
             showAlert("Erro ao carregar configurações", "error");
@@ -65,6 +68,8 @@ const AdminSettings = () => {
             await updateSettings('whatsapp_api_key', settings.whatsapp_api_key);
             await updateSettings('whatsapp_instance', settings.whatsapp_instance);
             await updateSettings('whatsapp_client_token', settings.whatsapp_client_token);
+            await updateSettings('instagram_url', settings.instagram_url || '');
+            await updateSettings('system_blocked', !!settings.system_blocked);
             showAlert("Configurações salvas com sucesso!", "success", null, 2000);
         } catch (error) {
             console.error(error);
@@ -78,8 +83,11 @@ const AdminSettings = () => {
 
     return (
         <div className="admin-content-inner">
-            <div className="admin-section-header">
-                <h2>Configurações do Sistema</h2>
+            <div className="header-title-container">
+                <div>
+                    <h2>Configurações do Sistema</h2>
+                    <p>Gerencie as integrações, mensagens automáticas e categorias do seu catálogo.</p>
+                </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', alignItems: 'start' }}>
@@ -172,6 +180,9 @@ const AdminSettings = () => {
                                     />
                                     Ativar Envio Direto via API (Evolution API / Outros)
                                 </label>
+                                <p style={{ fontSize: '0.75rem', color: '#888', marginLeft: '26px', marginTop: '4px' }}>
+                                    <strong>✨ Envio Invisível:</strong> Ao ativar esta opção, as mensagens são enviadas automaticamente pelo servidor, sem que o cliente precise clicar em "Enviar" no WhatsApp.
+                                </p>
                             </div>
 
                             {settings.whatsapp_use_api && (
@@ -233,6 +244,93 @@ const AdminSettings = () => {
                                     </p>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Quadro URL Instagram */}
+                        <div style={{
+                            marginTop: '30px',
+                            paddingTop: '20px',
+                            borderTop: '1px solid #333'
+                        }}>
+                            <h3 style={{
+                                fontSize: '1rem',
+                                marginBottom: '15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text'
+                            }}>
+                                <Instagram size={18} color="#dc2743" />
+                                URL do Instagram
+                            </h3>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Instagram size={16} color="#dc2743" /> Link do perfil
+                                </label>
+                                <input
+                                    type="url"
+                                    value={settings.instagram_url || ''}
+                                    onChange={(e) => setSettings({ ...settings, instagram_url: e.target.value })}
+                                    placeholder="https://instagram.com/seuperfil"
+                                />
+                                <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <Info size={14} /> O ícone do Instagram aparecerá no cabeçalho da loja ao preencher este campo.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Quadro Status do Sistema / Manutenção */}
+                        <div style={{
+                            marginTop: '30px',
+                            paddingTop: '20px',
+                            borderTop: '1px solid #333'
+                        }}>
+                            <h3 style={{
+                                fontSize: '1rem',
+                                marginBottom: '15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                color: settings.system_blocked ? '#ff4444' : '#4caf50'
+                            }}>
+                                <ShieldAlert size={18} />
+                                Status do Sistema
+                            </h3>
+                            <div className="form-group" style={{ 
+                                background: 'rgba(255,255,255,0.03)', 
+                                padding: '15px', 
+                                borderRadius: '12px',
+                                border: '1px solid ' + (settings.system_blocked ? 'rgba(255,68,68,0.2)' : 'rgba(255,255,255,0.05)')
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div>
+                                        <p style={{ margin: 0, color: '#fff', fontWeight: 'bold' }}>Modo de Manutenção</p>
+                                        <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#888' }}>
+                                            {settings.system_blocked 
+                                                ? 'O sistema está atualmente BLOQUEADO para clientes.' 
+                                                : 'O sistema está ONLINE e operando normalmente.'}
+                                        </p>
+                                    </div>
+                                    <label className="switch">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={!!settings.system_blocked} 
+                                            onChange={(e) => setSettings({ ...settings, system_blocked: e.target.checked })} 
+                                        />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+                                {settings.system_blocked && (
+                                    <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(255,68,68,0.1)', borderRadius: '8px', border: '1px solid rgba(255,68,68,0.2)' }}>
+                                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#ffaaaa', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <ShieldAlert size={14} /> Atenção: Com o sistema bloqueado, os clientes não poderão visualizar produtos ou fazer pedidos.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <button type="submit" className="save-btn" disabled={saving} style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }}>

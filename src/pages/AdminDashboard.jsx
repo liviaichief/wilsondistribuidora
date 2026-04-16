@@ -11,7 +11,9 @@ import {
     Calendar,
     Globe,
     Cake,
-    MessageCircle
+    MessageCircle,
+    ShieldAlert,
+    ShieldCheck
 } from 'lucide-react';
 import {
     BarChart,
@@ -37,7 +39,8 @@ const AdminDashboard = () => {
         recentRevenue: 0,
         activeUsers: 0,
         topProducts: [],
-        birthdaysToday: []
+        birthdaysToday: [],
+        systemBlocked: false
     });
     const [birthdayMessage, setBirthdayMessage] = useState('');
     // Local month helper: YYYY-MM
@@ -171,7 +174,8 @@ const AdminDashboard = () => {
                 recentRevenue: recentRevenue,
                 activeUsers: activeUsersCount,
                 topProducts: topProducts,
-                birthdaysToday: await fetchBirthdaysToday()
+                birthdaysToday: await fetchBirthdaysToday(),
+                systemBlocked: !!settings.system_blocked
             });
 
             // Fetch settings for birthday message
@@ -343,6 +347,13 @@ const AdminDashboard = () => {
                         icon={ShoppingBag}
                         color="#9c27b0" // Purple
                         subtext="Histórico completo"
+                    />
+                    <StatCard
+                        title="Status do Sistema"
+                        value={stats.systemBlocked ? 'MANUTENÇÃO' : 'ONLINE'}
+                        icon={stats.systemBlocked ? ShieldAlert : ShieldCheck}
+                        color={stats.systemBlocked ? '#ff4444' : '#4caf50'}
+                        subtext={stats.systemBlocked ? 'Loja bloqueada para clientes' : 'Loja operando normalmente'}
                     />
                 </div>
 

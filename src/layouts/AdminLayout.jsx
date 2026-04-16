@@ -98,36 +98,28 @@ const AdminLayout = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleHardRefresh = () => {
-        // Limpa o cache do navegador via API (útil para PWA e Service Workers) e força reload
+    const handleLogoClick = () => {
+        // Limpa o cache do navegador via API (útil para PWA e Service Workers) e força redirecionamento
         if ('caches' in window) {
             caches.keys().then((names) => {
                 for (let name of names) caches.delete(name);
             });
         }
-        // Força o recarregamento descartando o cache local
-        window.location.reload();
+        // Redireciona para a raiz do admin para evitar 404 em rotas profundas durante o reload no PWA
+        window.location.href = '/admin';
     };
 
     return (
         <div className="admin-container">
             <aside className="admin-sidebar" style={{ zIndex: 100 }}>
-                <div className="admin-brand-group" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '20px 0' }}>
+                <div className="admin-brand-group">
                     <div
-                        onClick={() => navigate('/')}
-                        style={{
-                            cursor: 'pointer',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            transition: 'transform 0.3s ease',
-                            width: '100%'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
-                        title="Voltar para a Loja"
+                        className="admin-logo-wrapper"
+                        onClick={handleLogoClick}
+                        title="Atualizar e Limpar Cache"
+                        style={{ cursor: 'pointer' }}
                     >
-                        <img src="/logo.png" alt="Wilson Distribuidora" style={{ height: '127px', maxWidth: '90%', objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }} />
+                        <img src="/logo.png" alt="Wilson Distribuidora" className="admin-sidebar-logo" />
                     </div>
                 </div>
 
@@ -191,129 +183,61 @@ const AdminLayout = () => {
                 </div>
             </aside>
 
-            <main className="admin-content" style={{ position: 'relative' }}>
-                <div style={{ 
-                    position: 'absolute', 
-                    top: '25px', 
-                    right: '40px', 
-                    zIndex: 150,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px'
-                }}>
-                    <button
-                        onClick={toggleNotifications}
-                        style={{ 
-                            cursor: 'pointer', 
-                            background: 'rgba(255, 255, 255, 0.05)', 
-                            border: '1px solid rgba(255, 255, 255, 0.1)', 
-                            borderRadius: '12px',
-                            width: '45px',
-                            height: '45px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: isNotificationsOpen ? '#a855f7' : '#fff',
-                            position: 'relative',
-                            transition: 'all 0.3s ease',
-                            backdropFilter: 'blur(10px)'
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                            e.currentTarget.style.borderColor = '#a855f7';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                        }}
-                        title="Notificações"
-                    >
-                        <Bell size={22} />
-                        {unreadCount > 0 && (
-                            <span style={{ 
-                                position: 'absolute', 
-                                top: '-5px', 
-                                right: '-5px', 
-                                backgroundColor: '#ef4444', 
-                                borderRadius: '10px', 
-                                color: 'white', 
-                                fontSize: '10px', 
-                                fontWeight: 'bold', 
-                                padding: '2px 6px', 
-                                minWidth: '18px', 
-                                textAlign: 'center',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                            }}>
-                                {unreadCount}
-                            </span>
-                        )}
-                    </button>
-
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '15px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        padding: '8px 15px',
-                        borderRadius: '15px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                    }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#fff', letterSpacing: '0.5px' }}>
-                                {profile?.full_name || user?.full_name || 'Administrador'}
-                            </span>
-                            <span style={{ fontSize: '0.6rem', color: '#a855f7', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '1.5px' }}>
-                                Acesso Online
-                            </span>
-                        </div>
-                        
-                        <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }} />
-
-                        <button
-                            onClick={() => {
-                                showConfirm(
-                                    'Tem certeza que deseja sair do sistema agora?',
-                                    async () => {
-                                        await signOut();
-                                        showAlert('Sessão finalizada com sucesso! 👋', 'success');
-                                        setTimeout(() => window.location.href = '/login', 1500);
-                                    },
-                                    'Sair do Sistema',
-                                    'Sim, Sair',
-                                    'Cancelar'
-                                );
-                            }}
-                            style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                border: '1px solid rgba(239, 68, 68, 0.2)', 
-                                color: '#ef4444', 
-                                cursor: 'pointer',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = '#ef4444';
-                                e.currentTarget.style.color = '#fff';
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                e.currentTarget.style.color = '#ef4444';
-                                e.currentTarget.style.transform = 'scale(1.0)';
-                            }}
-                            title="Sair do Sistema"
-                        >
-                            <LogOut size={18} />
-                        </button>
+            <main className="admin-content">
+                <header className="admin-header-actions">
+                    <div className="admin-header-left">
+                        {/* Placeholder for future breadcrumbs or mobile toggle */}
                     </div>
-                </div>
+                    
+                    <div className="admin-header-right">
+                        <button
+                            onClick={toggleNotifications}
+                            className={`notification-btn ${isNotificationsOpen ? 'active' : ''}`}
+                            title="Notificações"
+                        >
+                            <Bell size={22} />
+                            {unreadCount > 0 && (
+                                <span className="notification-badge">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <div className="admin-user-badge">
+                            <div className="user-info">
+                                <span className="user-name">
+                                    {profile?.full_name || user?.full_name || 'Administrador'}
+                                </span>
+                                <span className={`user-status ${isSystemBlocked ? 'status-blocked' : 'status-online'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div className={`status-dot ${isSystemBlocked ? 'dot-blocked' : 'dot-online'}`} />
+                                    {isSystemBlocked ? 'Modo Manutenção' : 'Acesso Online'}
+                                </span>
+                            </div>
+                            
+                            <div className="badge-divider" />
+
+                            <button
+                                onClick={() => {
+                                    showConfirm(
+                                        'Tem certeza que deseja sair do sistema agora?',
+                                        async () => {
+                                            await signOut();
+                                            showAlert('Sessão finalizada com sucesso! 👋', 'success');
+                                            setTimeout(() => window.location.href = '/login', 1500);
+                                        },
+                                        'Sair do Sistema',
+                                        'Sim, Sair',
+                                        'Cancelar'
+                                    );
+                                }}
+                                className="logout-btn-small"
+                                title="Sair do Sistema"
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </header>
                 {isSystemBlocked && location.pathname !== '/admin/financeiro' && (
                     <div style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', padding: '20px', borderRadius: '8px' }}>
                         <div style={{ backgroundColor: '#141414', border: '1px solid #ff4444', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(255,0,0,0.2)' }}>
@@ -408,6 +332,23 @@ const AdminLayout = () => {
                         </div>
                     </div>
                 )}
+                <div className="admin-mobile-nav">
+                    <Link to="/admin/dashboard" className={`nav-link ${location.pathname === '/admin/dashboard' ? 'active' : ''}`}>
+                        <LayoutDashboard size={24} />
+                    </Link>
+                    <Link to="/admin" className={`nav-link ${location.pathname === '/admin' ? 'active' : ''}`}>
+                        <ShoppingBag size={24} />
+                    </Link>
+                    <Link to="/admin/pedidos" className={`nav-link ${location.pathname.startsWith('/admin/pedidos') ? 'active' : ''}`}>
+                        <ClipboardList size={24} />
+                    </Link>
+                    <Link to="/admin/banners" className={`nav-link ${location.pathname.startsWith('/admin/banners') ? 'active' : ''}`}>
+                        <ImageIcon size={24} />
+                    </Link>
+                    <Link to="/admin/settings" className={`nav-link ${location.pathname.startsWith('/admin/settings') ? 'active' : ''}`}>
+                        <Settings size={24} />
+                    </Link>
+                </div>
             </main>
         </div >
     );

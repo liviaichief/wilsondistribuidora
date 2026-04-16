@@ -13,6 +13,13 @@ const AdminCatalog = () => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
     
+    // Modal & Catalog Settings State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [catalogTitle, setCatalogTitle] = useState('OFERTAS IMPERDÍVEIS');
+    const [catalogSubtitle, setCatalogSubtitle] = useState('Sua distribuidora de confiança com os melhores cortes!');
+    const [footerTitle, setFooterTitle] = useState('Peça agora pelo nosso WhatsApp!');
+    const [footerSubtitle, setFooterSubtitle] = useState('Garantimos a melhor qualidade e entrega rápida na sua casa ou evento.');
+    
     const catalogPreviewRef = useRef(null);
 
     useEffect(() => {
@@ -88,12 +95,15 @@ const AdminCatalog = () => {
         return selectedCategories.includes(productCat);
     });
 
-    const generateCatalog = async () => {
+    const handleOpenExportModal = () => {
         if (selectedProducts.length === 0) {
             alert('Selecione pelo menos um produto para gerar o catálogo.');
             return;
         }
+        setIsModalOpen(true);
+    };
 
+    const generateCatalog = async () => {
         setIsGenerating(true);
         try {
             const element = catalogPreviewRef.current;
@@ -141,14 +151,29 @@ const AdminCatalog = () => {
             alert('Falha ao gerar a imagem do catálogo. Verifique o console.');
         } finally {
             setIsGenerating(false);
+            setIsModalOpen(false); // Close modal on finish
         }
     };
 
     return (
-        <div style={{ display: 'flex', gap: '20px', height: '100%', alignItems: 'flex-start' }}>
+        <div className="admin-catalog-container">
+            <div className="header-title-container">
+                <div>
+                    <h2>Gerador de Catálogo</h2>
+                    <p>Selecione produtos para criar imagens de divulgação profissionais.</p>
+                </div>
+                <button 
+                    onClick={handleOpenExportModal}
+                    disabled={isGenerating || selectedProducts.length === 0}
+                    className="add-btn"
+                >
+                    {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />}
+                    {isGenerating ? 'Gerando...' : 'Gerar Catálogo'}
+                </button>
+            </div>
             
             {/* MAIN AREA - Filter and Products */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="admin-catalog-main">
                 
                 {/* Category Filters Top Bar */}
                 <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '12px', border: '1px solid #333' }}>
@@ -303,60 +328,107 @@ const AdminCatalog = () => {
                     )}
                 </div>
             </div>
-
-            {/* SIDEBAR FOR ACTIONS */}
-            <div style={{ width: '300px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '12px', border: '1px solid #333', position: 'sticky', top: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: '#fff' }}>
+            
+            <div className="admin-catalog-sidebar">
+                <div className="admin-catalog-sidebar-card">
+                    <div className="admin-catalog-sidebar-header">
                         <BookOpen size={24} color="var(--primary-color)" />
                         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Ações</h2>
                     </div>
 
-                    <div style={{ marginBottom: '20px', backgroundColor: '#252525', padding: '15px', borderRadius: '8px' }}>
+                    <div className="admin-catalog-stats-box">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                             <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Itens Selecionados</span>
                             <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>{selectedProducts.length}</span>
                         </div>
                     </div>
+ 
+                     <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4' }}>
+                         Selecione os produtos e gere uma imagem pronta para divulgação no WhatsApp ou Redes Sociais.
+                     </p>
+ 
+                     <button 
+                         onClick={handleOpenExportModal}
+                         disabled={isGenerating || selectedProducts.length === 0}
+                         className="save-btn"
+                         style={{ width: '100%' }}
+                     >
+                         {isGenerating ? (
+                             <>
+                                 <Loader2 size={20} className="animate-spin" />
+                                 Montando...
+                             </>
+                         ) : (
+                             <>
+                                 <Download size={20} />
+                                 Gerar Catálogo
+                             </>
+                         )}
+                     </button>
+                 </div>
+             </div>
 
-                    <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4' }}>
-                        Clique no botão abaixo para gerar uma imagem em alta resolução contendo todos os produtos selecionados e pronta para divulgação.
-                    </p>
+            {/* Customization Modal */}
+            {isModalOpen && (
+                <div style={{
+                    position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '12px', width: '500px', maxWidth: '90%', border: '1px solid #333'
+                    }}>
+                        <h2 style={{ color: '#fff', marginTop: 0, marginBottom: '20px' }}>Personalizar Imagem</h2>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>Título do Catálogo</label>
+                            <input 
+                                type="text" value={catalogTitle} onChange={(e) => setCatalogTitle(e.target.value)}
+                                style={{ width: '100%', padding: '10px', backgroundColor: '#252525', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '25px' }}>
+                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>Subtítulo (Cabeçalho)</label>
+                            <input 
+                                type="text" value={catalogSubtitle} onChange={(e) => setCatalogSubtitle(e.target.value)}
+                                style={{ width: '100%', padding: '10px', backgroundColor: '#252525', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
+                            />
+                        </div>
 
-                    <button 
-                        onClick={generateCatalog}
-                        disabled={isGenerating || selectedProducts.length === 0}
-                        style={{
-                            width: '100%',
-                            padding: '16px',
-                            backgroundColor: selectedProducts.length === 0 ? '#333' : 'var(--primary-color)',
-                            color: selectedProducts.length === 0 ? '#666' : '#fff',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: 'bold',
-                            fontSize: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '10px',
-                            cursor: (isGenerating || selectedProducts.length === 0) ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {isGenerating ? (
-                            <>
-                                <Loader2 size={20} className="animate-spin" />
-                                Montando Catálogo...
-                            </>
-                        ) : (
-                            <>
-                                <Download size={20} />
-                                Gerar Catálogo
-                            </>
-                        )}
-                    </button>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>Título Rodapé Central</label>
+                            <input 
+                                type="text" value={footerTitle} onChange={(e) => setFooterTitle(e.target.value)}
+                                style={{ width: '100%', padding: '10px', backgroundColor: '#252525', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '30px' }}>
+                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>Aviso Adicional Rodapé</label>
+                            <input 
+                                type="text" value={footerSubtitle} onChange={(e) => setFooterSubtitle(e.target.value)}
+                                style={{ width: '100%', padding: '10px', backgroundColor: '#252525', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <button 
+                                onClick={() => setIsModalOpen(false)}
+                                disabled={isGenerating}
+                                style={{ background: 'transparent', border: '1px solid #444', color: '#ccc', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer' }}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={generateCatalog}
+                                disabled={isGenerating}
+                                style={{ background: 'var(--primary-color)', border: 'none', color: '#000', fontWeight: 'bold', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                                Confirmar e Gerar
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* HIDDEN RENDER AREA FOR CATALOG IMAGE (HTML2CANVAS) */}
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
@@ -372,8 +444,8 @@ const AdminCatalog = () => {
                     {/* Catalog Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #7E22CE', paddingBottom: '20px', marginBottom: '30px' }}>
                         <div>
-                            <h1 style={{ margin: 0, color: '#000', fontSize: '2.5rem', fontWeight: '900', textTransform: 'uppercase' }}>OFERTAS IMPERDÍVEIS</h1>
-                            <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '1.1rem' }}>Sua distribuidora de confiança com os melhores cortes!</p>
+                            <h1 style={{ margin: 0, color: '#000', fontSize: '2.5rem', fontWeight: '900', textTransform: 'uppercase' }}>{catalogTitle}</h1>
+                            <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '1.1rem' }}>{catalogSubtitle}</p>
                         </div>
                         {/* Assuming public/logo.png exists, we can use it, but for canvas it might be safer to use base64 or absolute if issues arise. Relative usually works if served from root */}
                         <img src="/logo.png" alt="Logo" style={{ height: '137px', objectFit: 'contain' }} crossOrigin="anonymous" />
@@ -454,8 +526,8 @@ const AdminCatalog = () => {
 
                     {/* Catalog Footer */}
                     <div style={{ marginTop: '40px', padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '12px', textAlign: 'center', border: '1px solid #ddd' }}>
-                        <h3 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '1.2rem' }}>Peça agora pelo nosso WhatsApp!</h3>
-                        <p style={{ margin: 0, color: '#666' }}>Garantimos a melhor qualidade e entrega rápida na sua casa ou evento.</p>
+                        <h3 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '1.2rem' }}>{footerTitle}</h3>
+                        <p style={{ margin: 0, color: '#666' }}>{footerSubtitle}</p>
                     </div>
                 </div>
             </div>

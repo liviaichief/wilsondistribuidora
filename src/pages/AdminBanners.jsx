@@ -128,7 +128,10 @@ const AdminBanners = () => {
                         initialQuality: 0.75
                     };
                     const compressedBlob = await imageCompression(file, options);
-                    fileToUpload = new File([compressedBlob], file.name, { type: file.type });
+                    let safeName = file.name.toLowerCase().replace(/\s+/g, '_');
+                    if (safeName.endsWith('.jpeg')) safeName = safeName.replace('.jpeg', '.jpg');
+                    if (!safeName.match(/\.(jpg|jpeg|png|webp|mp4|mov|webm)$/)) safeName += '.jpg';
+                    fileToUpload = new File([compressedBlob], safeName, { type: compressedBlob.type });
                 }
 
                 const fileId = isVideo ? `v_${ID.unique()}` : ID.unique();
@@ -271,10 +274,10 @@ const AdminBanners = () => {
     return (
         <div className="admin-container">
             <div className="admin-content">
-                <div className="header-title" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="header-title-container">
                     <div>
                         <h2>Gestão de Banners</h2>
-                        <p style={{ color: '#888' }}>Gerencie os banners da página inicial.</p>
+                        <p>Gerencie os destaques visuais da sua página inicial.</p>
                     </div>
                     <button onClick={() => handleOpenModal()} className="add-btn">
                         <Plus size={20} /> Novo Banner

@@ -66,11 +66,15 @@
 }
 
 .header-logo {
-    height: 75px; /* Tamanho unificado para consistência total com a Home */
+    height: 75px;
     width: auto;
     object-fit: contain;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .header-logo-section {
@@ -88,10 +92,12 @@
 
 .admin-link {
     font-size: 1.05rem;
-    font-weight: 500;
-    border: 1px solid transparent;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.4rem 1rem;
-    border-radius: 4px;
+    border-radius: 12px;
     transition: all 0.3s;
     white-space: nowrap;
     /* Prevent breaking into two lines */
@@ -100,6 +106,9 @@
     top: auto;
     right: auto;
     margin-right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* Scoped rule removed as it's no longer needed */
@@ -130,17 +139,48 @@
 }
 
 .cart-btn {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     cursor: pointer;
     position: relative;
-    transition: transform 0.2s;
+    transition: all 0.2s;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .cart-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-color);
     color: var(--primary-color);
-    transform: scale(1.1);
+    transform: translateY(-2px);
+}
+
+/* Botão Instagram no header */
+.instagram-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    margin-top: 0;
+}
+
+.instagram-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #E1306C;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(225, 48, 108, 0.2);
 }
 
 .cart-badge {
@@ -337,6 +377,62 @@
     box-shadow: var(--ambient-shadow);
 }
 
+/* Aba Promoções — Fundo dourado sempre preenchido (igual à imagem) */
+.category-item.promo {
+    color: #fff;
+    background: linear-gradient(135deg, #5a3e00 0%, #8B6914 30%, #C9A227 65%, #9a7010 100%);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(180, 130, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.category-item.promo::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -75%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 235, 150, 0.25) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+}
+
+.category-item.promo:hover::after {
+    left: 130%;
+}
+
+.category-item.promo:hover {
+    background: linear-gradient(135deg, #6b4a00 0%, #a07820 30%, #e0b832 65%, #b08020 100%);
+    color: #fff;
+    border-color: rgba(240, 200, 74, 0.8);
+    box-shadow: 0 4px 18px rgba(212, 175, 55, 0.45);
+    transform: translateY(-2px);
+}
+
+.category-item.promo.active {
+    background: linear-gradient(135deg, #7a5200 0%, #C9A227 40%, #f0c84a 70%, #a07820 100%);
+    color: #fff;
+    border-color: #f0c84a;
+    box-shadow: 0 4px 22px rgba(212, 175, 55, 0.6);
+    font-weight: 900;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.category-item.promo.active .category-icon,
+.category-item.promo .category-icon {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5));
+}
+
 .category-icon {
     opacity: 0.8;
 }
@@ -508,10 +604,10 @@
         font-size: 1rem;
         padding: 0.3rem 0.6rem;
         margin-right: 5px;
-        color: var(--primary-color);
+        color: #ffffff !important;
         max-width: fit-content;
-        background: rgba(212, 175, 55, 0.05);
-        border: 1px solid rgba(212, 175, 55, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* User menu dropdown positioning fix for mobile */

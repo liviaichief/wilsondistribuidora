@@ -154,7 +154,7 @@
 }
 @media (max-width: 768px) {
     .order-history-container {
-        padding-top: 140px; /* Compensate for fixed header */
+        padding-top: 160px; /* Compensate for fixed header */
     }
 
     .history-content {

@@ -35,11 +35,12 @@ const Admin = () => {
         title: '',
         description: '',
         price: '',
-        category: '',
         image: '',
         is_promotion: false,
         promo_price: '',
-        active: true
+        active: true,
+        stock: '',
+        alert_msg: ''
     });
 
     const [editingPromoId, setEditingPromoId] = useState(null);
@@ -47,6 +48,10 @@ const Admin = () => {
 
     // Zoom Modal State
     const [zoomedImage, setZoomedImage] = useState(null);
+
+    // Stock Rules Modal State
+    const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+    const [stockModalProduct, setStockModalProduct] = useState(null);
 
     useEffect(() => {
         loadProducts();
@@ -146,10 +151,11 @@ const Admin = () => {
             price: '',
             category: categories.length > 0 ? categories[0].id : '',
             image: '',
-            uom: 'KG',
             is_promotion: false,
             promo_price: '',
-            active: true
+            active: true,
+            stock: '',
+            alert_msg: ''
         });
         setPreviewUrl('');
         setIsModalOpen(true);
@@ -201,12 +207,15 @@ const Admin = () => {
             {/* Removed NotificationModal component */}
 
             <div className="admin-content-inner">
-                    <div className="admin-section-header">
+                <div className="header-title-container">
+                    <div>
                         <h2>Gerenciar Produtos</h2>
-                        <button onClick={openNewModal} className="add-btn">
-                            <Plus size={20} /> <span className="add-text">Novo Produto</span>
-                        </button>
+                        <p>Visualize e edite os itens do seu catálogo.</p>
                     </div>
+                    <button onClick={openNewModal} className="add-btn">
+                        <Plus size={20} /> <span className="add-text">Novo Produto</span>
+                    </button>
+                </div>
 
                     {/* Filters Bar */}
                     <div className="filters-bar">
@@ -280,6 +289,8 @@ const Admin = () => {
                                         <th>Título</th>
                                         <th>Categoria</th>
                                         <th>Preço</th>
+                                        <th>Estoque</th>
+                                        <th>Alerta</th>
                                         <th>Ativo</th>
                                         <th>Promoção</th>
                                         <th>Ações</th>
@@ -288,34 +299,52 @@ const Admin = () => {
                                 <tbody>
                                     {filteredProducts.length > 0 ? (
                                         filteredProducts.map((item) => (
-                                            <tr key={item.id} onDoubleClick={() => handleEdit(item)} style={{ cursor: 'pointer' }} title="Clique duas vezes para editar">
-                                                <td onClick={(e) => { e.stopPropagation(); setZoomedImage(item); }}>
-                                                    {item.image ? (
-                                                        <img
-                                                            src={getImageUrl(item.image)}
-                                                            alt={item.title}
-                                                            className="thumb-img"
-                                                            style={{ cursor: 'zoom-in' }}
-                                                        />
-                                                    ) : (
-                                                        <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
-                                                    )}
+                                            <tr key={item.id || item.$id} onClick={() => handleEdit(item)} className="clickable-row">
+                                                <td>
+                                                    <div style={{ cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setZoomedImage(item); }}>
+                                                        {item.image ? (
+                                                            <img
+                                                                src={getImageUrl(item.image)}
+                                                                alt={item.title}
+                                                                className="thumb-img"
+                                                            />
+                                                        ) : (
+                                                            <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.sku || '-'}</td>
-                                                <td>{item.title}</td>
-                                                <td><span className="badge">{item.category}</span></td>
-                                                <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(item.price || 0))}</td>
+                                                <td style={{ fontWeight: 'bold' }}>{item.title}</td>
+                                                <td><span className="badge">{categories.find(c => c.id === item.category)?.name || item.category}</span></td>
+                                                <td className="product-price-cell">R$ {parseFloat(item.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                                 <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', minHeight: '42px' }}>
+                                                    <div 
+                                                        onClick={(e) => { e.stopPropagation(); setStockModalProduct(item); setIsStockModalOpen(true); }}
+                                                        style={{ 
+                                                            display: 'inline-flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '5px', 
+                                                            cursor: 'pointer',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '6px',
+                                                            background: 'rgba(255,255,255,0.05)',
+                                                            border: '1px solid rgba(255,255,255,0.1)'
+                                                        }}
+                                                    >
+                                                        {item.stock !== null && item.stock !== undefined ? item.stock : 0}
+                                                        <Settings size={12} />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div onClick={(e) => e.stopPropagation()}>
                                                         <label className="switch">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={item.active !== false}
-                                                                onChange={async () => {
+                                                                onChange={async (e) => {
                                                                     try {
-                                                                        await saveProduct({ ...item, active: !item.active });
+                                                                        await saveProduct({ ...item, active: e.target.checked });
                                                                         loadProducts(true);
-                                                                        showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success', null, 1000);
                                                                     } catch (err) {
                                                                         showAlert(err.message, 'error');
                                                                     }
@@ -326,69 +355,34 @@ const Admin = () => {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <label className="switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={item.is_promotion}
-                                                                onChange={() => handleTogglePromotion(item)}
-                                                            />
-                                                            <span className="slider round"></span>
-                                                        </label>
-                                                        {item.is_promotion && (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                <span style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 'bold' }}>EDITAR VALOR:</span>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                                    <div style={{
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        backgroundColor: '#1a1a1a',
-                                                                        border: '1px solid #333',
-                                                                        borderRadius: '4px',
-                                                                        padding: '0 8px'
-                                                                    }}>
-                                                                        <span style={{ color: '#888', fontSize: '0.8rem', marginRight: '4px' }}>R$</span>
-                                                                        <input
-                                                                            type="number"
-                                                                            step="0.01"
-                                                                            value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
-                                                                            onChange={(e) => {
-                                                                                setEditingPromoId(item.id);
-                                                                                setTempPromoPrice(e.target.value);
-                                                                            }}
-                                                                            style={{
-                                                                                width: '70px',
-                                                                                padding: '4px 0',
-                                                                                fontSize: '0.9rem',
-                                                                                backgroundColor: 'transparent',
-                                                                                border: 'none',
-                                                                                color: '#fff',
-                                                                                outline: 'none'
-                                                                            }}
-                                                                            placeholder="Valor"
-                                                                        />
-                                                                    </div>
-                                                                    {editingPromoId === item.id && (
-                                                                        <button
-                                                                            onClick={() => handleSavePromoPrice(item)}
-                                                                            className="icon-btn"
-                                                                            style={{ width: '24px', height: '24px', background: 'var(--primary-color)', color: '#000' }}
-                                                                        >
-                                                                            <CheckCircle size={14} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                    <div onClick={(e) => e.stopPropagation()}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <label className="switch" title="Ativar promoção">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={!!item.is_promotion}
+                                                                    onChange={() => handleTogglePromotion(item)}
+                                                                />
+                                                                <span className="slider round"></span>
+                                                            </label>
+                                                            {item.is_promotion && (
+                                                                <span
+                                                                    onClick={() => { setEditingPromoId(item.id); setTempPromoPrice(item.promo_price || item.price); }}
+                                                                    style={{ color: '#ff4444', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.85rem' }}
+                                                                >
+                                                                    R$ {parseFloat(item.promo_price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div className="actions">
-                                                        <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
-                                                            <Edit2 size={18} />
+                                                    <div className="actions" onClick={(e) => e.stopPropagation()}>
+                                                        <button onClick={() => handleEdit(item)} className="icon-btn edit">
+                                                            <Edit2 size={16} />
                                                         </button>
-                                                        <button className="icon-btn delete" onClick={() => handleDelete(item)} title="Excluir">
-                                                            <Trash2 size={18} />
+                                                        <button onClick={() => handleDelete(item)} className="icon-btn delete">
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -396,7 +390,7 @@ const Admin = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                                            <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
                                                 Nenhum produto encontrado com os filtros atuais.
                                             </td>
                                         </tr>
@@ -451,8 +445,10 @@ const Admin = () => {
                                             if (file) {
                                                 setIsUploadingImage(true);
                                                 try {
-                                                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
+                                                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/heic'];
+                                                    if (!validTypes.includes(file.type.toLowerCase()) && !file.name.toLowerCase().endsWith('.heic')) {
+                                                        throw new Error('Apenas JPG, PNG, WEBP ou HEIC.');
+                                                    }
 
                                                     const localUrl = URL.createObjectURL(file);
                                                     setPreviewUrl(localUrl);
@@ -464,7 +460,12 @@ const Admin = () => {
                                                         initialQuality: 0.7
                                                     };
                                                     const compressedBlob = await imageCompression(file, options);
-                                                    const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+                                                    
+                                                    let safeName = file.name.toLowerCase().replace(/\s+/g, '_');
+                                                    if (safeName.endsWith('.jpeg')) safeName = safeName.replace('.jpeg', '.jpg');
+                                                    if (!safeName.match(/\.(jpg|jpeg|png|webp)$/)) safeName += '.jpg';
+                                                    
+                                                    const compressedFile = new File([compressedBlob], safeName, { type: compressedBlob.type });
 
                                                     const result = await storage.createFile(
                                                         BUCKET_ID,
@@ -580,6 +581,29 @@ const Admin = () => {
                                 </div>
                             </div>
 
+                            {/* FIELDS ESTOQUE / ALERTA */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 3fr', gap: '20px' }}>
+                                <div className="form-group">
+                                    <label>Estoque Atual</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={currentProduct.stock || ''}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, stock: e.target.value })}
+                                        placeholder="Qtd"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Mensagem de Alerta na Tela</label>
+                                    <input
+                                        type="text"
+                                        value={currentProduct.alert_msg || ''}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, alert_msg: e.target.value })}
+                                        placeholder="Ex: Apenas por encomenda! Demora 2 dias."
+                                    />
+                                </div>
+                            </div>
+
                             <div className="form-group" style={{ 
                                 background: 'rgba(168, 85, 247, 0.05)', 
                                 padding: '15px 20px', 
@@ -652,7 +676,7 @@ const Admin = () => {
             {/* Image Zoom Modal */}
             {zoomedImage && (
                 <div className="modal-overlay" onClick={() => setZoomedImage(null)} style={{ zIndex: 1000000 }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'transparent', border: 'none', boxShadow: 'none', maxWidth: '90vw', maxHeight: '90vh' }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'transparent', border: 'none', boxShadow: 'none', maxWidth: '90vw', maxHeight: '90vh', overflow: 'visible' }}>
                         <div className="modal-header" style={{ position: 'absolute', right: '-10px', top: '-10px', zIndex: 1, padding: 0 }}>
                             <button className="close-btn" onClick={() => setZoomedImage(null)} style={{ background: '#fff', color: '#000', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
                                 <X size={24} />
@@ -672,6 +696,92 @@ const Admin = () => {
                         />
                         <div style={{ textAlign: 'center', marginTop: '15px', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                             {zoomedImage.title}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stock Rules Modal */}
+            {isStockModalOpen && stockModalProduct && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '500px' }}>
+                        <div className="modal-header">
+                            <h2>Regras de Estoque</h2>
+                            <button className="close-btn" onClick={() => setIsStockModalOpen(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '5px 20px 20px 20px', color: '#ccc' }}>
+                            <h3 style={{ color: '#fff', marginBottom: '15px' }}>{stockModalProduct.title}</h3>
+                            <p style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#aaa', lineHeight: '1.4' }}>
+                                Defina as configurações comportamentais referentes ao estoque e visibilidade no catálogo.
+                            </p>
+
+                            {/* Opções de Regras */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                                    <span style={{ color: '#eee', fontSize: '0.95rem' }}>Continuar vendendo sem estoque (Backorder)</span>
+                                    <label className="switch">
+                                        <input type="checkbox" checked={!!stockModalProduct.allow_backorder} onChange={(e) => setStockModalProduct({...stockModalProduct, allow_backorder: e.target.checked})} />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+                                
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                                    <span style={{ color: '#eee', fontSize: '0.95rem' }}>Ocultar item automaticamente se o estoque zerar</span>
+                                    <label className="switch">
+                                        <input type="checkbox" checked={!!stockModalProduct.hide_on_zero} onChange={(e) => setStockModalProduct({...stockModalProduct, hide_on_zero: e.target.checked})} />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                                    <span style={{ color: '#eee', fontSize: '0.95rem' }}>Exibir tag "Esgotado" na vitrine se o estoque zerar</span>
+                                    <label className="switch">
+                                        <input type="checkbox" checked={stockModalProduct.show_sold_out !== false} onChange={(e) => setStockModalProduct({...stockModalProduct, show_sold_out: e.target.checked})} />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+
+                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', gap: '15px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                        <span style={{ color: '#eee', fontSize: '0.95rem' }}>Alerta Automático de Estoque Baixo</span>
+                                        <span style={{ color: '#888', fontSize: '0.8rem' }}>Substitui a mensagem normal se o estoque atingir a cota mínima.</span>
+                                    </div>
+                                    <label className="switch">
+                                        <input type="checkbox" checked={!!stockModalProduct.low_stock_enabled} onChange={(e) => setStockModalProduct({...stockModalProduct, low_stock_enabled: e.target.checked})} />
+                                        <span className="slider round"></span>
+                                    </label>
+                                    <div style={{ width: '100%', display: 'flex', gap: '10px', marginTop: '5px' }}>
+                                        <input type="number" placeholder="Limite (ex: 5)" style={{ width: '120px', padding: '10px', background: 'rgba(0,0,0,0.5)', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }} value={stockModalProduct.low_stock_threshold || ''} onChange={(e) => setStockModalProduct({...stockModalProduct, low_stock_threshold: e.target.value})} disabled={!stockModalProduct.low_stock_enabled} />
+                                        <input type="text" placeholder="Mensagem na tela (ex: Últimas unidades em estoque!)" style={{ flex: 1, padding: '10px', background: 'rgba(0,0,0,0.5)', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }} value={stockModalProduct.alert_msg || ''} onChange={(e) => setStockModalProduct({...stockModalProduct, alert_msg: e.target.value})} disabled={!stockModalProduct.low_stock_enabled} />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr style={{ borderColor: '#333', margin: '25px 0' }} />
+                            
+                            <button 
+                                className="save-btn" 
+                                onClick={async () => {
+                                    try {
+                                        await saveProduct(stockModalProduct);
+                                        // Força atualização visual instantânea quebrando possíveis caches do navegador
+                                        setProducts(prev => prev.map(p => p.id === stockModalProduct.id ? stockModalProduct : p));
+                                        setFilteredProducts(prev => prev.map(p => p.id === stockModalProduct.id ? stockModalProduct : p));
+                                        
+                                        loadProducts(true);
+                                        setIsStockModalOpen(false);
+                                        showAlert('Regras de estoque salvas.', 'success');
+                                    } catch (err) {
+                                        showAlert('Erro ao salvar: ' + err.message, 'error');
+                                    }
+                                }}
+                                style={{ width: '100%', justifyContent: 'center' }}
+                            >
+                                <Save size={20} style={{ marginRight: '8px' }}/> Salvar Regras
+                            </button>
                         </div>
                     </div>
                 </div>

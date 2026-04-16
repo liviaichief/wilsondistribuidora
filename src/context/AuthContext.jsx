@@ -116,8 +116,15 @@ export const AuthProvider = ({ children }) => {
                                     first_name: (session.name || '').split(' ')[0] || '',
                                     last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
                                     user_id: session.$id,
-                                    role: defaultRole
-                                }
+                                    role: defaultRole,
+                                    whatsapp: '', // Inicializa vazio para usuários OAuth
+                                    birthday: null // Inicializa nulo para usuários OAuth
+                                },
+                                [
+                                    Permission.read(Role.any()),
+                                    Permission.write(Role.user(session.$id)),
+                                    Permission.update(Role.user(session.$id))
+                                ]
                             );
                             console.log("[Auth] Profile created successfully");
                             await fetchProfile(session.$id);
@@ -255,25 +262,52 @@ export const AuthProvider = ({ children }) => {
             setUser(mapUser(acc));
 
             const defaultRole = 'client';
+            const profileData = {
+                email: email,
+                full_name: additionalData?.full_name || '',
+                first_name: (additionalData?.full_name || '').split(' ')[0] || '',
+                last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
+                whatsapp: additionalData?.whatsapp || '',
+                birthday: additionalData?.birthday || null,
+                user_id: acc.$id,
+                role: defaultRole
+            };
+
             try {
                 await databases.createDocument(
                     DATABASE_ID,
                     COLLECTIONS.PROFILES,
                     acc.$id,
-                    {
-                        email: email,
-                        full_name: additionalData?.full_name || '',
-                        first_name: (additionalData?.full_name || '').split(' ')[0] || '',
-                        last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
-                        whatsapp: additionalData?.whatsapp || '',
-                        birthday: additionalData?.birthday || null,
-                        user_id: acc.$id,
-                        role: defaultRole
-                    }
+                    profileData,
+                    [
+                        Permission.read(Role.any()),
+                        Permission.write(Role.user(acc.$id)),
+                        Permission.update(Role.user(acc.$id))
+                    ]
                 );
+                console.log("[Auth] Profile created successfully during signup.");
             } catch (dbError) {
-                console.error("Error creating profile document during signup:", dbError);
-                throw new Error("Erro ao criar perfil: " + dbError.message);
+                // 409 = documento já existe (pode ter sido criado via webhook ou OAuth)
+                if (dbError.code === 409) {
+                    console.warn("[Auth] Profile already exists (409), continuing...");
+                } else {
+                    console.error("[Auth] Error creating profile document during signup:", dbError);
+                    // Tenta criar sem permissões explícitas como fallback
+                    try {
+                        await databases.createDocument(
+                            DATABASE_ID,
+                            COLLECTIONS.PROFILES,
+                            acc.$id,
+                            profileData
+                        );
+                        console.log("[Auth] Profile created via fallback (no explicit perms).");
+                    } catch (fallbackErr) {
+                        if (fallbackErr.code !== 409) {
+                            console.error("[Auth] Fallback profile creation also failed:", fallbackErr);
+                            throw new Error("Erro ao criar perfil: " + fallbackErr.message);
+                        }
+                    }
+                }
             }
 
             setRole(defaultRole);

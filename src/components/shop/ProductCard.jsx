@@ -61,39 +61,34 @@ const ProductCard = ({ product }) => {
                         e.target.style.filter = 'none';
                     }}
                 />
-                <div className={`price-tag ${product.is_promotion ? 'on-promo' : ''}`}>
+                {/* Price tag removed from image overlay to match the reference design */}
+            </div>
+            <div className="product-info">
+                <h3 className="product-title">{product.title}</h3>
+                <span className="product-sku">SKU: {product.sku || product.id.substring(0,6)}</span>
+                
+                <div className="product-price-section">
                     {product.is_promotion && product.promo_price ? (
                         <div className="promo-price-container">
-                            <span className="original-price" style={{ whiteSpace: 'nowrap' }}>
+                            <span className="original-price">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
                             </span>
                             <div className="current-price-row">
-                                <span className="promo-price" style={{ whiteSpace: 'nowrap' }}>
+                                <span className="main-price">
                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.promo_price))}
                                 </span>
-                                <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>
-                                    / {product.uom || 'KG'}
-                                </span>
+                                <span className="price-uom">/{product.uom || 'KG'}</span>
                             </div>
                         </div>
                     ) : (
-                        <>
-                            <span style={{ whiteSpace: 'nowrap' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}</span>
-                            <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>/ {product.uom || 'KG'}</span>
-                        </>
+                        <div className="current-price-row">
+                            <span className="main-price">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                            </span>
+                            <span className="price-uom">/{product.uom || 'KG'}</span>
+                        </div>
                     )}
                 </div>
-            </div>
-            <div className="product-info">
-                {product.is_promotion && (
-                    <div className="promo-badge">PROMOÇÃO</div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="product-category">{product.category}</span>
-                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>{product.sku || `#${product.id}`}</span>
-                </div>
-                <h3 className="product-title">{product.title}</h3>
-                <p className="product-desc">{product.description}</p>
 
                 <div className="product-actions">
                     {quantity === 0 ? (
@@ -116,6 +111,6 @@ const ProductCard = ({ product }) => {
     );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);
 
 
