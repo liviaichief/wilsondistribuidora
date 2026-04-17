@@ -17,17 +17,16 @@
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 30px 60px rgba(128, 0, 32, 0.15); /* More intense ambient shadow */
-    background: var(--surface-highest); /* Shift background instead of border */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    background: var(--surface-highest);
 }
 
 .image-container {
     position: relative;
     width: 100%;
-    aspect-ratio: 1.2;
+    aspect-ratio: 1.0; /* Adjusted to 1.0 to increase height of the image by approximately 20% from original design */
     overflow: hidden;
-    border-bottom: 4px solid #7c3aed; /* Purple line from reference */
+    border-bottom: 3px solid #7c3aed;
 }
 
 .product-image {
@@ -81,6 +80,26 @@
     letter-spacing: 1px;
 }
 
+.promo-ribbon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    background: #ff4444;
+    color: white;
+    padding: 5px 12px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    transform: none; /* Removed rotation */
+    z-index: 10;
+    box-shadow: -2px -2px 10px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    letter-spacing: 1px;
+    border-top-left-radius: 8px; /* Elegant corner */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .on-promo {
     border: none !important;
     background: #ffffff !important;
@@ -93,33 +112,45 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 2px;
+    gap: 0px;
+}
+
+.original-price {
+    font-size: 0.75rem;
+    text-decoration: line-through;
+    color: #8b949e;
+    opacity: 0.7;
+    margin-bottom: -4px;
+}
+
+.promo-price-container .main-price {
+    font-size: 1.4rem; /* Significantly larger */
+    color: #ff4444; /* Promotional red */
 }
 
 .product-info {
-    padding: 1.2rem;
+    padding: 0.2rem 0.4rem; /* Minimal padding */
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     position: relative;
+    min-height: auto;
 }
 
 .product-title {
-    font-size: 1.15rem;
+    font-size: 0.85rem; /* Further reduced */
     font-weight: 700;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0px; 
     color: #ffffff;
-    line-height: 1.3;
+    line-height: 1.1;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.1px;
+    height: 1.1rem; /* Fixed one-line height */
+    overflow: hidden;
 }
 
 .product-sku {
-    font-size: 0.75rem;
-    color: #8b949e;
-    font-family: 'Courier New', Courier, monospace;
-    margin-bottom: 1.2rem;
-    display: block;
+    display: none; /* Hidden to save vertical space as requested */
 }
 
 .product-price-section {
@@ -133,7 +164,7 @@
 }
 
 .main-price {
-    font-size: 1.5rem;
+    font-size: 1.4rem; /* Standardized to match promotional size */
     font-weight: 800;
     color: #e2b35a; /* Gold color */
     letter-spacing: -0.5px;
@@ -180,17 +211,14 @@
 .product-actions {
     display: flex;
     gap: 10px;
-    margin-top: 1rem;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    margin-top: -34px; /* Shrunk the card by moving the bottom edge up 50px relative to default flow */
+    opacity: 1; /* Always visible */
+    max-height: none; /* No expansion effect */
+    position: relative;
+    z-index: 5;
 }
 
-.product-card:hover .product-actions {
-    opacity: 1;
-    max-height: 50px;
-}
+/* Hover effect removed as per request */
 
 .qty-selector {
     display: flex;
@@ -205,14 +233,14 @@
     background: none;
     border: none;
     color: var(--primary-color);
-    width: 30px;
-    height: 30px;
+    width: 40px; /* Increased from 30px */
+    height: 40px; /* Increased from 30px */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background 0.2s;
-    border-radius: 2px;
+    border-radius: 4px;
 }
 
 .qty-selector button:hover {
@@ -220,9 +248,10 @@
 }
 
 .qty-selector span {
-    width: 30px;
+    width: 40px;
     text-align: center;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.2rem;
     color: #fff;
 }
 
@@ -231,14 +260,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     background: var(--surface-highest);
     border: none;
     color: var(--primary-light);
-    border-radius: 4px;
-    font-weight: 700;
+    border-radius: 8px; /* Slightly more rounded */
+    font-weight: 800;
     text-transform: uppercase;
-    font-size: 0.9rem;
+    font-size: 1.1rem; /* Increased from 0.9rem */
+    padding: 0.8rem; /* Added explicit padding for more height */
     cursor: pointer;
     transition: all 0.3s;
 }

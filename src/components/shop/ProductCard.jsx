@@ -48,6 +48,9 @@ const ProductCard = ({ product }) => {
             viewport={{ once: true }}
         >
             <div className="image-container">
+                {product.is_promotion && (
+                    <div className="promo-ribbon">Promoção</div>
+                )}
                 <img
                     // Optimization: Append width parameter if it's a Supabase URL to resize on fly
                     src={getImageUrl(product.image, { width: 400 })}

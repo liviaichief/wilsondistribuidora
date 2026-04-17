@@ -344,7 +344,7 @@
 
 .category-item {
     display: flex;
-    flex: 1;
+    flex: 0 0 auto; /* Changed from flex: 1 to prevent stretching when categories are loading */
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
