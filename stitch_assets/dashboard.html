@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Credit Dashboard - Dark Mode</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            'dashboard-black': '#0a0a0a',
+            'card-bg': '#141414',
+            'card-border': '#222222',
+            'brand-green': '#10b981',
+            'brand-red': '#ef4444',
+            'brand-blue': '#3b82f6',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-gradients">
+    .rainbow-bar {
+      background: linear-gradient(90deg, #ff4d4d, #f9cb28, #34d399, #60a5fa, #a78bfa);
+      height: 8px;
+      border-radius: 4px;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .chart-line {
+      fill: none;
+      stroke-width: 2;
+    }
+    .glow-overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+    /* Simple custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="bg-dashboard-black text-gray-200 font-sans min-h-screen flex overflow-hidden">
+<!-- BEGIN: Left Sidebar -->
+<aside class="w-20 border-r border-card-border flex flex-col items-center py-6 gap-8 z-10 bg-dashboard-black" data-purpose="main-sidebar">
+<!-- Logo -->
+<div class="w-10 h-10 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-xl flex items-center justify-center font-bold text-white italic">
+      C
+    </div>
+<!-- Navigation Icons -->
+<nav class="flex flex-col gap-6 flex-grow">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-800 text-yellow-500"><svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.08-.36.12-.57.12s-.41-.04-.57-.12l-7.9-4.44A.991.991 0 013 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.08.36-.12.57-.12s.41.04.57.12l7.9 4.44c.32.17.53.5.53.88v9z"></path></svg></button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 text-green-500"><svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg></button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 text-blue-400"><svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"></path></svg></button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 text-purple-400"><svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg></button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 text-red-400"><svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg></button>
+</nav>
+<!-- Profile -->
+<div class="pb-6">
+<img alt="Profile" class="w-10 h-10 rounded-full border border-gray-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH31YTVT20r4MbhtP-tCjXYe6IHtpIXm3zUFJNSHKpqmXCyNw4izopnSCKoyGWoFnk0jJgXvSS7eOQ8thK0hb61YztAWOc-KufDPLJS-NUlZieZvLmXLxawu5BWhzXG-5tyM4cHkRinGiEsAtkivvXl2OklOfIMoH1-x15qmGTW3C29s5mqdV1VtyUMk-MFAIYfFy-Y3wbefLvMShS-7rF7hCEHP6gTzXvJpdk3B2juTtS1edn6ZEFeLK1-iSiNjsVgXnNz4cY6G8"/>
+</div>
+</aside>
+<!-- END: Left Sidebar -->
+<!-- BEGIN: Main Content Container -->
+<div class="flex-grow flex flex-col overflow-hidden relative" data-purpose="main-layout-container">
+<div class="glow-overlay"></div>
+<!-- BEGIN: Top Navigation -->
+<header class="h-16 border-b border-card-border flex items-center px-8 gap-8 text-sm font-medium text-gray-400" data-purpose="top-header">
+<a class="text-white bg-gray-800/50 px-4 py-1.5 rounded-full" href="#">Dashboard</a>
+<a class="hover:text-white transition" href="#">Credit History</a>
+<a class="hover:text-white transition" href="#">Loans</a>
+<a class="hover:text-white transition" href="#">Disputing</a>
+<a class="hover:text-white transition" href="#">Documents</a>
+<a class="hover:text-white transition" href="#">Updates</a>
+<a class="hover:text-white transition" href="#">Notes</a>
+<div class="ml-auto flex items-center gap-4">
+<div class="relative">
+<input class="bg-card-bg border-none rounded-lg pl-10 pr-4 py-1 text-sm focus:ring-1 focus:ring-blue-500 w-48" placeholder="Search" type="text"/>
+<svg class="w-4 h-4 absolute left-3 top-2 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</div>
+</header>
+<!-- END: Top Navigation -->
+<!-- BEGIN: Scrollable Dashboard Content -->
+<main class="flex-grow overflow-y-auto p-8 grid grid-cols-12 gap-6" data-purpose="dashboard-grid">
+<!-- Left Column -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Header Section -->
+<section data-purpose="page-title">
+<h1 class="text-4xl font-light text-white flex items-center gap-3">
+            Your <img alt="User" class="w-8 h-8 rounded-full border border-gray-600" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-zfU1TZSpu7IfsSjbvZHMG0EExJYiZgGEz0bTfFZxXU78qufhjnGkmKW-K-PgcV6Wt5-2BCbcNTxpRx39xtSXKGWRlKfavzvD-OcJcRq9pbArZmnnsr5Tpo5a5gSDHpORF5RCyZBQc3S3AeVEnRUz3PhkG79FDtP26N5Jh82877jGsb_3TdIw-mzTck0cndzZdj-jKraqutey_BYPJwSGM3SrdCWiwcZqXa5dlnLRyKaIMhCwUaZKU2FB7U-KvDVRcApN2UrnNOg"/> Credit
+          </h1>
+<h2 class="text-4xl font-bold text-white mt-1">Dashboard</h2>
+</section>
+<!-- Score & Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-purpose="hero-stats">
+<!-- Credit Score Card -->
+<div class="bg-card-bg border border-card-border rounded-3xl p-6 flex flex-col justify-between" data-purpose="score-card">
+<div class="flex gap-4 mb-8">
+<span class="text-xs bg-gray-800 text-white px-3 py-1 rounded-full border border-gray-700">Transunion Score</span>
+<span class="text-xs text-gray-500 py-1">Experian</span>
+<span class="text-xs text-gray-500 py-1">Equifax</span>
+</div>
+<div class="flex items-baseline gap-4 mb-4">
+<span class="text-7xl font-bold text-white">730</span>
+<span class="text-brand-green text-sm flex items-center gap-1 font-semibold">+6 pts <svg class="w-3 h-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path></svg></span>
+</div>
+<p class="text-gray-400 text-lg mb-8">Excellent</p>
+<div class="rainbow-bar w-full mb-2"></div>
+<div class="flex justify-between text-[10px] text-gray-500 uppercase tracking-widest">
+<span>Poor</span>
+<span>Fair</span>
+<span>Good</span>
+<span>Excellent</span>
+</div>
+</div>
+<!-- Secondary Metric Cards -->
+<div class="grid grid-rows-2 gap-6">
+<div class="bg-card-bg border border-card-border rounded-3xl p-6 flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></div>
+<div class="flex-grow">
+<p class="text-gray-400 text-sm">Payments on Time</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-white">24</span>
+<span class="text-gray-600">/ 38</span>
+</div>
+</div>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-brand-green"></div>
+<div class="w-2 h-2 rounded-full bg-brand-green"></div>
+<div class="w-2 h-2 rounded-full bg-gray-700"></div>
+<div class="w-2 h-2 rounded-full bg-gray-700"></div>
+</div>
+</div>
+<div class="bg-card-bg border border-card-border rounded-3xl p-6 flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></div>
+<div class="flex-grow">
+<p class="text-gray-400 text-sm">Credit Utilization</p>
+<span class="text-3xl font-bold text-white">23<span class="text-lg ml-0.5">%</span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Changes Section -->
+<section data-purpose="recent-changes">
+<div class="bg-card-bg border border-card-border rounded-3xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-semibold text-white">Recent Changes</h3>
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 bg-brand-red text-white text-[10px] rounded-full flex items-center justify-center font-bold">2</span>
+<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between border-b border-gray-800 pb-4">
+<div>
+<p class="text-sm font-medium text-white">Credit History</p>
+<p class="text-xs text-gray-500">Updated June 16</p>
+</div>
+<div class="relative w-48 h-12">
+<!-- SVG Chart Placeholder -->
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path d="M0 25 Q 25 25 50 15 T 100 5" fill="none" stroke="#3b82f6" stroke-width="2"></path>
+<path d="M0 28 Q 25 20 50 25 T 100 15" fill="none" stroke="#a855f7" stroke-width="2"></path>
+<path d="M0 22 Q 25 28 50 20 T 100 25" fill="none" stroke="#10b981" stroke-width="2"></path>
+</svg>
+<div class="absolute -right-4 top-0 bg-gray-900 border border-gray-700 px-2 py-1 rounded-lg text-[10px]">
+                      720 <span class="text-[8px] opacity-50 uppercase">Transunion</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Your Credits List -->
+<section data-purpose="credits-list">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-2xl font-bold text-white">Your credits <span class="text-xs text-gray-500 font-normal ml-1 align-top">12</span></h3>
+<div class="flex gap-6 text-sm">
+<span class="text-gray-400">Inquiries <span class="text-[10px] align-top text-gray-600">24</span></span>
+<span class="text-gray-400">Public Records</span>
+</div>
+</div>
+<div class="flex gap-2 mb-6">
+<button class="bg-gray-800 text-white px-5 py-1.5 rounded-full text-sm">All</button>
+<button class="text-gray-500 px-5 py-1.5 rounded-full text-sm hover:bg-gray-800/50 transition">Active</button>
+<button class="text-gray-500 px-5 py-1.5 rounded-full text-sm hover:bg-gray-800/50 transition">Inactive</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Credit Item 1 -->
+<div class="bg-card-bg border border-card-border rounded-3xl p-6 relative group overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+<div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+</div>
+<span class="text-xs font-medium text-gray-400">Auto Loan</span>
+</div>
+<svg class="w-4 h-4 text-gray-600 group-hover:text-white transition cursor-pointer" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<p class="text-gray-300 font-medium mb-4">TD Bank USA</p>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-2xl font-bold text-white">$ 12,340</p>
+<p class="text-[10px] text-gray-600 uppercase">Paid Amount</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-medium text-white">36 mo.</p>
+<p class="text-[10px] text-gray-600 uppercase">Term</p>
+</div>
+</div>
+</div>
+<!-- Credit Item 2 -->
+<div class="bg-card-bg border border-card-border rounded-3xl p-6 relative group overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+<div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+</div>
+<span class="text-xs font-medium text-gray-400">Home Loan</span>
+</div>
+<svg class="w-4 h-4 text-gray-600 group-hover:text-white transition cursor-pointer" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<p class="text-gray-300 font-medium mb-4">SmartCredit</p>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-2xl font-bold text-white">$ 56,000</p>
+<p class="text-[10px] text-gray-600 uppercase">Paid Amount</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-medium text-white">120 mo.</p>
+<p class="text-[10px] text-gray-600 uppercase">Term</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Mobile Style Floating Card -->
+<div class="col-span-12 lg:col-span-4" data-purpose="detail-sidebar">
+<div class="sticky top-0 glass-effect rounded-[40px] p-8 h-[calc(100vh-8rem)] flex flex-col shadow-2xl overflow-hidden">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-xl bg-blue-500/30 flex items-center justify-center">
+<div class="w-4 h-4 bg-blue-500 rounded-md"></div>
+</div>
+<span class="text-sm text-gray-300">Auto Loan</span>
+</div>
+<button class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<h4 class="text-gray-400 text-sm mb-1">TD Bank USA</h4>
+<div class="flex justify-between items-baseline mb-12">
+<p class="text-5xl font-bold text-white">$ 12,340</p>
+<div class="text-right">
+<p class="text-[10px] text-gray-500 uppercase">Next Payment Date</p>
+<p class="text-xs text-white">03.05.2024</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="mb-12">
+<div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden flex">
+<div class="h-full rainbow-bar" style="width: 75%;"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] text-gray-600">
+<span>$0</span>
+<span>$15,000</span>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex gap-6 border-b border-gray-800 mb-8 pb-2 text-sm">
+<span class="text-white border-b-2 border-white pb-2 px-1 font-medium">Timeline</span>
+<span class="text-gray-500 pb-2 px-1">Details</span>
+<span class="text-gray-500 pb-2 px-1">Updates</span>
+</div>
+<!-- Timeline Grid -->
+<div class="flex-grow space-y-8 overflow-y-auto pr-2">
+<div>
+<div class="flex justify-between items-center mb-4">
+<h5 class="text-lg font-bold text-white">2023</h5>
+<div class="text-right">
+<p class="text-[8px] text-gray-600 uppercase">First Payment</p>
+<p class="text-[10px] text-gray-400">03.02.2023</p>
+</div>
+</div>
+<div class="grid grid-cols-6 gap-3">
+<!-- Status Matrix -->
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Jan</span>
+<div class="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center"></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Feb</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Mar</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Apr</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">May</span>
+<div class="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Jun</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<!-- Row 2 -->
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Jul</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Aug</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Sep</span>
+<div class="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Oct</span>
+<div class="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center"></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Nov</span>
+<div class="w-8 h-8 rounded-full bg-brand-green flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg></div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-[8px] text-gray-600 uppercase">Dec</span>
+<div class="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center text-white"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path clip-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path></svg></div>
+</div>
+</div>
+</div>
+<div>
+<h5 class="text-lg font-bold text-white mb-4">2024</h5>
+<div class="grid grid-cols-6 gap-3 opacity-40">
+<!-- Greyed out future/pending dates -->
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">Jan</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">Feb</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">Mar</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">Apr</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">May</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+<div class="flex flex-col items-center gap-1"><span class="text-[8px] text-gray-600 uppercase">Jun</span><div class="w-8 h-8 rounded-full bg-gray-800/50"></div></div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-8 grid grid-cols-3 gap-2">
+<button class="bg-white text-gray-900 text-[10px] font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg hover:bg-gray-100 transition">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path clip-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" fill-rule="evenodd"></path></svg>
+              Make a payment
+            </button>
+<button class="bg-gray-800 text-white text-[10px] font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-700 transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              Create Dispute
+            </button>
+<button class="bg-gray-800 text-white text-[10px] font-bold py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-gray-700 transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              Calculate
+            </button>
+</div>
+</div>
+</div>
+<!-- END: Right Column -->
+</main>
+<!-- END: Scrollable Dashboard Content -->
+</div>
+<!-- END: Main Content Container -->
+</body></html>

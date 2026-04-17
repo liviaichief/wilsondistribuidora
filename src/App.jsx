@@ -12,6 +12,10 @@ import ResetPassword from './pages/ResetPassword.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfileModal from './components/auth/ProfileModal'; // Global Modal
 import AdminSettings from './pages/AdminSettings.jsx';
+import AdminFinance from './pages/AdminFinance.jsx';
+import AdminBanners from './pages/AdminBanners.jsx';
+import AdminOrders from './pages/AdminOrders.jsx';
+import AdminCatalog from './pages/AdminCatalog.jsx';
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
@@ -66,13 +70,33 @@ function App() {
                   <Route index element={<Admin />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="users" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
                       <AdminUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="banners" element={
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                      <AdminBanners />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="catalogo" element={
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                      <AdminCatalog />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="pedidos" element={
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                      <AdminOrders />
                     </ProtectedRoute>
                   } />
                   <Route path="settings" element={
                     <ProtectedRoute allowedRoles={['admin', 'owner']}>
                       <AdminSettings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="financeiro" element={
+                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                      <AdminFinance />
                     </ProtectedRoute>
                   } />
                 </Route>

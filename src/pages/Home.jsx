@@ -7,20 +7,13 @@ import './Home.css';
 
 const ITEMS_PER_PAGE = 8; // Aumentado um pouco para preencher telas iniciais maiores
 
-const CATEGORY_PRIORITY = {
-    'kit': 1,
-    'carne': 2,
-    'suinos': 3,
-    'frango': 4,
-    'acompanhamentos': 5,
-    'acessorios': 6,
-    'insumos': 7,
-    'bebidas': 8
-};
+
 
 const Home = () => {
     // Banco em cache local 
     const [allProducts, setAllProducts] = useState([]);
+    const [isSystemBlocked, setIsSystemBlocked] = useState(false);
+    const [showBlockMessage, setShowBlockMessage] = useState(true);
 
     // Visão atual
     const [filteredItems, setFilteredItems] = useState([]);
@@ -41,10 +34,27 @@ const Home = () => {
         const fetchInitialData = async () => {
             setLoading(true);
             try {
-                // Ao passar null, o dataService nos devolve a base inteira sem filtros severos.
-                const data = await getProducts(); // dataService internamente limita a 100 itens ord. por data
-                // Filtramos produtos desativados para o cliente:
-                const activeOnly = data.documents.filter(d => d.active !== false);
+                const { getCategories } = await import('../services/dataService');
+                const [data, categoriesList] = await Promise.all([
+                    getProducts(),
+                    getCategories()
+                ]);
+
+                if (data.system_blocked) {
+                    setIsSystemBlocked(true);
+                } else {
+                    setIsSystemBlocked(false);
+                }
+
+                // Lista de IDs de categorias ativas
+                const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
+
+                // Filtramos produtos desativados E produtos de categorias desativadas para o cliente:
+                const activeOnly = data.documents.filter(d => 
+                    d.active !== false && 
+                    activeCatIds.includes(d.category)
+                );
+                
                 setAllProducts(activeOnly);
             } catch (err) {
                 console.error("Home load error:", err);
@@ -57,6 +67,15 @@ const Home = () => {
         fetchInitialData();
     }, []);
 
+    useEffect(() => {
+        if (isSystemBlocked && showBlockMessage) {
+            const timer = setTimeout(() => {
+                setShowBlockMessage(false);
+            }, 20000);
+            return () => clearTimeout(timer);
+        }
+    }, [isSystemBlocked, showBlockMessage]);
+
     // 2. Filtra a base local (Memória) toda vez que a Categoria muda, instântaneamente.
     useEffect(() => {
         let newFiltered = [];
@@ -64,26 +83,6 @@ const Home = () => {
             // Aba Promoções: Mostrar promoções + Cópia de todos os outros produtos ordenados por categoria
             const promoProducts = allProducts.filter(d => d.is_promotion === true);
             const otherProducts = allProducts.filter(d => d.is_promotion !== true);
-
-            // Ordem das categorias solicitada: da esquerda para a direita, começando pela carne
-            const PROMO_CATEGORY_PRIORITY = {
-                'carne': 1,
-                'suinos': 2,
-                'frango': 3,
-                'acompanhamentos': 4,
-                'acessorios': 5,
-                'insumos': 6,
-                'bebidas': 7,
-                'kit': 8
-            };
-
-            otherProducts.sort((a, b) => {
-                const catA = (a.category || '').toLowerCase();
-                const catB = (b.category || '').toLowerCase();
-                const prioA = PROMO_CATEGORY_PRIORITY[catA] || 99;
-                const prioB = PROMO_CATEGORY_PRIORITY[catB] || 99;
-                return prioA - prioB;
-            });
 
             newFiltered = [...promoProducts, ...otherProducts];
         } else {
@@ -124,6 +123,21 @@ const Home = () => {
 
     return (
         <div className="home-container">
+            {isSystemBlocked && showBlockMessage && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', padding: '20px' }}>
+                    <div style={{ backgroundColor: '#141414', border: '1px solid #333', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                        <div style={{ fontSize: '100px', marginBottom: '10px', animation: 'pulse 2s infinite' }}>😔</div>
+                        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '15px', letterSpacing: '-1px' }}>Sistema Indisponível</h2>
+                        <p style={{ color: '#aaa', fontSize: '1rem', lineHeight: 1.6, marginBottom: '30px' }}>
+                            No momento, nossa plataforma encontra-se temporariamente fora do ar devido a problemas financeiros. Por favor, regularize as pendências para restaurar a operação da loja.
+                        </p>
+                        <div style={{ display: 'inline-block', padding: '10px 20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>
+                            Aguardando Pagamento
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Header
                 activeCategory={activeCategory}
                 onCategoryChange={setActiveCategory}

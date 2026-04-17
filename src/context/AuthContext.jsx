@@ -13,6 +13,17 @@ export const AuthProvider = ({ children }) => {
     const [authModalView, setAuthModalView] = useState('login');
     const [guestMode, setGuestMode] = useState(false); // Guest Mode
 
+    // Safety timeout to prevent infinite loading screen
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (loading) {
+                console.warn("[Auth] Safety timeout reached, forcing loading false.");
+                setLoading(false);
+            }
+        }, 5000); // 5 seconds max for checking session
+        return () => clearTimeout(timer);
+    }, [loading]);
+
     const [role, setRole] = useState(null);
     const [profile, setProfile] = useState(null);
 

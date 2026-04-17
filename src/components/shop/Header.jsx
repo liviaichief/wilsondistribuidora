@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useOrder } from '../../context/OrderContext';
 
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package } from 'lucide-react';
+import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package, Fish, PartyPopper, Store, Box } from 'lucide-react';
 import './Header.css';
 
 // Custom Icons - Doodle Style
@@ -147,29 +147,56 @@ const Header = ({ activeCategory, onCategoryChange }) => {
         };
     }, []);
 
-    const categories = [
-        { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
-        { id: 'kit', label: 'KIT', icon: Package },
-        { id: 'carne', label: 'CARNE', icon: OssobucoIcon },
-        { id: 'suinos', label: 'SUÍNOS', icon: SausageIcon },
-        { id: 'frango', label: 'FRANGO', icon: DrumstickIcon },
-        { id: 'acompanhamentos', label: 'ACOMPANHAMENTOS', icon: GarlicBreadIcon },
-        { id: 'acessorios', label: 'ACESSÓRIOS', icon: CharcoalIcon },
-        { id: 'insumos', label: 'INSUMOS', icon: Flame },
-        { id: 'bebidas', label: 'BEBIDAS', icon: Beer },
-    ];
+    const [categories, setCategories] = React.useState([
+        { id: 'all', label: 'PROMOÇÕES', icon: Sparkles }
+    ]);
+
+    React.useEffect(() => {
+        const loadCats = async () => {
+            try {
+                const { getCategories } = await import('../../services/dataService');
+                const data = await getCategories();
+                
+                const getIconForCategory = (id) => {
+                    switch (id) {
+                        case '1': return OssobucoIcon;
+                        case '2': return SausageIcon;
+                        case '3': return DrumstickIcon;
+                        case '4': return Beer;
+                        case '5': return Store;
+                        default: return Box;
+                    }
+                };
+
+                const formatted = [
+                    { id: 'all', label: 'PROMOÇÕES', icon: Sparkles },
+                    ...data.filter(cat => cat.active !== false).map(cat => ({
+                        id: cat.id,
+                        label: cat.name.toUpperCase(),
+                        icon: getIconForCategory(cat.id)
+                    }))
+                ];
+                setCategories(formatted);
+            } catch (e) {
+                console.error("Error loading header categories:", e);
+            }
+        };
+        loadCats();
+    }, []);
 
     return (
         <header className={`site-header ${isHome ? 'home-header' : ''}`}>
             <div className="header-container">
-                {/* Top Row: Logo and Actions */}
-                <div className="header-main-row">
-                    {/* 1. Logo Section */}
-                    <div className="header-logo-section" onClick={handleLogoClick} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                        <img src="/logo-3r.jpeg" alt="3R Grill Boutique de Carnes" className="header-logo" />
+                {/* Top Row: Standard Layout across all pages */}
+                <div className="header-main-row is-home-layout">
+
+
+                    {/* Logo Section */}
+                    <div className="header-logo-section" onClick={handleLogoClick} title="Página Inicial">
+                        <img src="/logo.png" alt="Wilson Distribuidora" className="header-logo" />
                     </div>
 
-                    {/* 2. User Actions Section */}
+                    {/* 2. User Actions Section (Right Aligned) */}
                     <div className="header-actions">
                         {user && (
                             <span

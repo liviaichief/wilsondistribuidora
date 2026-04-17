@@ -50,7 +50,7 @@ const ProductCard = ({ product }) => {
             <div className="image-container">
                 <img
                     // Optimization: Append width parameter if it's a Supabase URL to resize on fly
-                    src={getImageUrl(product.image)}
+                    src={getImageUrl(product.image, { width: 400 })}
                     alt={product.title}
                     className="product-image"
                     loading="lazy"
@@ -65,11 +65,11 @@ const ProductCard = ({ product }) => {
                     {product.is_promotion && product.promo_price ? (
                         <div className="promo-price-container">
                             <span className="original-price" style={{ whiteSpace: 'nowrap' }}>
-                                R$ {product.price.toFixed(2)}
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
                             </span>
                             <div className="current-price-row">
                                 <span className="promo-price" style={{ whiteSpace: 'nowrap' }}>
-                                    R$ {parseFloat(product.promo_price).toFixed(2)}
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.promo_price))}
                                 </span>
                                 <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>
                                     / {product.uom || 'KG'}
@@ -78,7 +78,7 @@ const ProductCard = ({ product }) => {
                         </div>
                     ) : (
                         <>
-                            <span style={{ whiteSpace: 'nowrap' }}>R$ {product.price.toFixed(2)}</span>
+                            <span style={{ whiteSpace: 'nowrap' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}</span>
                             <span className="uom-tag" style={{ whiteSpace: 'nowrap' }}>/ {product.uom || 'KG'}</span>
                         </>
                     )}
@@ -90,7 +90,7 @@ const ProductCard = ({ product }) => {
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="product-category">{product.category}</span>
-                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>#{product.product_sku || product.id}</span>
+                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>{product.sku || `#${product.id}`}</span>
                 </div>
                 <h3 className="product-title">{product.title}</h3>
                 <p className="product-desc">{product.description}</p>

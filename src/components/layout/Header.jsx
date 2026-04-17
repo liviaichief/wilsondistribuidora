@@ -27,7 +27,7 @@ export default function Header({ activeCategory, onCategoryChange }) {
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center">
                         <Link to="/" className="mr-6 flex items-center space-x-2">
-                            <span className="text-xl font-bold text-primary-700 tracking-tight">BOUTIQUE<span className="text-gray-900">CARNE</span></span>
+                            <span className="text-xl font-bold text-primary-700 tracking-tight">BASE<span className="text-gray-900">APP</span></span>
                         </Link>
                         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
                             {CATEGORIES.map((category) => (

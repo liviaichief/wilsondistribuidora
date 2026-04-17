@@ -149,13 +149,12 @@ const AuthModal = () => {
         <>
             <div className="auth-backdrop" onClick={closeAuthModal}>
                 <div className="auth-modal" onClick={e => e.stopPropagation()}>
-                    <div className="auth-header">
-                        <h2>
-                            {authModalView === 'login' && <><LogIn size={24} /> Entrar</>}
-                            {authModalView === 'register' && <><User size={24} /> Criar Conta</>}
-                            {authModalView === 'forgot' && <><Lock size={24} /> Recuperar Senha</>}
-                        </h2>
-                        <button className="close-auth" onClick={closeAuthModal}>
+                    <div className="auth-header" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ textAlign: 'center', width: '100%', marginBottom: '0.2rem' }}>
+                            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', color: 'var(--accent-color)', fontWeight: 'bold', lineHeight: 1 }}>WILSON</div>
+                            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.7rem', color: '#888', letterSpacing: '4px', textTransform: 'uppercase' }}>Distribuidora</div>
+                        </div>
+                        <button className="close-auth" onClick={closeAuthModal} style={{ position: 'absolute', right: '1rem', top: '1.5rem' }}>
                             <X size={24} />
                         </button>
                     </div>

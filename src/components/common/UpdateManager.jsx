@@ -17,16 +17,8 @@ const UpdateManager = () => {
                     const data = await response.json();
 
                     if (data.version && data.version !== APP_VERSION) {
-                        console.log(`New version detected: ${data.version}. Current: ${APP_VERSION}. Forcing reload...`);
-
-                        // Clear caches if supported
-                        if ('caches' in window) {
-                            const names = await caches.keys();
-                            for (let name of names) await caches.delete(name);
-                        }
-
-                        // Force hard reload
-                        window.location.reload();
+                        console.log(`New version detected: ${data.version}. Current: ${APP_VERSION}. Soft update available.`);
+                        // window.location.reload() disabled to prevent loop
                     }
                 }
             } catch (error) {

@@ -70,7 +70,7 @@ const PWAInstallPrompt = () => {
         <div className="pwa-install-prompt">
             <div className="pwa-content">
                 <div className="pwa-text">
-                    <strong>Boutique de Carnes</strong>
+                    <strong>Base App</strong>
                     {isIOS ? (
                         <p>No <strong>Safari</strong>, toque em <Share size={14} style={{ display: 'inline', verticalAlign: 'middle', margin: '0 2px' }} /> Compartilhar e "Adicionar à Tela de Início".</p>
                     ) : (

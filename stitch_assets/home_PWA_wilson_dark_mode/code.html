@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#2a2a2a",
+                        "primary-fixed-dim": "#ffb3b5",
+                        "tertiary-fixed-dim": "#9acfde",
+                        "on-tertiary-fixed-variant": "#114d5b",
+                        "surface": "#131313",
+                        "tertiary-container": "#004451",
+                        "primary-container": "#800020",
+                        "primary-fixed": "#ffdada",
+                        "on-tertiary-container": "#7cb0c0",
+                        "on-error": "#690005",
+                        "on-primary": "#680018",
+                        "error": "#ffb4ab",
+                        "secondary": "#c8c6c5",
+                        "on-primary-fixed-variant": "#8e0f28",
+                        "surface-variant": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#e5e2e1",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#b6b5b4",
+                        "error-container": "#93000a",
+                        "outline": "#a78a8a",
+                        "primary": "#ffb3b5",
+                        "surface-container-highest": "#353534",
+                        "background": "#131313",
+                        "inverse-surface": "#e5e2e1",
+                        "on-background": "#e5e2e1",
+                        "tertiary": "#9acfde",
+                        "secondary-fixed": "#e4e2e1",
+                        "surface-container": "#201f1f",
+                        "surface-tint": "#ffb3b5",
+                        "on-tertiary-fixed": "#001f26",
+                        "on-secondary": "#303030",
+                        "on-surface-variant": "#e0bfbf",
+                        "surface-bright": "#393939",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "secondary-container": "#474746",
+                        "on-primary-fixed": "#40000b",
+                        "inverse-primary": "#af2b3e",
+                        "on-primary-container": "#ff828a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "outline-variant": "#584141",
+                        "surface-dim": "#131313",
+                        "tertiary-fixed": "#b6ebfb",
+                        "on-tertiary": "#003640",
+                        "on-secondary-fixed": "#1b1c1c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Work Sans"],
+                        "label": ["Work Sans"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Work Sans', sans-serif; }
+        .font-serif { font-family: 'Newsreader', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-pill {
+            box-shadow: 0 4px 20px rgba(128, 0, 32, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-[#131313] dark:bg-[#131313] docked full-width top-0 z-50 border-b border-[#2a2a2a] shadow-[0_20px_40px_rgba(128,0,32,0.08)] sticky top-0">
+<div class="flex justify-between items-center w-full px-6 py-4">
+<button class="active:scale-95 duration-150 text-[#e5e2e1]">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-serif text-2xl tracking-tighter uppercase text-2xl font-bold text-[#800020] font-serif italic">WILSON</h1>
+<button class="active:scale-95 duration-150 text-[#e5e2e1]">
+<span class="material-symbols-outlined">shopping_cart</span>
+</button>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-4 md:px-8 space-y-12 pt-6">
+<!-- Horizontal Category Navigation -->
+<nav class="flex gap-4 overflow-x-auto pb-4 no-scrollbar items-center">
+<button class="bg-primary-container text-white px-6 py-2 rounded-full font-serif italic tracking-wide active-pill flex-shrink-0 transition-all">Beef</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-serif italic tracking-wide hover:bg-surface-container-highest flex-shrink-0 transition-all">Pork</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-serif italic tracking-wide hover:bg-surface-container-highest flex-shrink-0 transition-all">Chicken</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-serif italic tracking-wide hover:bg-surface-container-highest flex-shrink-0 transition-all">Kits</button>
+</nav>
+<!-- Main Promotional Banner -->
+<section class="relative h-[450px] rounded-xl overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent z-10"></div>
+<img class="w-full h-full object-cover grayscale brightness-50 transition-transform duration-700 group-hover:scale-105" data-alt="Vintage delivery truck parked in front of a rustic brick wall, dark moody lighting, cinematic high contrast atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBhbyIA9Egk6YJlfLofcRqeFaqkJ-dm5lXGtVMC-HJylJ4_h2f0o7Azbv24-c8vURbNrF48wypQccM0s60MgvL0v768-ysun6sGlxoTmacI3ccbNtjPJzNyQdPTldRG7UJE2znXY37lDyo2KC7IJz6IUDp6euj7_N3yyXwkZXlwl-H7GdShE-1bBggIMsnWTNvRupjz_S5djmbqoEEXhUxy5twTlra1NIIr3auc3V79Lzg8yFyh8oU9_7Gf8J6_o-T7JQLQ-uO0Oyl"/>
+<div class="absolute inset-0 z-20 flex flex-col justify-center p-8 md:p-16 space-y-4">
+<span class="text-primary font-serif italic text-xl">Destaque da Semana</span>
+<h2 class="text-6xl md:text-8xl font-serif font-extrabold tracking-tighter uppercase leading-none">Picanha<br/><span class="text-primary-container">Premium</span></h2>
+<p class="max-w-md text-on-surface-variant font-light leading-relaxed">Marmorização superior e maturação artesanal. O corte definitivo para quem não aceita menos que a excelência.</p>
+<div class="pt-4">
+<button class="bg-primary-container hover:bg-on-primary-fixed-variant text-white px-10 py-4 rounded-lg font-serif italic text-lg transition-colors shadow-xl">Explorar Seleção</button>
+</div>
+</div>
+</section>
+<!-- Selected Cuts Grid -->
+<section class="space-y-8">
+<div class="flex items-end justify-between border-b border-surface-container-highest pb-4">
+<div>
+<h3 class="text-4xl font-serif italic">Cortes Selecionados</h3>
+<p class="text-on-surface-variant text-sm uppercase tracking-[0.2em] mt-1">Nossa Curadoria do Dia</p>
+</div>
+<button class="text-primary font-serif italic hover:underline">Ver Todos</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Product Card 1 -->
+<div class="group space-y-4 bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-300">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close-up of a raw premium wagyu ribeye steak with intense marbling on a dark slate background, dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH4_nDZkCDeYEQjnNUqXbOBuddRIZbaGAt4G3tZlvx64Bw7Rqq9Ns5wsm2vz6F-Jt5L50UxGXkw6WSuUJ2anJfDeA4S8Br6S-k8gxrmrn00Z9ERcgXey2j5N7pZ9G9hvTxQYNJEdLuMwv1Bygb70xzPVFCajolg8EqGJaFhK-xK87ilsGK4FYfgasV2IDjpYQmVGjfhW5LV98mXV1naEbNMl9G5wvlIAFQvBLynF9vaCa751xsEYzzmiqdQKrU6O84LWrMCGdo3-vL"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-serif text-xl">Ribeye Angus</h4>
+<p class="text-on-surface-variant text-sm">Aproximadamente 400g</p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xl font-serif font-bold text-primary">R$ 89,90</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group space-y-4 bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-300">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Thick cut porterhouse steak with sea salt flakes on a black rustic plate, moody luxury food photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALPA7nJ53QXTsAm2sDA13jfCtMJhETxThBAX8toF95TIiQKJ_R2rQLmZnk3Tad18So9AxH3Pl2seiztjQTSA9sp3057MXM0ftLfhMPp8Feu-TFChV_pJfvMmLs2yjA_VKMgzZJxNimpMLfT0eevPEPuXzebS9eczL_yeGoqUvmlc_XE_BZO6wHhh5nqx0j1aqD5PR2VnwL9_o70ZgWM2QPhYJWouMWBND2sVD64bRKVVRfwqz5aVzRFFJDTet3_0lUQCOsQKPOiCcg"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-serif text-xl">Porterhouse</h4>
+<p class="text-on-surface-variant text-sm">Aproximadamente 600g</p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xl font-serif font-bold text-primary">R$ 145,00</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group space-y-4 bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-300">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="High quality raw beef tenderloin medallions arranged on a wooden board, atmospheric kitchen lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKOit4qCYRz66-d_6D5QeTpP5KVyChkZt-iGBIgZOzP8AzACVWQSaLbdU3K2W-92LjJiaknrAJWXSnM-DxZAFyztb70DjfzU1XnKk6857KyCFZvD4QwpEPaAlpZXpwsY8EBmjEc9b1-L1jJ09LBr9V-jBrlLoejCYX6xsCQlCfyx49rSF1JpZQnIl7xD2S6avGQifaTkkEcyMQEn01sGoCcQqLkgseYFLqmwy77xBI5Gt1r7sOvmetvVnPPVHghkzsPaLZrCAzyGXi"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-serif text-xl">Filet Mignon</h4>
+<p class="text-on-surface-variant text-sm">Aproximadamente 500g</p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xl font-serif font-bold text-primary">R$ 112,00</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="group space-y-4 bg-surface-container-lowest p-4 rounded-xl border border-transparent hover:border-outline-variant transition-all duration-300">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Short ribs meat on bone, raw and seasoned, cinematic dark meat texture close-up" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEi7Lxr6tzxlpdlp_7iTBNUYtP1gQcXztw0FL-LebImvA8Nmx1fObNKssqGsMrt3vIMdj25tAxyMLrheKXFXi09NTPk25lPoQGvsB8T2mt7tZ8JKEK8e3SfxXfgyOJlKuuupKQr45veXJtcHp7aZdZJU0lv8w8WOjNcS7NKplcP4HiLZ8ma-zAGSq5UdDpNw7mPNfhhiwtW2BcEIlkiqA14NsGssd48I_YUwKOVBc3oKHJ53hIZmutKFu_0n43oaYp6Rpe9n_YSlOT"/>
+</div>
+<div class="space-y-1">
+<h4 class="font-serif text-xl">Costela Premium</h4>
+<p class="text-on-surface-variant text-sm">Vendido por kg</p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="text-xl font-serif font-bold text-primary">R$ 68,90</span>
+<button class="bg-surface-container-highest hover:bg-primary-container p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- The Butcher's Ledger (Newsletter) -->
+<section class="bg-surface-container-high rounded-3xl p-12 relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+<div class="md:w-1/2 space-y-6 relative z-10">
+<h3 class="text-5xl font-serif italic leading-tight">O Ledger do Açougueiro</h3>
+<p class="text-on-surface-variant font-light text-lg">Receba insights semanais sobre cortes raros, técnicas de maturação e ofertas exclusivas para membros do Ledger.</p>
+<div class="flex flex-col sm:flex-row gap-3">
+<input class="bg-surface-container-highest border-none focus:ring-1 focus:ring-primary-container rounded-lg px-6 py-4 flex-grow text-on-surface placeholder:text-outline" placeholder="Seu melhor e-mail" type="email"/>
+<button class="bg-primary-container text-white px-8 py-4 rounded-lg font-serif italic hover:bg-on-primary-fixed-variant transition-all">Assinar</button>
+</div>
+<p class="text-[10px] uppercase tracking-widest text-outline">Respeitamos sua privacidade como respeitamos o tempo de maturação.</p>
+</div>
+<div class="md:w-1/2 flex justify-center relative z-10">
+<div class="w-48 h-64 border-2 border-primary-container/30 rounded-lg flex items-center justify-center rotate-6 scale-110 bg-surface shadow-2xl">
+<span class="material-symbols-outlined text-primary-container text-8xl opacity-50">menu_book</span>
+</div>
+<div class="w-48 h-64 border-2 border-outline-variant rounded-lg flex items-center justify-center -rotate-12 absolute bg-surface shadow-xl -z-10">
+<span class="material-symbols-outlined text-on-surface-variant text-8xl opacity-20">history_edu</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1a1a]/80 backdrop-blur-xl z-50 rounded-t-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<div class="flex flex-col items-center justify-center bg-[#800020] text-white rounded-xl px-4 py-1.5 animate-pulse-subtle">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-medium">Cortes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#e5e2e1]/60 hover:bg-[#2a2a2a] rounded-xl px-4 py-1.5 transition-all">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-medium">Pedidos</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#e5e2e1]/60 hover:bg-[#2a2a2a] rounded-xl px-4 py-1.5 transition-all">
+<span class="material-symbols-outlined">star</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-medium">Favoritos</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#e5e2e1]/60 hover:bg-[#2a2a2a] rounded-xl px-4 py-1.5 transition-all">
+<span class="material-symbols-outlined">person</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-medium">Conta</span>
+</div>
+</nav>
+</body></html>

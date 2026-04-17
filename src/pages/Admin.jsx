@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings } from '../services/dataService';
+import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings, getCategories } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID, Permission, Role } from 'appwrite';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save, Loader2 } from 'lucide-react';
@@ -11,7 +11,6 @@ import imageCompression from 'browser-image-compression';
 import './Admin.css';
 
 const Admin = () => {
-    const [activeTab, setActiveTab] = useState('products');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
@@ -21,6 +20,7 @@ const Admin = () => {
     const [previewUrl, setPreviewUrl] = useState('');
 
     const { showAlert, showConfirm } = useAlert();
+    const [categories, setCategories] = useState([]);
 
     // Filter State
     const [filterTitle, setFilterTitle] = useState('');
@@ -35,7 +35,7 @@ const Admin = () => {
         title: '',
         description: '',
         price: '',
-        category: 'carne',
+        category: '',
         image: '',
         is_promotion: false,
         promo_price: '',
@@ -49,10 +49,21 @@ const Admin = () => {
     const [zoomedImage, setZoomedImage] = useState(null);
 
     useEffect(() => {
-        if (activeTab === 'products') {
-            loadProducts();
+        loadProducts();
+        loadCategories();
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const data = await getCategories();
+            setCategories(data);
+            if (data.length > 0 && !currentProduct.category) {
+                setCurrentProduct(prev => ({ ...prev, category: data[0].id }));
+            }
+        } catch (e) {
+            console.error("Admin: Error loading categories:", e);
         }
-    }, [activeTab]);
+    };
 
     const loadProducts = async (silent = false) => {
         if (!silent) setLoading(true);
@@ -81,12 +92,22 @@ const Admin = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (product) => {
         showConfirm(
             'Tem certeza que deseja excluir este produto?',
             async () => {
                 try {
-                    await deleteProduct(id);
+                    // First delete the file if it exists
+                    if (product.image) {
+                        try {
+                            await storage.deleteFile(BUCKET_ID, product.image);
+                        } catch (e) {
+                            console.warn('Failed to delete product image:', e);
+                        }
+                    }
+                    
+                    // Then delete the document
+                    await deleteProduct(product.id || product.$id);
                     loadProducts();
                     showAlert('O produto foi removido com sucesso.', 'success', 'Produto excluído');
                 } catch (err) {
@@ -123,7 +144,7 @@ const Admin = () => {
             title: '',
             description: '',
             price: '',
-            category: 'carne',
+            category: categories.length > 0 ? categories[0].id : '',
             image: '',
             uom: 'KG',
             is_promotion: false,
@@ -168,7 +189,7 @@ const Admin = () => {
 
     // Filter Logic
     const filteredProducts = products.filter(product => {
-        const matchSku = (product.product_sku || '').toLowerCase().includes(skuFilter.toLowerCase());
+        const matchSku = (product.sku || '').toLowerCase().includes(skuFilter.toLowerCase());
         const matchTitle = (product.title || '').toLowerCase().includes(titleFilter.toLowerCase());
         const matchCategory = categoryFilter === 'all' || (product.category || '').toLowerCase() === categoryFilter.toLowerCase();
 
@@ -179,33 +200,7 @@ const Admin = () => {
         <div className="admin-container">
             {/* Removed NotificationModal component */}
 
-            <div className="admin-sidebar-tabs">
-                <button
-                    className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('products')}
-                >
-                    <ShoppingBag size={18} /> <span>Produtos</span>
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'banners' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('banners')}
-                >
-                    <ImageIcon size={18} /> <span>Banners</span>
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('orders')}
-                >
-                    <ClipboardList size={18} /> <span>Pedidos</span>
-                </button>
-            </div>
-
-            {activeTab === 'banners' ? (
-                <AdminBanners />
-            ) : activeTab === 'orders' ? (
-                <AdminOrders />
-            ) : (
-                <div className="admin-content-inner">
+            <div className="admin-content-inner">
                     <div className="admin-section-header">
                         <h2>Gerenciar Produtos</h2>
                         <button onClick={openNewModal} className="add-btn">
@@ -235,14 +230,9 @@ const Admin = () => {
                             className="filter-select-main"
                         >
                             <option value="all">Todas as Categorias</option>
-                            <option value="kit">Kit</option>
-                            <option value="carne">Carne</option>
-                            <option value="suinos">Suínos</option>
-                            <option value="frango">Frango</option>
-                            <option value="acompanhamentos">Acompanhamentos</option>
-                            <option value="acessorios">Acessórios</option>
-                            <option value="insumos">Insumos</option>
-                            <option value="bebidas">Bebidas</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
                         </select>
                         {/* Clear Filters Button */}
                         {(titleFilter || skuFilter || categoryFilter !== 'all') && (
@@ -311,27 +301,29 @@ const Admin = () => {
                                                         <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                                                     )}
                                                 </td>
-                                                <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.product_sku || '-'}</td>
+                                                <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.sku || '-'}</td>
                                                 <td>{item.title}</td>
                                                 <td><span className="badge">{item.category}</span></td>
-                                                <td>R$ {parseFloat(item.price || 0).toFixed(2)}</td>
+                                                <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(item.price || 0))}</td>
                                                 <td>
-                                                    <label className="switch">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={item.active !== false}
-                                                            onChange={async () => {
-                                                                try {
-                                                                    await saveProduct({ ...item, active: !item.active });
-                                                                    loadProducts(true);
-                                                                    showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success', null, 1000);
-                                                                } catch (err) {
-                                                                    showAlert(err.message, 'error');
-                                                                }
-                                                            }}
-                                                        />
-                                                        <span className="slider round"></span>
-                                                    </label>
+                                                    <div style={{ display: 'flex', alignItems: 'center', minHeight: '42px' }}>
+                                                        <label className="switch">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.active !== false}
+                                                                onChange={async () => {
+                                                                    try {
+                                                                        await saveProduct({ ...item, active: !item.active });
+                                                                        loadProducts(true);
+                                                                        showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success', null, 1000);
+                                                                    } catch (err) {
+                                                                        showAlert(err.message, 'error');
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="slider round"></span>
+                                                        </label>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -345,19 +337,37 @@ const Admin = () => {
                                                         </label>
                                                         {item.is_promotion && (
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                <span style={{ fontSize: '0.7rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>EDITAR VALOR:</span>
+                                                                <span style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 'bold' }}>EDITAR VALOR:</span>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                                    <input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
-                                                                        onChange={(e) => {
-                                                                            setEditingPromoId(item.id);
-                                                                            setTempPromoPrice(e.target.value);
-                                                                        }}
-                                                                        style={{ width: '80px', padding: '4px', fontSize: '0.9rem', backgroundColor: '#1a1a1a', border: '1px solid #333', color: '#fff', borderRadius: '4px' }}
-                                                                        placeholder="Preço"
-                                                                    />
+                                                                    <div style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        backgroundColor: '#1a1a1a',
+                                                                        border: '1px solid #333',
+                                                                        borderRadius: '4px',
+                                                                        padding: '0 8px'
+                                                                    }}>
+                                                                        <span style={{ color: '#888', fontSize: '0.8rem', marginRight: '4px' }}>R$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
+                                                                            onChange={(e) => {
+                                                                                setEditingPromoId(item.id);
+                                                                                setTempPromoPrice(e.target.value);
+                                                                            }}
+                                                                            style={{
+                                                                                width: '70px',
+                                                                                padding: '4px 0',
+                                                                                fontSize: '0.9rem',
+                                                                                backgroundColor: 'transparent',
+                                                                                border: 'none',
+                                                                                color: '#fff',
+                                                                                outline: 'none'
+                                                                            }}
+                                                                            placeholder="Valor"
+                                                                        />
+                                                                    </div>
                                                                     {editingPromoId === item.id && (
                                                                         <button
                                                                             onClick={() => handleSavePromoPrice(item)}
@@ -377,7 +387,7 @@ const Admin = () => {
                                                         <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
                                                             <Edit2 size={18} />
                                                         </button>
-                                                        <button className="icon-btn delete" onClick={() => handleDelete(item.id)} title="Excluir">
+                                                        <button className="icon-btn delete" onClick={() => handleDelete(item)} title="Excluir">
                                                             <Trash2 size={18} />
                                                         </button>
                                                     </div>
@@ -396,7 +406,6 @@ const Admin = () => {
                         </div>
                     )}
                 </div>
-            )}
 
             {isModalOpen && (
                 <div className="modal-overlay">
@@ -427,165 +436,188 @@ const Admin = () => {
                                     placeholder="Detalhes do produto..."
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>Preço (R$)</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    required
-                                    value={currentProduct.price}
-                                    onChange={e => setCurrentProduct({ ...currentProduct, price: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Imagem</label>
-                                <input
-                                    type="file"
-                                    accept="image/png, image/jpeg, image/jpg, image/webp"
-                                    onChange={async (e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            setIsUploadingImage(true);
-                                            try {
-                                                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                                                if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
+                                          <div className="form-group">
+                                <label>Imagem do Produto</label>
+                                <label className="custom-file-upload">
+                                    <ImageIcon size={32} color="#a855f7" />
+                                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Escolher Imagem</span>
+                                    <span style={{ color: '#666', fontSize: '0.8rem' }}>PNG, JPG ou WEBP (Max 800px)</span>
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                                        style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                setIsUploadingImage(true);
+                                                try {
+                                                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                                                    if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
 
-                                                // Show local preview immediately
-                                                const localUrl = URL.createObjectURL(file);
-                                                setPreviewUrl(localUrl);
+                                                    const localUrl = URL.createObjectURL(file);
+                                                    setPreviewUrl(localUrl);
 
-                                                const options = {
-                                                    maxSizeMB: 0.2,
-                                                    maxWidthOrHeight: 1000,
-                                                    useWebWorker: true,
-                                                };
-                                                const compressedBlob = await imageCompression(file, options);
-                                                console.log(`Comprimiu imagem: ${(file.size / 1024).toFixed(0)}KB para ${(compressedBlob.size / 1024).toFixed(0)}KB`);
+                                                    const options = {
+                                                        maxSizeMB: 0.06, 
+                                                        maxWidthOrHeight: 800,
+                                                        useWebWorker: true,
+                                                        initialQuality: 0.7
+                                                    };
+                                                    const compressedBlob = await imageCompression(file, options);
+                                                    const compressedFile = new File([compressedBlob], file.name, { type: file.type });
 
-                                                // Appwrite requires a File object with a name in some SDK versions/environments
-                                                const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+                                                    const result = await storage.createFile(
+                                                        BUCKET_ID,
+                                                        ID.unique(),
+                                                        compressedFile,
+                                                        [
+                                                            Permission.read(Role.any()),
+                                                            Permission.write(Role.users()),
+                                                            Permission.update(Role.users()),
+                                                            Permission.delete(Role.users())
+                                                        ]
+                                                    );
 
-                                                const result = await storage.createFile(
-                                                    BUCKET_ID,
-                                                    ID.unique(),
-                                                    compressedFile,
-                                                    [
-                                                        Permission.read(Role.any()),
-                                                        Permission.write(Role.users()),
-                                                        Permission.update(Role.users()),
-                                                        Permission.delete(Role.users())
-                                                    ]
-                                                );
+                                                    if (currentProduct.image && currentProduct.image !== result.$id) {
+                                                        try {
+                                                            await storage.deleteFile(BUCKET_ID, currentProduct.image);
+                                                        } catch (e) {
+                                                            console.warn('Failed to delete old image:', e);
+                                                        }
+                                                    }
 
-                                                setCurrentProduct(prev => ({ ...prev, image: result.$id }));
-                                            } catch (err) {
-                                                showAlert('Erro no upload: ' + err.message, 'error');
-                                                console.error(err);
-                                            } finally {
-                                                setIsUploadingImage(false);
+                                                    setCurrentProduct(prev => ({ ...prev, image: result.$id }));
+                                                } catch (err) {
+                                                    showAlert('Erro no upload: ' + err.message, 'error');
+                                                } finally {
+                                                    setIsUploadingImage(false);
+                                                }
                                             }
-                                        }
-                                    }}
-                                />
+                                        }}
+                                    />
+                                </label>
+                                
                                 {previewUrl && (
-                                    <div style={{ marginTop: '10px', position: 'relative', display: 'inline-block' }}>
-                                        <img src={previewUrl} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #444' }} />
-                                        <span style={{ position: 'absolute', bottom: '5px', left: '5px', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', fontSize: '10px', borderRadius: '4px', color: 'white' }}>
-                                            Preview
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setPreviewUrl('');
-                                                setCurrentProduct(prev => ({ ...prev, image: '' }));
-                                            }}
-                                            style={{
-                                                position: 'absolute',
-                                                top: '5px',
-                                                right: '5px',
-                                                background: 'rgba(255,0,0,0.8)',
-                                                border: 'none',
-                                                borderRadius: '50%',
-                                                width: '30px',
-                                                height: '30px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                color: 'white',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                                            }}
-                                            title="Remover Imagem"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                    <div className="image-preview-container">
+                                        <img src={previewUrl} alt="Preview" />
+                                        <div className="preview-overlay">
+                                            <span className="preview-badge">Visualização da Distribuidora</span>
+                                            <button
+                                                type="button"
+                                                className="remove-image-btn"
+                                                onClick={() => {
+                                                    setPreviewUrl('');
+                                                    setCurrentProduct(prev => ({ ...prev, image: '' }));
+                                                }}
+                                                title="Remover Imagem"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            <div className="form-group">
-                                <label>Categoria</label>
-                                <select
-                                    value={currentProduct.category}
-                                    onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
-                                >
-                                    <option value="kit">Kit</option>
-                                    <option value="carne">Carne</option>
-                                    <option value="suinos">Suínos</option>
-                                    <option value="frango">Frango</option>
-                                    <option value="acompanhamentos">Acompanhamentos</option>
-                                    <option value="acessorios">Acessórios</option>
-                                    <option value="insumos">Insumos</option>
-                                    <option value="bebidas">Bebidas</option>
-                                </select>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div className="form-group">
+                                    <label>Categoria</label>
+                                    <select
+                                        value={currentProduct.category}
+                                        onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Preço (R$)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#a855f7', fontWeight: 'bold' }}>R$</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            required
+                                            value={currentProduct.price}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, price: e.target.value })}
+                                            style={{ paddingLeft: '40px' }}
+                                            placeholder="0,00"
+                                        />
+                                    </div>
+                                </div>
                             </div>
+
                             <div className="form-group">
                                 <label>Unidade de Medida</label>
-                                <div style={{ display: 'flex', gap: '20px', padding: '10px 0' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <div style={{ display: 'flex', gap: '15px' }}>
+                                    {['KG', 'Unidade'].map(u => (
+                                        <label key={u} style={{ 
+                                            flex: 1, 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            gap: '8px', 
+                                            cursor: 'pointer',
+                                            padding: '12px',
+                                            background: currentProduct.uom === u || (!currentProduct.uom && u === 'KG') ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                                            border: `1.5px solid ${currentProduct.uom === u || (!currentProduct.uom && u === 'KG') ? '#a855f7' : 'rgba(255, 255, 255, 0.08)'}`,
+                                            borderRadius: '12px',
+                                            color: '#fff',
+                                            fontWeight: 600,
+                                            transition: 'all 0.3s'
+                                        }}>
+                                            <input
+                                                type="radio"
+                                                name="uom"
+                                                value={u}
+                                                checked={currentProduct.uom === u || (!currentProduct.uom && u === 'KG')}
+                                                onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
+                                                style={{ display: 'none' }}
+                                            />
+                                            {u}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ 
+                                background: 'rgba(168, 85, 247, 0.05)', 
+                                padding: '15px 20px', 
+                                borderRadius: '15px', 
+                                border: '1px solid rgba(168, 85, 247, 0.1)',
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                marginTop: '10px' 
+                            }}>
+                                <span style={{ color: '#fff', fontWeight: 600 }}>Cofigurações de Promoção</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <label className="switch">
                                         <input
-                                            type="radio"
-                                            name="uom"
-                                            value="KG"
-                                            checked={currentProduct.uom === 'KG' || !currentProduct.uom}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
+                                            type="checkbox"
+                                            checked={currentProduct.is_promotion}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
                                         />
-                                        KG
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <input
-                                            type="radio"
-                                            name="uom"
-                                            value="Unidade"
-                                            checked={currentProduct.uom === 'Unidade'}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
-                                        />
-                                        Unidade
+                                        <span className="slider round"></span>
                                     </label>
                                 </div>
                             </div>
-                            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                <label className="switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={currentProduct.is_promotion}
-                                        onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
-                                    />
-                                    <span className="slider round"></span>
-                                </label>
-                                <span>Produto em Promoção</span>
-                            </div>
 
                             {currentProduct.is_promotion && (
-                                <div className="form-group">
+                                <div className="form-group" style={{ marginTop: '15px' }}>
                                     <label>Preço Promocional (R$)</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        required={currentProduct.is_promotion}
-                                        value={currentProduct.promo_price}
-                                        onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
-                                        placeholder="Ex: 79.90"
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981', fontWeight: 'bold' }}>R$</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            required={currentProduct.is_promotion}
+                                            value={currentProduct.promo_price}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
+                                            placeholder="0,00"
+                                            style={{ paddingLeft: '40px', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                                        />
+                                    </div>
                                 </div>
                             )}
 

@@ -4,7 +4,7 @@ import { useOrder } from '../../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAlert } from '../../context/AlertContext';
-import { createOrder, getSettings } from '../../services/dataService';
+import { createOrder, getSettings, sendWhatsAppMessage } from '../../services/dataService';
 import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode, Loader2 } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../../lib/imageUtils';
 import './CartSidebar.css';
@@ -26,8 +26,8 @@ const CartSidebar = () => {
 
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
-    const [whatsappNumber, setWhatsappNumber] = useState('5511944835865'); // Default fallback
-    const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - 3R GRILL*'); // Default fallback message
+    const [whatsappNumber, setWhatsappNumber] = useState(''); // Default fallback
+    const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - BASE APP*'); // Default fallback message
     const [isProcessing, setIsProcessing] = useState(false); // Added processing state
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
@@ -275,7 +275,7 @@ const CartSidebar = () => {
                 `CEP: ${address.cep} - ${address.city}/${address.state}`;
         }
 
-        let headerText = whatsappMessage || '*NOVO PEDIDO - 3R GRILL*';
+        let headerText = whatsappMessage || '*NOVO PEDIDO - BASE APP*';
         if (headerText.includes('{pedido}')) {
             headerText = headerText.replace('{pedido}', `#${orderNumDisplay}`);
         } else {
@@ -297,9 +297,27 @@ const CartSidebar = () => {
         toggleCart(); // Close cart sidebar
         setIsProcessing(false);
 
-        // 5. Open WhatsApp (New tab for Web, same tab for Mobile)
+        // 5. Try Direct Send via API (if enabled)
+        let didSendDirectly = false;
+        try {
+            didSendDirectly = await sendWhatsAppMessage(phoneNumber, message);
+            if (didSendDirectly) {
+                console.log("Order message sent directly via API!");
+                // Optionally send a confirmation to the customer too
+                const customerMsg = `Olá *${customerName}*! Recebemos seu pedido *#${orderNumDisplay}* com sucesso. Em breve entraremos em contato para finalizar os detalhes. Agradecemos a preferência! 🥩🔥`;
+                await sendWhatsAppMessage(customerPhone, customerMsg);
+            }
+        } catch (apiErr) {
+            console.warn("Direct Send failed, will use manual redirect:", apiErr);
+        }
+
+        // 6. Open WhatsApp redirect (Manually as fallback or confirmation)
         if (isMobile) {
             window.location.href = whatsappUrl;
+        } else if (didSendDirectly) {
+            // Se já enviou diretamente e não é mobile, não precisa abrir o popup do WhatsApp Web
+            if (popupWindow) popupWindow.close();
+            showAlert(`Pedido #${orderNumDisplay} enviado com sucesso! ✅`, 'success');
         } else if (popupWindow) {
             popupWindow.location.href = whatsappUrl;
         } else {
@@ -332,7 +350,9 @@ const CartSidebar = () => {
                                     <img src={getImageUrl(item.image)} alt={item.title} className="cart-item-img" />
                                     <div className="cart-item-info">
                                         <h4>{item.title}</h4>
-                                        <p className="cart-item-price">R$ {item.price.toFixed(2)}</p>
+                                        <p className="cart-item-price">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
+                                        </p>
                                         <div className="cart-item-controls">
                                             <div className="qty-selector small">
                                                 <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
@@ -348,6 +368,15 @@ const CartSidebar = () => {
                             ))
                         )}
                     </div>
+
+                    {cartItems.length > 0 && (
+                        <div className="cart-total-display" style={{ padding: '15px', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderTop: '1px solid rgba(212, 175, 55, 0.1)', marginBottom: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.2rem', fontWeight: '900', color: 'var(--primary-color)' }}>
+                                <span>Subtotal:</span>
+                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}</span>
+                            </div>
+                        </div>
+                    )}
 
                     {cartItems.length > 0 && (
                         <div className="checkout-form" style={{ marginTop: 'auto' }}>

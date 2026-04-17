@@ -1,2 +1,0 @@
-[01/03/2026, 14:13:53] STATUS: SUCCESS | Produtos encontrados: 16 | Conexão e leitura de produtos OK
-[01/03/2026, 14:14:29] STATUS: SUCCESS | Produtos encontrados: 16 | Conexão e leitura de produtos OK
