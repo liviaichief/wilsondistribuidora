@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
 import { getImageUrl } from '../../lib/imageUtils';
+import { formatTitleCase } from '../../lib/utils';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -92,7 +93,7 @@ const ProductCard = ({ product }) => {
                     <span className="product-category">{product.category}</span>
                     <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>{product.sku || `#${product.id}`}</span>
                 </div>
-                <h3 className="product-title">{product.title}</h3>
+                <h3 className="product-title">{formatTitleCase(product.title)}</h3>
                 <p className="product-desc">{product.description}</p>
 
                 <div className="product-actions">

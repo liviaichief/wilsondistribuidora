@@ -1,7 +1,8 @@
 import React from 'react';
 import { useOrder } from '../../context/OrderContext';
 import { X, ShoppingBag, Clock, CheckCircle } from 'lucide-react';
-import './CartSidebar.css'; // Reusing CartSidebar styles for consistency
+import { formatTitleCase } from '../../lib/utils';
+import './CartSidebar.css';
 
 const OrderSidebar = () => {
     const { orders, isOrderSidebarOpen, toggleOrderSidebar } = useOrder();
@@ -38,7 +39,7 @@ const OrderSidebar = () => {
                                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '5px' }}>
                                     {order.items.items.map((item, idx) => (
                                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ccc' }}>
-                                            <span>{item.quantity}x {item.title}</span>
+                                            <span>{item.quantity}x {formatTitleCase(item.title)}</span>
                                         </div>
                                     ))}
                                 </div>

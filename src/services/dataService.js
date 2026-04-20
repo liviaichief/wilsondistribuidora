@@ -127,7 +127,10 @@ export const saveProduct = async (product) => {
             uom: product.uom || 'KG',
             is_promotion: !!product.is_promotion,
             promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
-            active: product.active !== false
+            active: product.active !== false,
+            manage_stock: !!product.manage_stock,
+            stock_quantity: parseInt(product.stock_quantity) || 0,
+            allow_backorder: !!product.allow_backorder
         };
 
         if (docId) {
@@ -296,37 +299,24 @@ export const sendWhatsAppMessage = async (phone, message) => {
         const instance = settings.whatsapp_instance;
         const apiKey = settings.whatsapp_api_key; // No Z-API isso é o Instance Token
 
-        let endpoint = '';
-        let body = {};
-        let headers = { 'Content-Type': 'application/json' };
-
-        if (provider === 'zapi') {
-            // Z-API Standard: {url}/instances/{instance}/token/{token}/send-text
-            endpoint = `${apiUrl}/instances/${instance}/token/${apiKey}/send-text`;
-            body = {
-                phone: fullPhone,
-                message: message
-            };
-            if (settings.whatsapp_client_token) {
-                headers['Client-Token'] = settings.whatsapp_client_token;
-            }
-        } else {
-            // Evolution API Standard: {url}/message/sendText/{instance}
-            endpoint = `${apiUrl}/message/sendText/${instance}`;
-            body = {
-                number: fullPhone,
-                text: message,
-                delay: 1200,
-                linkPreview: true
-            };
-            headers['apikey'] = apiKey;
-        }
+        // Evolution API Standard: {url}/message/sendText/{instance}
+        const endpoint = `${apiUrl}/message/sendText/${instance}`;
+        const body = {
+            number: fullPhone,
+            text: message,
+            delay: 1200,
+            linkPreview: true
+        };
+        const headers = { 
+            'Content-Type': 'application/json',
+            'apikey': apiKey 
+        };
 
         const response = await axios.post(endpoint, body, { headers });
 
         return response.status === 200 || response.status === 201;
     } catch (error) {
-        console.error(`Error sending WhatsApp message via ${settings.whatsapp_api_provider}:`, error.response?.data || error.message);
+        console.error("Error sending WhatsApp message via Evolution API:", error.response?.data || error.message);
         return false;
     }
 };

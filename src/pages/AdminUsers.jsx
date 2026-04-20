@@ -8,7 +8,7 @@ import './Admin.css';
 
 const AdminUsers = () => {
     const { showAlert, showConfirm } = useAlert();
-    const { role: loggedInRole } = useAuth();
+    const { role: loggedInRole, isAdmin } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -45,8 +45,7 @@ const AdminUsers = () => {
         setIsCreateModalOpen(true);
     };
 
-    // Edit User Modal State
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    // Edit User Panel State
     const [editingUser, setEditingUser] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -60,6 +59,7 @@ const AdminUsers = () => {
     }, [search]);
 
     useEffect(() => {
+        setEditingUser(null); // Clear editing panel when switching tabs
         loadUsers();
     }, [activeTab, page, debouncedSearch]);
 
@@ -255,7 +255,7 @@ const AdminUsers = () => {
 
             // O sincronismo de labels deve ser feito via Appwrite Function para segurança
             showAlert("Dados atualizados com sucesso!", 'success', null, 1000);
-            setIsEditModalOpen(false);
+            setEditingUser(null);
             loadUsers();
         } catch (error) {
             console.error("Update error:", error);
@@ -279,8 +279,9 @@ const AdminUsers = () => {
 
     return (
         <div className="admin-container">
-            <div className="admin-content-inner">
-                <div className="admin-section-header">
+            <div className="admin-content-inner" style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="admin-section-header">
                     <div>
                         <h2>Gestão de Usuários</h2>
                         <p className="section-subtitle">Gerencie perfis e acessos do sistema.</p>
@@ -345,7 +346,12 @@ const AdminUsers = () => {
                                 </thead>
                                 <tbody>
                                     {users.map((user) => (
-                                        <tr key={user.id}>
+                                        <tr 
+                                            key={user.id} 
+                                            onDoubleClick={() => openEditModal(user)}
+                                            className={editingUser?.id === user.id ? 'active-row' : ''}
+                                            style={{ cursor: 'pointer' }}
+                                        >
                                             <td>
                                                 <div style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{user.full_name || 'Sem nome'}</div>
                                                 <div style={{ fontSize: '0.9rem', color: '#888' }}>{user.email}</div>
@@ -453,6 +459,102 @@ const AdminUsers = () => {
                         )}
                     </>
                 )}
+                </div>
+
+                {/* Right Panel for Editing (Permanent) */}
+                <div className="side-edit-panel">
+                    {editingUser ? (
+                        <>
+                            <div className="side-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 800 }}>Editar Usuário</h3>
+                                <button onClick={() => setEditingUser(null)} className="close-btn" style={{ width: '32px', height: '32px' }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handleUpdateUser} className="product-form" style={{ padding: 0 }}>
+                                <div className="form-group">
+                                    <label>Email (Somente Leitura)</label>
+                                    <input type="email" disabled style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', cursor: 'not-allowed', color: '#666' }}
+                                        value={editingUser.email} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Nome Completo</label>
+                                    <input type="text" required
+                                        value={editingUser.full_name} onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>WhatsApp</label>
+                                    <input type="text"
+                                        value={editingUser.whatsapp} onChange={e => setEditingUser({ ...editingUser, whatsapp: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Data de Nascimento</label>
+                                    <input type="date"
+                                        value={editingUser.birthday} onChange={e => setEditingUser({ ...editingUser, birthday: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Perfil de Acesso</label>
+                                    <select
+                                        value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}
+                                        style={{ width: '100%', padding: '0.8rem', background: '#121212', border: '1px solid #444', color: 'white', borderRadius: '4px' }}>
+                                        <option value="client">Cliente</option>
+                                        <option value="owner">Proprietário</option>
+                                        {isAdmin && <option value="admin">Administrador</option>}
+                                    </select>
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                                    <button type="button" onClick={() => setEditingUser(null)} className="save-btn" style={{ backgroundColor: 'transparent', color: '#fff', border: '1px solid #444', flex: 1 }}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" className="save-btn" disabled={isUpdating} style={{ justifyContent: 'center', flex: 2 }}>
+                                        {isUpdating ? (
+                                            <>
+                                                <Loader2 className="animate-spin" size={20} />
+                                                <span>Salvando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save size={20} />
+                                                <span>Salvar</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    ) : (
+                        <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            height: '100%', 
+                            minHeight: '400px',
+                            color: '#555',
+                            textAlign: 'center',
+                            padding: '20px'
+                        }}>
+                            <div style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                borderRadius: '50%', 
+                                background: 'rgba(255, 255, 255, 0.02)', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                marginBottom: '15px' 
+                            }}>
+                                <User size={30} opacity={0.2} />
+                            </div>
+                            <h4 style={{ color: '#888', margin: '0 0 10px 0' }}>Nenhum usuário selecionado</h4>
+                            <p style={{ fontSize: '0.9rem', maxWidth: '200px', margin: 0 }}>
+                                Clique duas vezes em um usuário na lista para editar seus dados aqui.
+                            </p>
+                        </div>
+                    )}
+                </div>
 
                 {/* Create Modal */}
                 {isCreateModalOpen && (
@@ -497,7 +599,7 @@ const AdminUsers = () => {
                                         <option value="" disabled>Selecione um perfil...</option>
                                         <option value="client">Cliente</option>
                                         <option value="owner">Proprietário</option>
-                                        {loggedInRole === 'admin' && <option value="admin">Administrador</option>}
+                                        {isAdmin && <option value="admin">Administrador</option>}
                                     </select>
                                 </div>
                                 <button type="submit" className="save-btn" disabled={isCreating} style={{ justifyContent: 'center', width: '100%' }}>
@@ -518,64 +620,6 @@ const AdminUsers = () => {
                     </div>
                 )}
 
-                {/* Edit Modal */}
-                {isEditModalOpen && editingUser && (
-                    <div className="modal-overlay">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h2>Editar Usuário</h2>
-                                <button className="close-btn" onClick={() => setIsEditModalOpen(false)}>
-                                    <X size={24} />
-                                </button>
-                            </div>
-                            <form onSubmit={handleUpdateUser} className="product-form">
-                                <div className="form-group">
-                                    <label>Email (Somente Leitura)</label>
-                                    <input type="email" disabled style={{ backgroundColor: '#1a1a1a', cursor: 'not-allowed', color: '#666' }}
-                                        value={editingUser.email} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Nome Completo</label>
-                                    <input type="text" required
-                                        value={editingUser.full_name} onChange={e => setEditingUser({ ...editingUser, full_name: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>WhatsApp</label>
-                                    <input type="text"
-                                        value={editingUser.whatsapp} onChange={e => setEditingUser({ ...editingUser, whatsapp: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Data de Nascimento</label>
-                                    <input type="date"
-                                        value={editingUser.birthday} onChange={e => setEditingUser({ ...editingUser, birthday: e.target.value })} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Perfil de Acesso</label>
-                                    <select
-                                        value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}
-                                        style={{ width: '100%', padding: '0.8rem', background: '#121212', border: '1px solid #444', color: 'white', borderRadius: '4px' }}>
-                                        <option value="client">Cliente</option>
-                                        <option value="owner">Proprietário</option>
-                                        {loggedInRole === 'admin' && <option value="admin">Administrador</option>}
-                                    </select>
-                                </div>
-                                <button type="submit" className="save-btn" disabled={isUpdating} style={{ justifyContent: 'center', width: '100%' }}>
-                                    {isUpdating ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={20} />
-                                            <span>Salvando...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={20} />
-                                            <span>Salvar Alterações</span>
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

@@ -191,129 +191,61 @@ const AdminLayout = () => {
                 </div>
             </aside>
 
-            <main className="admin-content" style={{ position: 'relative' }}>
-                <div style={{ 
-                    position: 'absolute', 
-                    top: '25px', 
-                    right: '40px', 
-                    zIndex: 150,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px'
-                }}>
-                    <button
-                        onClick={toggleNotifications}
-                        style={{ 
-                            cursor: 'pointer', 
-                            background: 'rgba(255, 255, 255, 0.05)', 
-                            border: '1px solid rgba(255, 255, 255, 0.1)', 
-                            borderRadius: '12px',
-                            width: '45px',
-                            height: '45px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: isNotificationsOpen ? '#a855f7' : '#fff',
-                            position: 'relative',
-                            transition: 'all 0.3s ease',
-                            backdropFilter: 'blur(10px)'
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                            e.currentTarget.style.borderColor = '#a855f7';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                        }}
-                        title="Notificações"
-                    >
-                        <Bell size={22} />
-                        {unreadCount > 0 && (
-                            <span style={{ 
-                                position: 'absolute', 
-                                top: '-5px', 
-                                right: '-5px', 
-                                backgroundColor: '#ef4444', 
-                                borderRadius: '10px', 
-                                color: 'white', 
-                                fontSize: '10px', 
-                                fontWeight: 'bold', 
-                                padding: '2px 6px', 
-                                minWidth: '18px', 
-                                textAlign: 'center',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                            }}>
-                                {unreadCount}
-                            </span>
-                        )}
-                    </button>
-
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '15px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        padding: '8px 15px',
-                        borderRadius: '15px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                    }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#fff', letterSpacing: '0.5px' }}>
-                                {profile?.full_name || user?.full_name || 'Administrador'}
-                            </span>
-                            <span style={{ fontSize: '0.6rem', color: '#a855f7', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '1.5px' }}>
-                                Acesso Online
-                            </span>
+            <main className="admin-content">
+                {/* Fixed Top Header Bar */}
+                <header className="admin-top-bar">
+                    <div className="admin-top-bar-inner">
+                        <div className="page-context">
+                            <span className="context-label">Painel de Controle</span>
+                            <h1 className="context-title">Wilson Distribuidora</h1>
                         </div>
-                        
-                        <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }} />
 
-                        <button
-                            onClick={() => {
-                                showConfirm(
-                                    'Tem certeza que deseja sair do sistema agora?',
-                                    async () => {
-                                        await signOut();
-                                        showAlert('Sessão finalizada com sucesso! 👋', 'success');
-                                        setTimeout(() => window.location.href = '/login', 1500);
-                                    },
-                                    'Sair do Sistema',
-                                    'Sim, Sair',
-                                    'Cancelar'
-                                );
-                            }}
-                            style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                border: '1px solid rgba(239, 68, 68, 0.2)', 
-                                color: '#ef4444', 
-                                cursor: 'pointer',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = '#ef4444';
-                                e.currentTarget.style.color = '#fff';
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                e.currentTarget.style.color = '#ef4444';
-                                e.currentTarget.style.transform = 'scale(1.0)';
-                            }}
-                            title="Sair do Sistema"
-                        >
-                            <LogOut size={18} />
-                        </button>
+                        <div className="admin-header-actions">
+                            <button
+                                onClick={toggleNotifications}
+                                className={`notification-btn ${isNotificationsOpen ? 'active' : ''}`}
+                                title="Notificações"
+                            >
+                                <Bell size={20} />
+                                {unreadCount > 0 && (
+                                    <span className="unread-badge">{unreadCount}</span>
+                                )}
+                            </button>
+
+                            <div className="admin-user-capsule">
+                                <div className="user-info">
+                                    <span className="user-name">
+                                        {profile?.full_name || user?.full_name || 'Administrador'}
+                                    </span>
+                                    <span className="user-status">Acesso Online</span>
+                                </div>
+                                
+                                <div className="capsule-divider" />
+
+                                <button
+                                    onClick={() => {
+                                        showConfirm(
+                                            'Tem certeza que deseja sair do sistema agora?',
+                                            async () => {
+                                                await signOut();
+                                                showAlert('Sessão finalizada com sucesso! 👋', 'success');
+                                                setTimeout(() => window.location.href = '/login', 1500);
+                                            },
+                                            'Sair do Sistema',
+                                            'Sim, Sair',
+                                            'Cancelar'
+                                        );
+                                    }}
+                                    className="logout-action-btn"
+                                    title="Sair do Sistema"
+                                >
+                                    <LogOut size={16} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </header>
+
                 {isSystemBlocked && location.pathname !== '/admin/financeiro' && (
                     <div style={{ position: 'absolute', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', padding: '20px', borderRadius: '8px' }}>
                         <div style={{ backgroundColor: '#141414', border: '1px solid #ff4444', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(255,0,0,0.2)' }}>

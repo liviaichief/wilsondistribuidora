@@ -149,7 +149,10 @@ const Admin = () => {
             uom: 'KG',
             is_promotion: false,
             promo_price: '',
-            active: true
+            active: true,
+            manage_stock: false,
+            stock_quantity: 0,
+            allow_backorder: false
         });
         setPreviewUrl('');
         setIsModalOpen(true);
@@ -197,7 +200,7 @@ const Admin = () => {
     });
 
     return (
-        <div className="admin-container">
+        <>
             {/* Removed NotificationModal component */}
 
             <div className="admin-content-inner">
@@ -282,6 +285,7 @@ const Admin = () => {
                                         <th>Preço</th>
                                         <th>Ativo</th>
                                         <th>Promoção</th>
+                                        <th style={{ textAlign: 'center' }}>Estoque</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -382,12 +386,38 @@ const Admin = () => {
                                                         )}
                                                     </div>
                                                 </td>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    {item.manage_stock ? (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                                                            <span style={{ 
+                                                                fontWeight: 'bold', 
+                                                                color: item.stock_quantity > 0 ? '#4ade80' : '#f87171',
+                                                                fontSize: '1rem' 
+                                                            }}>
+                                                                {item.stock_quantity}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ color: '#aaa', fontSize: '1.2rem'}} title="Estoque Infinito">∞</span>
+                                                    )}
+                                                </td>
                                                 <td>
                                                     <div className="actions">
-                                                        <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar">
+                                                        <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar Produto">
                                                             <Edit2 size={18} />
                                                         </button>
-                                                        <button className="icon-btn delete" onClick={() => handleDelete(item)} title="Excluir">
+                                                        <button 
+                                                            className="icon-btn" 
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                handleEdit(item); 
+                                                            }} 
+                                                            title="Regras de Estoque"
+                                                            style={{ border: '1px solid #333', background: 'transparent' }}
+                                                        >
+                                                            <Settings size={18} style={{ color: '#22d3ee' }} />
+                                                        </button>
+                                                        <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Excluir">
                                                             <Trash2 size={18} />
                                                         </button>
                                                     </div>
@@ -579,6 +609,60 @@ const Admin = () => {
                                     ))}
                                 </div>
                             </div>
+                            
+                            {/* Stock Management Section */}
+                            <div className="form-group" style={{ 
+                                background: 'rgba(34, 211, 238, 0.05)', 
+                                padding: '15px 20px', 
+                                borderRadius: '15px', 
+                                border: '1px solid rgba(34, 211, 238, 0.1)',
+                                marginTop: '15px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: currentProduct.manage_stock ? '15px' : '0' }}>
+                                    <span style={{ color: '#fff', fontWeight: 600 }}>Gerenciar Estoque deste Produto?</span>
+                                    <label className="switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={currentProduct.manage_stock}
+                                            onChange={e => setCurrentProduct({ ...currentProduct, manage_stock: e.target.checked })}
+                                        />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+                                
+                                {currentProduct.manage_stock && (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '15px', borderTop: '1px solid rgba(34, 211, 238, 0.1)' }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label style={{ color: '#aaa', fontSize: '0.9rem' }}>Quantidade Atual</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={currentProduct.stock_quantity !== undefined ? currentProduct.stock_quantity : 0}
+                                                onChange={e => setCurrentProduct({ ...currentProduct, stock_quantity: parseInt(e.target.value) || 0 })}
+                                                placeholder="0"
+                                                style={{ border: '1px solid rgba(34, 211, 238, 0.3)' }}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <label style={{ marginBottom: 0, color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }} htmlFor="allow_backorder">
+                                                    Vender sem estoque?
+                                                </label>
+                                                <input
+                                                    id="allow_backorder"
+                                                    type="checkbox"
+                                                    checked={currentProduct.allow_backorder}
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, allow_backorder: e.target.checked })}
+                                                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                                />
+                                            </div>
+                                            <small style={{ color: '#666', fontSize: '0.75rem', marginTop: '5px' }}>
+                                                (Se marcado, cliente pode comprar mesmo se a quantidade for 0)
+                                            </small>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="form-group" style={{ 
                                 background: 'rgba(168, 85, 247, 0.05)', 
@@ -676,7 +760,7 @@ const Admin = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 

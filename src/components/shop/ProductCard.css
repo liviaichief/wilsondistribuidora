@@ -48,9 +48,9 @@
     top: 10px;
     right: 10px;
     background: rgba(18, 18, 18, 0.9);
-    color: var(--primary-color);
+    color: #ffffff;
     padding: 0.2rem 0.6rem;
-    border: 1px solid var(--primary-color);
+    border: 1px solid #ffffff;
     font-weight: 700;
     font-size: 1rem;
     backdrop-filter: blur(4px);

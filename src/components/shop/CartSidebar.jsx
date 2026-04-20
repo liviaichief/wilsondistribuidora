@@ -7,6 +7,7 @@ import { useAlert } from '../../context/AlertContext';
 import { createOrder, getSettings, sendWhatsAppMessage } from '../../services/dataService';
 import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode, Loader2 } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../../lib/imageUtils';
+import { formatTitleCase } from '../../lib/utils';
 import './CartSidebar.css';
 
 const CartSidebar = () => {
@@ -261,7 +262,7 @@ const CartSidebar = () => {
 
         // 3. Construct WhatsApp Message
         const itemsList = cartItems.map(item =>
-            `• ${item.quantity}x ${item.title} - R$ ${(item.price * item.quantity).toFixed(2)}`
+            `• ${item.quantity}x ${formatTitleCase(item.title)} - R$ ${(item.price * item.quantity).toFixed(2)}`
         ).join('\n');
 
         let addressText = '';
@@ -347,9 +348,9 @@ const CartSidebar = () => {
                         ) : (
                             cartItems.map(item => (
                                 <div key={item.id} className="cart-item">
-                                    <img src={getImageUrl(item.image)} alt={item.title} className="cart-item-img" />
+                                    <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
                                     <div className="cart-item-info">
-                                        <h4>{item.title}</h4>
+                                        <h4>{formatTitleCase(item.title)}</h4>
                                         <p className="cart-item-price">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
                                         </p>

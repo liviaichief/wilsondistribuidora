@@ -101,15 +101,186 @@
 }
 
 .admin-content {
-    padding: 2rem;
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.admin-top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(10, 10, 10, 0.4);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem 2rem;
+    margin-bottom: 1rem;
+}
+
+.admin-top-bar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.page-context {
+    display: flex;
+    flex-direction: column;
+}
+
+.context-label {
+    font-size: 0.65rem;
+    color: #a855f7;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.context-title {
+    font-size: 1.1rem;
+    color: #fff;
+    margin: 0;
+    font-weight: 700;
+}
+
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.notification-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.notification-btn:hover {
+    background: rgba(168, 85, 247, 0.1);
+    border-color: #a855f7;
+    color: #a855f7;
+}
+
+.unread-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 20px;
+    border: 2px solid #000;
+}
+
+.admin-user-capsule {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 12px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.user-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.user-status {
+    font-size: 0.6rem;
+    color: #a855f7;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.capsule-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.logout-action-btn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-action-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 .admin-content-inner {
     padding: 0 2rem 2rem;
+}
+
+.side-edit-panel {
+    width: 450px;
+    min-width: 450px;
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 30px;
+    position: sticky;
+    top: 100px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+    from { 
+        opacity: 0; 
+        transform: translateX(40px) scale(0.98); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0) scale(1); 
+    }
+}
+
+.active-row {
+    background: rgba(168, 85, 247, 0.08) !important;
+}
+
+.active-row td:first-child {
+    border-left: 3px solid #a855f7;
 }
 
 .admin-section-header {
@@ -751,6 +922,26 @@
         padding: 10px;
         font-size: 0.9rem;
         white-space: nowrap;
+    }
+
+    .admin-top-bar {
+        padding: 0.5rem 1rem;
+    }
+
+    .context-label {
+        display: none;
+    }
+
+    .context-title {
+        font-size: 0.9rem;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .admin-header-actions {
+        gap: 0.75rem;
     }
 }
 
