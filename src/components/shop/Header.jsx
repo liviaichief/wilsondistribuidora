@@ -43,16 +43,14 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const [showVersion, setShowVersion] = React.useState(false);
     const [instagramLink, setInstagramLink] = React.useState('');
     const userMenuRef = React.useRef(null);
+    const categoryListRef = React.useRef(null);
 
     const handleLogoClick = () => {
-        // Clear caches if available
         if (window.caches) {
             caches.keys().then((names) => {
                 for (let name of names) caches.delete(name);
             }).catch(err => console.log('Cache clear error:', err));
         }
-        
-        // Force full page reload to the root
         window.location.href = '/';
     };
 
@@ -112,47 +110,42 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     return (
         <header className={`site-header ${isHome ? 'home-header' : ''}`}>
             <div className="header-container">
-                {/* 1. Top Bar: Social & Notifications */}
-                <div className="header-top-bar">
-                    <div className="top-bar-left">
-                         <span className="welcome-text">
-                            {user ? `Olá, ${user.user_metadata?.full_name?.split(' ')[0]}` : 'Bem-vindo!'}
-                         </span>
-                    </div>
-                    <div className="top-bar-right">
-                        {instagramLink && (
-                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="top-bar-link">
-                                <Instagram size={18} />
-                            </a>
-                        )}
-                        <button className="top-bar-link">
-                            <Bell size={18} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* 2. Main Row: Logo, Search, Actions */}
-                <div className="header-main-row">
-                    <div className="header-logo-section" onClick={handleLogoClick}>
+                <div className="header-main-row is-home-layout">
+                    {/* Logo Section */}
+                    <div className="header-logo-section" onClick={handleLogoClick} title="Página Inicial">
                         <img src="/logo.png" alt="Wilson Distribuidora" className="header-logo" />
                     </div>
 
-                    <div className="header-search-container">
-                        <div className="search-wrapper">
-                            <input type="text" placeholder="Buscar cortes..." className="search-input" />
-                            <ShoppingBag size={18} className="search-icon" />
-                        </div>
-                    </div>
-
+                    {/* User Actions Section */}
                     <div className="header-actions">
-                        <button className="action-icon-btn cart-toggle-desktop" onClick={toggleCart}>
-                            <ShoppingBag size={24} />
+                        {instagramLink && (
+                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="cart-btn">
+                                <Instagram size={31} color="white" />
+                            </a>
+                        )}
+                        
+                        {user && (
+                            <span
+                                className="admin-link"
+                                onClick={() => { setShowVersion(true); setTimeout(() => setShowVersion(false), 5000); }}
+                                style={{ cursor: 'pointer', color: 'white', marginRight: '10px' }}
+                            >
+                                {`Olá, ${user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}`}
+                            </span>
+                        )}
+
+                        <button className="cart-btn" onClick={toggleCart}>
+                            <ShoppingBag size={31} />
                             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                         </button>
 
                         <div className="user-menu-container" ref={userMenuRef}>
-                            <button className="action-icon-btn" onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
-                                <User size={24} />
+                            <button
+                                className="cart-btn"
+                                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                title="Minha Conta"
+                            >
+                                <User size={31} color={user ? "var(--primary-color)" : "white"} />
                             </button>
 
                             {isUserMenuOpen && (
@@ -171,11 +164,15 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                                 <ClipboardList size={16} /> <span>Meus Pedidos</span>
                                             </Link>
                                             <button className="user-menu-item" onClick={() => { setIsUserMenuOpen(false); navigate('/logout'); }}>
-                                                <LogOut size={16} /> <span>Sair</span>
+                                                <LogOut size={16} /> Sair
                                             </button>
                                         </>
                                     ) : (
                                         <>
+                                            <div className="user-menu-header">
+                                                <small>Bem-vindo!</small>
+                                                <span>Acesse sua conta</span>
+                                            </div>
                                             <button className="user-menu-item" onClick={() => { openAuthModal('login'); setIsUserMenuOpen(false); }}>
                                                 <User size={16} /> Login
                                             </button>
@@ -187,21 +184,29 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 </div>
                             )}
                         </div>
+
+                        {cartCount > 0 && (
+                            <div className="cart-summary-inline">
+                                <button className="nav-checkout-btn" onClick={toggleCart}>
+                                    Finalizar
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* 3. Navigation: Desktop Only */}
+                {/* Bottom Row: Navigation Tabs */}
                 {isHome && (
-                    <div className="header-nav-section desktop-only-nav">
+                    <div className="header-nav-section">
                         <nav className="category-nav-inline">
-                            <div className="category-list no-scrollbar">
+                            <div className="category-list" ref={categoryListRef}>
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
                                         className={`category-item ${activeCategory === cat.id ? 'active' : ''}`}
                                         onClick={() => onCategoryChange(cat.id)}
                                     >
-                                        {cat.id === 'all' && <cat.icon size={20} className="category-icon" />}
+                                        {cat.id === 'all' && <cat.icon size={25} className="category-icon" />}
                                         <span>{cat.label}</span>
                                     </button>
                                 ))}
@@ -210,11 +215,11 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                     </div>
                 )}
             </div>
-
+            
             {showVersion && (
-                <div className="version-toast">
-                    <span className="version-tag">{APP_VERSION}</span>
-                    <span className="date-tag">Build: {BUILD_DATE}</span>
+                <div className="logout-toast" style={{ flexDirection: 'column', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(20,20,20,0.95)', border: '1px solid var(--primary-color)', userSelect: 'none' }}>
+                    <span style={{ color: 'var(--primary-color)', fontSize: '1.2rem', fontWeight: 'bold' }}>{APP_VERSION}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#ccc', fontWeight: 'normal' }}>Publicado em: {BUILD_DATE}</span>
                 </div>
             )}
         </header>
