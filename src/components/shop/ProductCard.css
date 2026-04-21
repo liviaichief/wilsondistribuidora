@@ -52,10 +52,39 @@
     align-items: center;
     gap: 4px;
     z-index: 10;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-.price-tag span:first-child {
+/* Promo Layout - High Contrast (Original Web Style) */
+.price-tag.on-promo {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+.promo-price-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: #ff4444; /* Bright Red for original price */
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.promo-price {
+    color: #000000 !important;
+    font-weight: 900;
+    font-size: 1.1rem;
+    font-family: var(--font-heading);
+}
+
+.price-tag:not(.on-promo) span:first-child {
     font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1.1rem;
