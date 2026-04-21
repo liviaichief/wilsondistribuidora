@@ -552,3 +552,32 @@ export const deleteCategoryGlobal = async (categoryId) => {
     }
 };
 
+// --- UOM MANAGEMENT ---
+
+export const getUOMs = async () => {
+    try {
+        const response = await databases.getDocument(DATABASE_ID, 'settings', 'project_uoms');
+        if (response && response.value) {
+            return JSON.parse(response.value);
+        }
+    } catch (e) {
+        // Se não existir, retorna as padrões que já usamos
+        return [
+            { id: '1', name: 'KG', active: true },
+            { id: '2', name: 'Unidade', active: true },
+            { id: '3', name: 'Pacote', active: true },
+            { id: '4', name: 'Caixa', active: true }
+        ];
+    }
+    return [];
+};
+
+export const saveUOMs = async (uoms) => {
+    try {
+        await updateSettings('project_uoms', JSON.stringify(uoms));
+        return true;
+    } catch (e) {
+        console.error("Error saving UOMs:", e);
+        throw e;
+    }
+};

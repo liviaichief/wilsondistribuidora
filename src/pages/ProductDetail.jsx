@@ -117,10 +117,6 @@ const ProductDetail = () => {
                     </div>
 
                     <div className="product-detail-info">
-                        <div className="product-meta">
-                            <span className="product-category-detail">{product.category}</span>
-                        </div>
-
                         <h1 className="product-title-detail">{product.title}</h1>
 
                         <div className="product-price-section">

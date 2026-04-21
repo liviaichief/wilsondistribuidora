@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings, getCategories } from '../services/dataService';
+import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings, getCategories, getUOMs } from '../services/dataService';
 import { storage, BUCKET_ID } from '../lib/appwrite';
 import { ID, Permission, Role } from 'appwrite';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save, Loader2 } from 'lucide-react';
@@ -21,6 +21,7 @@ const Admin = () => {
 
     const { showAlert, showConfirm } = useAlert();
     const [categories, setCategories] = useState([]);
+    const [uoms, setUoms] = useState([]);
 
     // Filter State
     const [filterTitle, setFilterTitle] = useState('');
@@ -51,7 +52,20 @@ const Admin = () => {
     useEffect(() => {
         loadProducts();
         loadCategories();
+        loadUOMs();
     }, []);
+
+    const loadUOMs = async () => {
+        try {
+            const data = await getUOMs();
+            setUoms(data);
+            if (data.length > 0 && !currentProduct.uom) {
+                setCurrentProduct(prev => ({ ...prev, uom: data[0].name }));
+            }
+        } catch (e) {
+            console.error("Admin: Error loading UOMs:", e);
+        }
+    };
 
     const loadCategories = async () => {
         try {
@@ -478,14 +492,18 @@ const Admin = () => {
                                                     setPreviewUrl(localUrl);
 
                                                     const options = {
-                                                        maxSizeMB: 0.06, 
-                                                        maxWidthOrHeight: 800,
+                                                        maxSizeMB: 0.15, 
+                                                        maxWidthOrHeight: 1024,
                                                         useWebWorker: true,
                                                         initialQuality: 0.7
                                                     };
+                                                    
+                                                    console.log('Admin: Iniciando compressão da imagem...', file.name);
                                                     const compressedBlob = await imageCompression(file, options);
                                                     const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+                                                    console.log('Admin: Imagem comprimida:', (compressedFile.size / 1024).toFixed(2), 'KB');
 
+                                                    console.log('Admin: Enviando para o Storage (Bucket:', BUCKET_ID, ')...');
                                                     const result = await storage.createFile(
                                                         BUCKET_ID,
                                                         ID.unique(),
@@ -497,18 +515,20 @@ const Admin = () => {
                                                             Permission.delete(Role.users())
                                                         ]
                                                     );
+                                                    console.log('Admin: Upload concluído com sucesso! ID:', result.$id);
 
                                                     if (currentProduct.image && currentProduct.image !== result.$id) {
                                                         try {
                                                             await storage.deleteFile(BUCKET_ID, currentProduct.image);
                                                         } catch (e) {
-                                                            console.warn('Failed to delete old image:', e);
+                                                            console.warn('Admin: Erro ao deletar imagem antiga (não crítico):', e);
                                                         }
                                                     }
 
                                                     setCurrentProduct(prev => ({ ...prev, image: result.$id }));
                                                 } catch (err) {
-                                                    showAlert('Erro no upload: ' + err.message, 'error');
+                                                    console.error('Admin: ERRO CRÍTICO NO UPLOAD:', err);
+                                                    showAlert('Erro no upload: ' + (err.response?.message || err.message), 'error');
                                                 } finally {
                                                     setIsUploadingImage(false);
                                                 }
@@ -569,35 +589,26 @@ const Admin = () => {
 
                             <div className="form-group">
                                 <label>Unidade de Medida</label>
-                                <div style={{ display: 'flex', gap: '15px' }}>
-                                    {['KG', 'Unidade'].map(u => (
-                                        <label key={u} style={{ 
-                                            flex: 1, 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center',
-                                            gap: '8px', 
-                                            cursor: 'pointer',
-                                            padding: '12px',
-                                            background: currentProduct.uom === u || (!currentProduct.uom && u === 'KG') ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                                            border: `1.5px solid ${currentProduct.uom === u || (!currentProduct.uom && u === 'KG') ? '#a855f7' : 'rgba(255, 255, 255, 0.08)'}`,
-                                            borderRadius: '12px',
-                                            color: '#fff',
-                                            fontWeight: 600,
-                                            transition: 'all 0.3s'
-                                        }}>
-                                            <input
-                                                type="radio"
-                                                name="uom"
-                                                value={u}
-                                                checked={currentProduct.uom === u || (!currentProduct.uom && u === 'KG')}
-                                                onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
-                                                style={{ display: 'none' }}
-                                            />
-                                            {u}
-                                        </label>
+                                <select
+                                    value={currentProduct.uom || (uoms.length > 0 ? uoms[0].name : 'KG')}
+                                    onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        background: '#1a1a1a',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        borderRadius: '8px',
+                                        color: '#fff',
+                                        fontSize: '1rem',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {uoms.filter(u => u.active !== false).map(u => (
+                                        <option key={u.id} value={u.name} style={{ background: '#1a1a1a', color: '#fff' }}>
+                                            {u.name}
+                                        </option>
                                     ))}
-                                </div>
+                                </select>
                             </div>
                             
                             {/* Stock Management Section */}

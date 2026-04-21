@@ -8,6 +8,7 @@ import { account } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
 
 import AdminCategories from './AdminCategories';
+import AdminUOMs from './AdminUOMs';
 
 const AdminSettings = () => {
     const { role, user, isAdmin } = useAuth();
@@ -76,8 +77,11 @@ const AdminSettings = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', alignItems: 'start' }}>
-                {/* Lado Esquerdo: Gestão de Categorias */}
-                <AdminCategories />
+                {/* Lado Esquerdo: Gestão de Categorias e UOMs */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                    <AdminCategories />
+                    <AdminUOMs />
+                </div>
 
                 {/* Lado Direito: Quadro de Configurações (Original) */}
                 <div style={{ background: '#1a1a1a', padding: '30px', borderRadius: '12px', border: '1px solid #333' }}>

@@ -6,7 +6,7 @@ import { storage, BUCKET_ID, client } from './appwrite';
  * @param {string} imagePath - The image reference from the database (URL, Path, or ID).
  * @returns {string} - The fully qualified URL to display.
  */
-export const getImageUrl = (imagePath) => {
+export const getImageUrl = (imagePath, options = {}) => {
     if (!imagePath) {
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
     }
@@ -22,36 +22,28 @@ export const getImageUrl = (imagePath) => {
         const fileId = typeof imagePath === 'string' ? imagePath.replace('product-images/', '') : imagePath;
 
         // Use the SDK method which is more reliable than manual construction
-        // It automatically uses the correct endpoint and project ID from the client config
         if (storage && fileId) {
             // Se for um item especial ou GIF, visualização direta
             if (fileId.toLowerCase().endsWith('.gif') || fileId.startsWith('v_')) {
                 return storage.getFileView(BUCKET_ID, fileId).toString();
             }
 
-            // Para produtos e banners, usamos o preview com redimensionamento inteligente
-            // Isso reduz drasticamente o tempo de carregamento da Home
+            // Para garantir compatibilidade e evitar erros 403 (Forbidden) observados no preview,
+            // usamos getFileView por padrão. O preview pode ser habilitado se as permissões 
+            // do bucket forem ajustadas no Appwrite.
             try {
-                const width = options.width || undefined;
-                const height = options.height || undefined;
-                const quality = options.quality || 80;
-
-                return storage.getFilePreview(
-                    BUCKET_ID, 
-                    fileId, 
-                    width, 
-                    height, 
-                    undefined, // gravity
-                    quality
-                ).toString();
+                // Se quisermos forçar o preview no futuro, a lógica está aqui, 
+                // mas por ora o View é mais confiável para este ambiente.
+                return storage.getFileView(BUCKET_ID, fileId).toString();
             } catch (e) {
+                console.warn('SDK View failed:', e);
                 return storage.getFileView(BUCKET_ID, fileId).toString();
             }
         }
 
-        // Fallback to manual construction if storage is not available (unlikely)
-        const endpoint = client?.config?.endpoint || 'https://cloud.appwrite.io/v1';
-        const project = client?.config?.project || '698e695d001d446b21d9';
+        // Fallback manual altamente resiliente usando as mesmas variáveis do client
+        const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+        const project = import.meta.env.VITE_APPWRITE_PROJECT_ID || '';
 
         return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
     } catch (error) {

@@ -89,14 +89,13 @@ const ProductCard = ({ product }) => {
                 {product.is_promotion && (
                     <div className="promo-badge">PROMOÇÃO</div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="product-category">{product.category}</span>
-                    <span className="product-id" style={{ fontSize: '0.7rem', color: '#666', opacity: 0.7 }}>{product.sku || `#${product.id}`}</span>
-                </div>
                 <h3 className="product-title">{formatTitleCase(product.title)}</h3>
                 <p className="product-desc">{product.description}</p>
-
+                
                 <div className="product-actions">
+                    <div className="product-uom-info">
+                        <span>{product.uom || 'KG'}</span>
+                    </div>
                     {product.manage_stock && product.stock_quantity <= 0 && !product.allow_backorder ? (
                         <button
                             className="btn-add"
