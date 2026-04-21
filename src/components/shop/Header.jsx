@@ -44,7 +44,17 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const [instagramLink, setInstagramLink] = React.useState('');
     const userMenuRef = React.useRef(null);
 
-    const handleLogoClick = () => navigate('/');
+    const handleLogoClick = () => {
+        // Clear caches if available
+        if (window.caches) {
+            caches.keys().then((names) => {
+                for (let name of names) caches.delete(name);
+            }).catch(err => console.log('Cache clear error:', err));
+        }
+        
+        // Force full page reload to the root
+        window.location.href = '/';
+    };
 
     React.useEffect(() => {
         const fetchInsta = async () => {
