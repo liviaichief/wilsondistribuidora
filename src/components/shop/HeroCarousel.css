@@ -1,137 +1,69 @@
 .hero-carousel {
     position: relative;
     width: 100%;
-    height: 500px;
+    height: 400px;
     overflow: hidden;
-    margin-bottom: 3rem;
-    border-radius: var(--radius-md);
-    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .carousel-slide {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
 }
 
 .carousel-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(0.7);
 }
 
 .carousel-overlay {
     position: absolute;
-    bottom: 60px;
-    left: 60px;
-    right: 60px;
+    bottom: 20%;
+    left: 10%;
     color: #fff;
     z-index: 2;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .carousel-overlay h2 {
-    font-size: 4rem;
-    margin-bottom: 10px;
-    font-family: var(--font-display);
-    line-height: 1;
-    letter-spacing: -0.04em;
-}
-
-.carousel-overlay p {
-    font-size: 1.2rem;
-    font-weight: 500;
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
     font-family: var(--font-heading);
-    color: var(--accent-color);
-    text-transform: uppercase;
-    letter-spacing: 3px;
-}
-
-.carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 3;
-    transition: all 0.3s;
-    border-radius: 50%;
-}
-
-.carousel-btn:hover {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.carousel-btn.prev {
-    left: 20px;
-}
-
-.carousel-btn.next {
-    right: 20px;
+    color: var(--primary-color);
 }
 
 .carousel-indicators {
     position: absolute;
-    bottom: 30px;
-    left: 60px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    gap: 8px;
-    z-index: 3;
+    gap: 10px;
 }
 
 .indicator {
-    width: 30px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
     border: none;
     cursor: pointer;
-    transition: all 0.3s;
-    border-radius: var(--radius-full);
 }
 
 .indicator.active {
-    background: var(--accent-color);
-    width: 60px;
+    background: var(--primary-color);
 }
 
 @media (max-width: 768px) {
     .hero-carousel {
-        height: 350px;
-        margin-bottom: 2rem;
-        border-radius: 0; /* Full width on mobile looks more app-like */
-    }
-
-    .carousel-overlay {
-        bottom: 40px;
-        left: 20px;
-        right: 20px;
-    }
-
-    .carousel-overlay h2 {
-        font-size: 2.2rem;
-    }
-
-    .carousel-overlay p {
-        font-size: 0.8rem;
-        letter-spacing: 2px;
-    }
-
-    .carousel-btn {
-        display: none; /* Swipe only on mobile */
+        height: 250px;
+        border-radius: 0;
     }
     
-    .carousel-indicators {
-        left: 20px;
+    .carousel-overlay h2 {
+        font-size: 1.8rem;
     }
 }

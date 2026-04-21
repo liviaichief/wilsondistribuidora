@@ -1,141 +1,66 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Outfit:wght@100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Work+Sans:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
-    /* Wilson Distribuidora - Refined Luxury Theme */
-    --primary-color: #800020; /* Deep Burgundy */
-    --primary-gradient: linear-gradient(135deg, #800020 0%, #5a0016 100%);
-    --accent-color: #D4AF37; /* Metallic Gold */
-    --secondary-color: #080808; /* Deep Obsidian */
-    --surface-lowest: #050505;
-    --surface-medium: #111111;
-    --surface-highest: #1a1a1a;
-    
-    --text-main: #f5f5f5;
-    --text-muted: #a0a0a0;
-    --text-gold: #D4AF37;
+    /* Original Web Constants */
+    --primary-color: #800020;
+    --primary-light: #ffb3b5;
+    --accent-color: #D4AF37; 
+    --secondary-color: #131313;
+    --surface-lowest: #0e0e0e;
+    --surface-highest: #2a2a2a;
+    --text-color: #e5e2e1;
+    --text-muted: #e0bfbf;
 
-    --font-display: 'Newsreader', serif;
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
+    --font-heading: 'Newsreader', serif;
+    --font-family: 'Work Sans', sans-serif;
     
+    --ghost-border: rgba(255, 255, 255, 0.15);
+    --ambient-shadow: 0 20px 40px rgba(128, 0, 32, 0.08);
+
+    /* PWA Specific Tokens (Mobile Only) */
+    --pwa-font-display: 'Newsreader', serif;
+    --pwa-font-heading: 'Outfit', sans-serif;
+    --pwa-font-body: 'DM Sans', sans-serif;
     --glass-bg: rgba(15, 15, 15, 0.7);
     --glass-border: rgba(255, 255, 255, 0.08);
-    --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
-    
-    --radius-sm: 8px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-    --radius-full: 999px;
 }
 
-@theme {
-    --color-primary: var(--color-primary);
-    --color-background-light: var(--color-background-light);
-    --color-background-dark: var(--color-background-dark);
-    --color-surface-dark: var(--color-surface-dark);
-    --color-border-dark: var(--color-border-dark);
-    --color-security-green: var(--color-security-green);
-}
-
-.material-symbols-outlined {
-    font-family: 'Material Symbols Outlined';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    display: inline-block;
-    line-height: 1;
-    text-transform: none;
-    letter-spacing: normal;
-    word-wrap: normal;
-    white-space: nowrap;
-    direction: ltr;
-
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    vertical-align: middle;
-    user-select: none;
-}
-
+/* Global resets and basics */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: var(--font-body);
+    font-family: var(--font-family);
     background-color: var(--secondary-color);
-    color: var(--text-main);
+    color: var(--text-color);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior-y: auto;
+    overflow-x: hidden;
 }
 
-h1, h2, h3, h4 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.display-text {
-    font-family: var(--font-display);
-}
-
-/* Glassmorphism Utility */
-.glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-}
-
-.card-refined {
-    background: var(--surface-medium);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-border);
-    transition: transform 0.3s ease, border-color 0.3s ease;
-}
-
-.card-refined:hover {
-    border-color: var(--primary-color);
-}
-
-button {
-    font-family: var(--font-heading);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 10px 20px;
-    box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3);
-}
-
-.btn-primary:active {
-    transform: scale(0.98);
-}
-
-/* Hide scrollbar for clean PWA look */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
+/* Luxury/PWA specific typography overrides ONLY on mobile */
 @media (max-width: 768px) {
-    .main-content {
-        padding-bottom: 90px; /* Space for BottomNav */
+    body {
+        font-family: var(--pwa-font-body);
+    }
+    h1, h2, h3 {
+        font-family: var(--pwa-font-heading);
     }
 }
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--secondary-color); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
