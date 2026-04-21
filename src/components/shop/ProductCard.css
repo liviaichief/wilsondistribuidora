@@ -1,25 +1,19 @@
 .product-card {
-    background: var(--surface-lowest);
-    border: none; /* No-line rule */
-    border-radius: 6px;
+    background: var(--surface-medium);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    box-shadow: var(--ambient-shadow);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--card-shadow);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     position: relative;
-}
-
-.product-card.promo-highlight {
-    border-color: #ff4444;
-    /* Vermelho para chamar atenção como promoção */
-    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.15);
+    border: 1px solid var(--glass-border);
 }
 
 .product-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 30px 60px rgba(128, 0, 32, 0.15); /* More intense ambient shadow */
-    background: var(--surface-highest); /* Shift background instead of border */
+    border-color: var(--primary-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
 .image-container {
@@ -27,277 +21,184 @@
     width: 100%;
     aspect-ratio: 1;
     overflow: hidden;
-    border-bottom: none;
+    background: #000;
 }
 
 .product-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.6s ease;
-    filter: brightness(0.9);
+    transition: transform 0.8s ease;
+    filter: brightness(0.85);
 }
 
 .product-card:hover .product-image {
-    transform: scale(1.08);
-    filter: brightness(1.1);
+    transform: scale(1.1);
+    filter: brightness(1);
 }
 
 .price-tag {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(18, 18, 18, 0.9);
-    color: #ffffff;
-    padding: 0.2rem 0.6rem;
-    border: 1px solid #ffffff;
-    font-weight: 700;
-    font-size: 1rem;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    z-index: 2;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 4px;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.price-tag span:first-child {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent-color);
 }
 
 .uom-tag {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    opacity: 0.9;
+    opacity: 0.6;
     text-transform: uppercase;
 }
 
 .promo-badge {
-    align-self: flex-start;
-    background: #ff4444;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--primary-gradient);
     color: white;
-    padding: 0.2rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 4px 10px;
+    font-size: 0.65rem;
     font-weight: 800;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+    border-radius: var(--radius-full);
+    z-index: 10;
     letter-spacing: 1px;
-}
-
-.on-promo {
-    border: none !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    padding: 0.2rem 0.5rem;
-    /* Slightly tighter padding */
-}
-
-.promo-price-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-}
-
-.current-price-row {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
-
-.original-price {
-    text-decoration: line-through;
-    font-size: 0.75rem;
-    color: #ff0000;
-    opacity: 1;
-    margin-right: 0;
-    line-height: 1;
-}
-
-.promo-price {
-    font-size: 1.05rem;
-    font-weight: 800;
-    line-height: 1;
+    box-shadow: 0 4px 10px rgba(128, 0, 32, 0.4);
 }
 
 .product-info {
-    padding: 1rem;
+    padding: 1.2rem;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    position: relative;
 }
 
 .product-category {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    color: var(--primary-color);
-    font-weight: 600;
-    letter-spacing: 1px;
-    margin-bottom: 0.5rem;
-    opacity: 0.8;
+    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
 }
 
 .product-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-    line-height: 1.3;
+    font-size: 1.1rem;
     font-family: var(--font-heading);
-    letter-spacing: -0.02em;
-}
-
-.product-desc {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.2;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    line-height: 1.5;
+}
+
+.product-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
 }
 
 .product-actions {
-    display: flex;
-    gap: 10px;
     margin-top: auto;
+}
+
+.btn-add {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .qty-selector {
     display: flex;
     align-items: center;
-    background: #121212;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 2px;
+    justify-content: space-between;
+    background: var(--surface-highest);
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-sm);
+    padding: 4px;
 }
 
 .qty-selector button {
-    background: none;
+    background: transparent;
     border: none;
-    color: var(--primary-color);
-    width: 30px;
-    height: 30px;
+    color: white;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
 }
 
 .qty-selector button:hover {
-    background: rgba(212, 175, 55, 0.1);
-}
-
-.qty-selector span {
-    width: 30px;
-    text-align: center;
-    font-weight: 600;
-    color: #fff;
-}
-
-.btn-add {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: var(--surface-highest);
-    border: none;
-    color: var(--primary-light);
-    border-radius: 4px;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-add:hover {
-    background: var(--primary-color);
-    color: var(--text-color);
-    box-shadow: var(--ambient-shadow);
-}
-
-.qty-selector.full-width {
-    flex-grow: 1;
-    justify-content: space-between;
-    padding: 4px 10px;
-    background: rgba(212, 175, 55, 0.1);
-    /* Gold tint */
-    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .qty-display {
-    font-size: 1.1rem;
+    font-family: var(--font-heading);
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--accent-color);
 }
 
 @media (max-width: 768px) {
     .product-info {
-        padding: 0.8rem;
+        padding: 1rem;
     }
-
+    
     .product-title {
         font-size: 1rem;
-        margin-bottom: 0.3rem;
     }
-
-    .product-desc {
-        font-size: 0.8rem;
-        line-height: 1.2;
-        margin-bottom: 0.8rem;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-    }
-
+    
     .price-tag {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-        top: 5px;
-        right: 5px;
+        padding: 4px 8px;
+        bottom: 8px;
+        right: 8px;
     }
-
-    .price-tag.on-promo {
-        padding: 0.15rem 0.35rem;
-        gap: 2px;
+    
+    .price-tag span:first-child {
+        font-size: 0.95rem;
     }
-
-    .promo-price {
-        font-size: 0.85rem;
-    }
-
-    .original-price {
-        font-size: 0.65rem;
-        margin-right: 0;
-    }
-
-    .uom-tag {
-        font-size: 0.6rem;
-    }
-
-    .btn-add {
-        font-size: 0.8rem;
-        padding: 0.5rem;
-    }
-
-    .qty-selector {
-        padding: 2px 5px;
-    }
-
-    .qty-selector button {
-        width: 25px;
-        height: 25px;
-    }
-
-    .qty-selector span {
-        width: 20px;
-        font-size: 0.9rem;
-    }
-}
-
-.clickable-card {
-    cursor: pointer;
 }

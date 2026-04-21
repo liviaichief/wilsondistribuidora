@@ -1,22 +1,32 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Outfit:wght@100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
-    /* Obsidian Butcher Constants */
-    --primary-color: #800020;
-    --primary-light: #ffb3b5;
-    --accent-color: #D4AF37; /* Gold accent for readability on dark backgrounds */
-    --secondary-color: #131313;
-    --surface-lowest: #0e0e0e;
-    --surface-highest: #2a2a2a;
-    --text-color: #e5e2e1;
-    --text-muted: #e0bfbf;
-
-    --font-heading: 'Newsreader', serif;
-    --font-family: 'Work Sans', sans-serif;
+    /* Wilson Distribuidora - Refined Luxury Theme */
+    --primary-color: #800020; /* Deep Burgundy */
+    --primary-gradient: linear-gradient(135deg, #800020 0%, #5a0016 100%);
+    --accent-color: #D4AF37; /* Metallic Gold */
+    --secondary-color: #080808; /* Deep Obsidian */
+    --surface-lowest: #050505;
+    --surface-medium: #111111;
+    --surface-highest: #1a1a1a;
     
-    --ghost-border: rgba(255, 255, 255, 0.15);
-    --ambient-shadow: 0 20px 40px rgba(128, 0, 32, 0.08);
+    --text-main: #f5f5f5;
+    --text-muted: #a0a0a0;
+    --text-gold: #D4AF37;
+
+    --font-display: 'Newsreader', serif;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    
+    --glass-bg: rgba(15, 15, 15, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+    
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 999px;
 }
 
 @theme {
@@ -58,50 +68,74 @@
 }
 
 body {
-    font-family: var(--font-family);
+    font-family: var(--font-body);
     background-color: var(--secondary-color);
-    color: var(--text-color);
+    color: var(--text-main);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: auto;
-    /* Ensure pull-to-refresh is enabled */
 }
 
-input,
-textarea,
-[contenteditable="true"] {
-    user-select: text;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    cursor: text;
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-    transition: color 0.3s ease;
+.display-text {
+    font-family: var(--font-display);
 }
 
-ul {
-    list-style: none;
+/* Glassmorphism Utility */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-    width: 8px;
+.card-refined {
+    background: var(--surface-medium);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--secondary-color);
+.card-refined:hover {
+    border-color: var(--primary-color);
 }
 
-::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-    border: 1px solid #444;
+button {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-color);
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 20px;
+    box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Hide scrollbar for clean PWA look */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding-bottom: 90px; /* Space for BottomNav */
+    }
 }

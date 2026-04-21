@@ -12,6 +12,7 @@ async function run() {
     try { await databases.createBooleanAttribute('main_db', 'products', 'manage_stock', false, false); console.log('+ attr: manage_stock'); } catch (e) { if(e.code!==409) console.log(e); }
     try { await databases.createIntegerAttribute('main_db', 'products', 'stock_quantity', false, -1000000, 1000000, 0); console.log('+ attr: stock_quantity'); } catch (e) { if(e.code!==409) console.log(e); }
     try { await databases.createBooleanAttribute('main_db', 'products', 'allow_backorder', false, false); console.log('+ attr: allow_backorder'); } catch (e) { if(e.code!==409) console.log(e); }
+    try { await databases.createBooleanAttribute('main_db', 'products', 'disable_on_zero_stock', false, false); console.log('+ attr: disable_on_zero_stock'); } catch (e) { if(e.code!==409) console.log(e); }
     
     console.log("Processo finalizado.");
 }

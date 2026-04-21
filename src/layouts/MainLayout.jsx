@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import CartSidebar from '../components/shop/CartSidebar';
 import OrderSidebar from '../components/shop/OrderSidebar';
+import BottomNav from '../components/shop/BottomNav';
 import AuthModal from '../components/auth/AuthModal';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -11,6 +12,7 @@ const MainLayout = () => {
         <div className="app-container">
             <CartSidebar />
             <OrderSidebar />
+            <BottomNav />
             <AuthModal />
             <Analytics />
             <SpeedInsights />

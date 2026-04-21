@@ -312,18 +312,20 @@ const CartSidebar = () => {
             console.warn("Direct Send failed, will use manual redirect:", apiErr);
         }
 
-        // 6. Open WhatsApp redirect (Manually as fallback or confirmation)
+        // 6. Open WhatsApp redirect (Always redirect the customer for confirmation)
         if (isMobile) {
             window.location.href = whatsappUrl;
-        } else if (didSendDirectly) {
-            // Se já enviou diretamente e não é mobile, não precisa abrir o popup do WhatsApp Web
-            if (popupWindow) popupWindow.close();
-            showAlert(`Pedido #${orderNumDisplay} enviado com sucesso! ✅`, 'success');
-        } else if (popupWindow) {
-            popupWindow.location.href = whatsappUrl;
         } else {
-            // Fallback se o navegador bloqueou o popup sincrono
-            window.location.href = whatsappUrl;
+            if (popupWindow) {
+                popupWindow.location.href = whatsappUrl;
+            } else {
+                // Fallback if popup was blocked
+                window.location.href = whatsappUrl;
+            }
+            
+            if (didSendDirectly) {
+                showAlert(`Pedido #${orderNumDisplay} enviado com sucesso! ✅`, 'success');
+            }
         }
     };
 
@@ -332,7 +334,7 @@ const CartSidebar = () => {
             <div className="cart-backdrop" onClick={toggleCart}></div>
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
-                    <h2><ShoppingBag size={20} /> Seu Carrinho</h2>
+                    <h2 style={{ color: 'white' }}><ShoppingBag size={20} color="white" /> Seu Carrinho</h2>
                     <button className="close-cart" onClick={toggleCart}>
                         <X size={24} />
                     </button>
@@ -350,8 +352,8 @@ const CartSidebar = () => {
                                 <div key={item.id} className="cart-item">
                                     <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
                                     <div className="cart-item-info">
-                                        <h4>{formatTitleCase(item.title)}</h4>
-                                        <p className="cart-item-price">
+                                        <h4 style={{ color: 'white' }}>{formatTitleCase(item.title)}</h4>
+                                        <p className="cart-item-price" style={{ color: 'white' }}>
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
                                         </p>
                                         <div className="cart-item-controls">
@@ -360,8 +362,8 @@ const CartSidebar = () => {
                                                 <span>{item.quantity}</span>
                                                 <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
                                             </div>
-                                            <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
-                                                <Trash2 size={16} />
+                                            <button className="remove-btn" style={{ color: 'white' }} onClick={() => removeFromCart(item.id)}>
+                                                <Trash2 size={16} color="white" />
                                             </button>
                                         </div>
                                     </div>
@@ -372,7 +374,7 @@ const CartSidebar = () => {
 
                     {cartItems.length > 0 && (
                         <div className="cart-total-display" style={{ padding: '15px', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderTop: '1px solid rgba(212, 175, 55, 0.1)', marginBottom: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.2rem', fontWeight: '900', color: 'var(--primary-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.2rem', fontWeight: '900', color: 'white' }}>
                                 <span>Subtotal:</span>
                                 <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}</span>
                             </div>

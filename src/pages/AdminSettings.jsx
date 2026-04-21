@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Phone, Info, X, Loader2 } from 'lucide-react';
+import { Save, Phone, Info, X, Loader2, Instagram } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { account } from '../lib/appwrite';
@@ -15,7 +15,8 @@ const AdminSettings = () => {
         whatsapp_number: '',
         whatsapp_message: '*NOVO PEDIDO {pedido} - BASE APP*',
         birthday_message: '',
-        whatsapp_use_api: false
+        whatsapp_use_api: false,
+        instagram_link: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -55,6 +56,7 @@ const AdminSettings = () => {
             await updateSettings('whatsapp_message', settings.whatsapp_message);
             await updateSettings('birthday_message', settings.birthday_message);
             await updateSettings('whatsapp_use_api', settings.whatsapp_use_api);
+            await updateSettings('instagram_link', settings.instagram_link);
             // Configurações de API agora são geridas externamente
             showAlert("Configurações salvas com sucesso!", "success", null, 2000);
         } catch (error) {
@@ -94,6 +96,20 @@ const AdminSettings = () => {
                                 />
                                 <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                     <Info size={14} /> Use apenas números, com código do país (55) e DDD.
+                                </p>
+                            </div>
+                            <div className="form-group">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Instagram size={18} color="var(--primary-color)" /> Link do Instagram
+                                </label>
+                                <input
+                                    type="url"
+                                    value={settings.instagram_link || ''}
+                                    onChange={(e) => setSettings({ ...settings, instagram_link: e.target.value })}
+                                    placeholder="Ex: https://instagram.com/seuperfil"
+                                />
+                                <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '8px' }}>
+                                    Link para o perfil do Instagram que aparecerá no cabeçalho do site.
                                 </p>
                             </div>
                             <div className="form-group">

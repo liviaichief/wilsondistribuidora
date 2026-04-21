@@ -124,6 +124,7 @@ export const AlertProvider = ({ children }) => {
                                 ) : (
                                     <button
                                         onClick={closeAlert}
+                                        style={alertConfig.type === 'success' ? { transform: 'scale(1.4)', margin: '10px' } : {}}
                                         className={`px-8 py-2 rounded text-white font-medium transition-colors shadow-lg ${alertConfig.type === 'error' ? 'bg-red-600 hover:bg-red-700 hover:shadow-red-500/20' :
                                             alertConfig.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/20' :
                                                 'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/20'

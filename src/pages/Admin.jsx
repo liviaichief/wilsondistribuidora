@@ -152,7 +152,8 @@ const Admin = () => {
             active: true,
             manage_stock: false,
             stock_quantity: 0,
-            allow_backorder: false
+            allow_backorder: false,
+            disable_on_zero_stock: false
         });
         setPreviewUrl('');
         setIsModalOpen(true);
@@ -406,17 +407,6 @@ const Admin = () => {
                                                         <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar Produto">
                                                             <Edit2 size={18} />
                                                         </button>
-                                                        <button 
-                                                            className="icon-btn" 
-                                                            onClick={(e) => { 
-                                                                e.stopPropagation(); 
-                                                                handleEdit(item); 
-                                                            }} 
-                                                            title="Regras de Estoque"
-                                                            style={{ border: '1px solid #333', background: 'transparent' }}
-                                                        >
-                                                            <Settings size={18} style={{ color: '#22d3ee' }} />
-                                                        </button>
                                                         <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Excluir">
                                                             <Trash2 size={18} />
                                                         </button>
@@ -631,34 +621,43 @@ const Admin = () => {
                                 </div>
                                 
                                 {currentProduct.manage_stock && (
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '15px', borderTop: '1px solid rgba(34, 211, 238, 0.1)' }}>
-                                        <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label style={{ color: '#aaa', fontSize: '0.9rem' }}>Quantidade Atual</label>
+                                    <div style={{ display: 'flex', gap: '20px', paddingTop: '15px', borderTop: '1px solid rgba(34, 211, 238, 0.1)', flexWrap: 'wrap' }}>
+                                        <div className="form-group" style={{ marginBottom: 0, width: '120px' }}>
+                                            <label style={{ color: '#aaa', fontSize: '0.9rem' }}>Quantidade</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 value={currentProduct.stock_quantity !== undefined ? currentProduct.stock_quantity : 0}
                                                 onChange={e => setCurrentProduct({ ...currentProduct, stock_quantity: parseInt(e.target.value) || 0 })}
                                                 placeholder="0"
-                                                style={{ border: '1px solid rgba(34, 211, 238, 0.3)' }}
+                                                style={{ border: '1px solid rgba(34, 211, 238, 0.3)', width: '100%' }}
                                             />
                                         </div>
-                                        <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <label style={{ marginBottom: 0, color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }} htmlFor="allow_backorder">
-                                                    Vender sem estoque?
+                                        <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', flex: 1, gap: '10px', minWidth: '250px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '8px' }}>
+                                                <label style={{ marginBottom: 0, color: '#ddd', fontSize: '0.9rem', cursor: 'pointer', flex: 1 }} htmlFor="allow_backorder">
+                                                    1 - Vender sem estoque
                                                 </label>
                                                 <input
                                                     id="allow_backorder"
                                                     type="checkbox"
-                                                    checked={currentProduct.allow_backorder}
-                                                    onChange={e => setCurrentProduct({ ...currentProduct, allow_backorder: e.target.checked })}
-                                                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                                    checked={currentProduct.allow_backorder || false}
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, allow_backorder: e.target.checked, disable_on_zero_stock: e.target.checked ? false : currentProduct.disable_on_zero_stock })}
+                                                    style={{ width: '20px', height: '20px', cursor: 'pointer', margin: 0 }}
                                                 />
                                             </div>
-                                            <small style={{ color: '#666', fontSize: '0.75rem', marginTop: '5px' }}>
-                                                (Se marcado, cliente pode comprar mesmo se a quantidade for 0)
-                                            </small>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '8px' }}>
+                                                <label style={{ marginBottom: 0, color: '#ddd', fontSize: '0.9rem', cursor: 'pointer', flex: 1 }} htmlFor="disable_on_zero_stock">
+                                                    2 - Desabilitar produto ao zerar
+                                                </label>
+                                                <input
+                                                    id="disable_on_zero_stock"
+                                                    type="checkbox"
+                                                    checked={currentProduct.disable_on_zero_stock || false}
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, disable_on_zero_stock: e.target.checked, allow_backorder: e.target.checked ? false : currentProduct.allow_backorder })}
+                                                    style={{ width: '20px', height: '20px', cursor: 'pointer', margin: 0 }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -669,41 +668,38 @@ const Admin = () => {
                                 padding: '15px 20px', 
                                 borderRadius: '15px', 
                                 border: '1px solid rgba(168, 85, 247, 0.1)',
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                marginTop: '10px' 
+                                marginTop: '15px'
                             }}>
-                                <span style={{ color: '#fff', fontWeight: 600 }}>Cofigurações de Promoção</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={currentProduct.is_promotion}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {currentProduct.is_promotion && (
-                                <div className="form-group" style={{ marginTop: '15px' }}>
-                                    <label>Preço Promocional (R$)</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981', fontWeight: 'bold' }}>R$</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required={currentProduct.is_promotion}
-                                            value={currentProduct.promo_price}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
-                                            placeholder="0,00"
-                                            style={{ paddingLeft: '40px', borderColor: 'rgba(16, 185, 129, 0.3)' }}
-                                        />
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ display: 'block', marginBottom: '8px' }}>Preço Promocional (R$)</label>
+                                        <div style={{ position: 'relative', opacity: currentProduct.is_promotion ? 1 : 0.5, transition: 'opacity 0.3s' }}>
+                                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981', fontWeight: 'bold' }}>R$</span>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                required={currentProduct.is_promotion}
+                                                value={currentProduct.promo_price || ''}
+                                                onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
+                                                placeholder="0,00"
+                                                style={{ paddingLeft: '40px', borderColor: 'rgba(16, 185, 129, 0.3)', width: '100%', margin: 0, background: 'rgba(0,0,0,0.2)' }}
+                                                disabled={!currentProduct.is_promotion}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                        <label style={{ fontSize: '0.85rem', marginBottom: '8px', color: '#ccc' }}>Ativar Promoção</label>
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={currentProduct.is_promotion}
+                                                onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             <button
                                 type="submit"

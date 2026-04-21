@@ -97,7 +97,15 @@ const ProductCard = ({ product }) => {
                 <p className="product-desc">{product.description}</p>
 
                 <div className="product-actions">
-                    {quantity === 0 ? (
+                    {product.manage_stock && product.stock_quantity <= 0 && !product.allow_backorder ? (
+                        <button
+                            className="btn-add"
+                            disabled
+                            style={{ background: '#333', color: '#888', cursor: 'not-allowed' }}
+                        >
+                            Esgotado
+                        </button>
+                    ) : quantity === 0 ? (
                         <button
                             className="btn-add"
                             onClick={handleAdd}

@@ -93,16 +93,24 @@ const AuthModal = () => {
 
                 // Convert DD/MM/YYYY to YYYY-MM-DD for DB
                 let isoDate = null;
-                if (birthDate.length === 10) {
+                if (birthDate.length >= 10) {
                     const [day, month, year] = birthDate.split('/');
-                    isoDate = `${year}-${month}-${day}`;
+                    if (day && month && year && year.length === 4) {
+                        isoDate = `${year}-${month}-${day}`;
+                    }
                 }
 
-                const { data, error } = await signUp(email, password, {
-                    full_name: fullName,
-                    whatsapp: whatsapp,
-                    birthday: isoDate
-                });
+                // Prepare additional payload, omitting nulls to prevent 'Document payload is invalid' string matching errors from passing null
+                const additionalPayload = {
+                    full_name: fullName ? fullName.trim() : 'Perfil Cliente',
+                    whatsapp: whatsapp ? whatsapp.trim() : ''
+                };
+                
+                if (isoDate) {
+                    additionalPayload.birthday = isoDate;
+                }
+
+                const { data, error } = await signUp(email.trim(), password, additionalPayload);
 
                 if (error) throw error;
 
@@ -121,7 +129,7 @@ const AuthModal = () => {
             console.error('Auth Error Details:', err);
 
             let errorMsg = err.message || 'Houve um erro ao processar sua solicitação.';
-
+            
             // Helpful translations for Appwrite errors
             if (errorMsg.includes('Invalid login credentials') || errorMsg.includes('Invalid credentials')) {
                 errorMsg = 'E-mail ou senha incorretos.';
@@ -137,6 +145,9 @@ const AuthModal = () => {
                 errorMsg = 'Muitas tentativas seguidas. Por favor, aguarde alguns minutos.';
             } else if (errorMsg.includes('Network Error') || errorMsg.includes('Failed to fetch')) {
                 errorMsg = 'Erro de conexão. Verifique sua internet.';
+            } else if (errorMsg.includes('There was an error processing your request')) {
+                // Let's add the raw stringified error object to see which argument fails
+                errorMsg = errorMsg + ' RAW: ' + JSON.stringify(err);
             }
 
             showAlert(errorMsg, 'error', 'Erro');

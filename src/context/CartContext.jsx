@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useAlert } from './AlertContext';
 
 const CartContext = createContext();
 
@@ -7,6 +8,7 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
     const { user } = useAuth();
+    const { showAlert } = useAlert();
     const [cartItems, setCartItems] = useState(() => {
         const storedCart = localStorage.getItem('cart');
         return storedCart ? JSON.parse(storedCart) : [];
@@ -32,19 +34,28 @@ export const CartProvider = ({ children }) => {
     const addToCart = (product, quantity = 1) => {
         setCartItems(prev => {
             const existing = prev.find(item => item.id === product.id);
+            const proposedQuantity = existing ? existing.quantity + quantity : quantity;
+            
+            // Stock Rules Validation
+            if (product.manage_stock && !product.allow_backorder) {
+                if (proposedQuantity > product.stock_quantity) {
+                    showAlert(`Desculpe, temos apenas ${product.stock_quantity} un. de ${product.title} em estoque.`, 'warning', 'Estoque Insuficiente', 2000);
+                    return prev; // Do not add
+                }
+            }
+
             if (existing) {
                 return prev.map(item =>
                     item.id === product.id
-                        ? { ...item, quantity: item.quantity + quantity }
+                        ? { ...item, quantity: proposedQuantity }
                         : item
                 );
             }
 
             const effectivePrice = product.is_promotion && product.promo_price ? parseFloat(product.promo_price) : parseFloat(product.price);
 
-            return [...prev, { ...product, quantity, price: effectivePrice, original_price: parseFloat(product.price) }];
+            return [...prev, { ...product, quantity: proposedQuantity, price: effectivePrice, original_price: parseFloat(product.price) }];
         });
-        // setIsCartOpen(true); // Changed behavior: don't auto-open
     };
 
     const removeFromCart = (id) => {
@@ -56,9 +67,22 @@ export const CartProvider = ({ children }) => {
             removeFromCart(id);
             return;
         }
-        setCartItems(prev => prev.map(item =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-        ));
+
+        setCartItems(prev => {
+            const itemToUpdate = prev.find(item => item.id === id);
+            
+            // Stock Rules Validation
+            if (itemToUpdate && itemToUpdate.manage_stock && !itemToUpdate.allow_backorder) {
+                if (newQuantity > itemToUpdate.stock_quantity) {
+                    showAlert(`Apenas ${itemToUpdate.stock_quantity} un. de ${itemToUpdate.title} disponíveis.`, 'warning');
+                    return prev;
+                }
+            }
+
+            return prev.map(item =>
+                item.id === id ? { ...item, quantity: newQuantity } : item
+            );
+        });
     };
 
     const clearCart = () => setCartItems([]);

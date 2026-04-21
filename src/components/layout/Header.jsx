@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, ShoppingBag, X, User } from 'lucide-react';
+import { Menu, ShoppingBag, X, User, Instagram } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import Button from '../ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSettings } from '../../services/dataService';
 
 const CATEGORIES = [
     { id: 'all', label: 'Todos' },
@@ -16,8 +17,19 @@ const CATEGORIES = [
 
 export default function Header({ activeCategory, onCategoryChange }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [instagramLink, setInstagramLink] = useState('');
     const location = useLocation();
     const isAdmin = location.pathname.startsWith('/admin');
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const settings = await getSettings();
+            if (settings && settings.instagram_link) {
+                setInstagramLink(settings.instagram_link);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     if (isAdmin) return null; // Or render admin header
 
@@ -45,8 +57,20 @@ export default function Header({ activeCategory, onCategoryChange }) {
                         </nav>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                        <Link to="/login">
+                    <div className="flex items-center space-x-4">
+                        {instagramLink && (
+                            <a 
+                                href={instagramLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-gray-500 hover:text-primary-600 transition-colors p-1"
+                                title="Instagram"
+                            >
+                                <Instagram className="h-5 w-5" />
+                            </a>
+                        )}
+                        <div className="flex items-center space-x-2">
+                            <Link to="/login">
                             <Button variant="ghost" size="sm">
                                 <User className="h-5 w-5" />
                                 <span className="sr-only">Login</span>
@@ -58,6 +82,8 @@ export default function Header({ activeCategory, onCategoryChange }) {
                     </div>
                 </div>
             </div>
+        </div>
+
 
             {/* Mobile Menu */}
             <AnimatePresence>

@@ -263,20 +263,26 @@ export const AuthProvider = ({ children }) => {
 
             const defaultRole = 'client';
             try {
+                // Remove propriedades vazias/null para o Appwrite não estourar 400 Bad Request Payload
+                const profilePayload = {
+                    email: email,
+                    full_name: additionalData?.full_name || 'Perfil Cliente',
+                    first_name: (additionalData?.full_name || '').split(' ')[0] || 'Perfil',
+                    last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
+                    whatsapp: additionalData?.whatsapp || '',
+                    user_id: acc.$id,
+                    role: defaultRole
+                };
+
+                if (additionalData?.birthday) {
+                    profilePayload.birthday = additionalData.birthday;
+                }
+
                 await databases.createDocument(
                     DATABASE_ID,
                     COLLECTIONS.PROFILES,
                     acc.$id,
-                    {
-                        email: email,
-                        full_name: additionalData?.full_name || '',
-                        first_name: (additionalData?.full_name || '').split(' ')[0] || '',
-                        last_name: (additionalData?.full_name || '').split(' ').slice(1).join(' ') || '',
-                        whatsapp: additionalData?.whatsapp || '',
-                        birthday: additionalData?.birthday || null,
-                        user_id: acc.$id,
-                        role: defaultRole
-                    }
+                    profilePayload
                 );
             } catch (dbError) {
                 console.error("Error creating profile document during signup:", dbError);

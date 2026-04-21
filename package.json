@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node bump_version.cjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "health-check": "node maintenance/appwrite/db_health_job.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "deploy": "node bump_version.cjs && npx vercel --prod"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",

@@ -5,7 +5,8 @@ import { useCart } from '../../context/CartContext';
 import { useOrder } from '../../context/OrderContext';
 
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package, Fish, PartyPopper, Store, Box } from 'lucide-react';
+import { ShoppingBag, Flame, Sparkles, User, LogOut, ClipboardList, CheckCircle, Shield, Beer, Package, Fish, PartyPopper, Store, Box, Instagram, Bell } from 'lucide-react';
+import { getSettings } from '../../services/dataService';
 import './Header.css';
 
 // Custom Icons - Doodle Style
@@ -79,6 +80,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const { user, openAuthModal, signOut, isAdmin, isOwner, openProfileModal } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
     const [showVersion, setShowVersion] = React.useState(false); // Version display state
+    const [instagramLink, setInstagramLink] = React.useState('');
     // const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false); // Removed local state
     const [logoutMessage, setLogoutMessage] = React.useState(null);
     const userMenuRef = React.useRef(null);
@@ -88,6 +90,16 @@ const Header = ({ activeCategory, onCategoryChange }) => {
     const handleLogoClick = () => {
         navigate('/');
     };
+
+    React.useEffect(() => {
+        const fetchInsta = async () => {
+            const setts = await getSettings();
+            if (setts && setts.instagram_link) {
+                setInstagramLink(setts.instagram_link);
+            }
+        };
+        fetchInsta();
+    }, []);
 
     React.useEffect(() => {
         const handleClickOutside = (event) => {
@@ -186,14 +198,43 @@ const Header = ({ activeCategory, onCategoryChange }) => {
 
     return (
         <header className={`site-header ${isHome ? 'home-header' : ''}`}>
+            
+            {/* New top bar row for notifications */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '36px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 2rem', gap: '15px', zIndex: 10, background: 'rgba(0,0,0,0.2)' }}>
+                {instagramLink && (
+                    <a 
+                        href={instagramLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="cart-btn"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Nosso Instagram"
+                    >
+                        <Instagram size={22} color="white" />
+                    </a>
+                )}
+                <button className="cart-btn" title="Notificações" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Bell size={22} color="white" />
+                </button>
+
+            </div>
+
             <div className="header-container">
                 {/* Top Row: Standard Layout across all pages */}
-                <div className="header-main-row is-home-layout">
+                <div className="header-main-row is-home-layout" style={{ marginTop: '36px' }}>
 
 
                     {/* Logo Section */}
                     <div className="header-logo-section" onClick={handleLogoClick} title="Página Inicial">
                         <img src="/logo.png" alt="Wilson Distribuidora" className="header-logo" />
+                    </div>
+
+                    {/* Search Bar - Global UX Improvement */}
+                    <div className="header-search-container">
+                        <div className="search-wrapper">
+                            <input type="text" placeholder="Buscar cortes premium..." className="search-input" />
+                            <ShoppingBag size={18} className="search-icon" />
+                        </div>
                     </div>
 
                     {/* 2. User Actions Section (Right Aligned) */}
@@ -219,7 +260,7 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 title="Minha Conta"
                             >
-                                <User size={31} color={user ? "var(--primary-color)" : "white"} />
+                                <User size={31} color="white" />
                             </button>
 
                             {isUserMenuOpen && (
@@ -284,9 +325,9 @@ const Header = ({ activeCategory, onCategoryChange }) => {
                     </div>
                 </div>
 
-                {/* Bottom Row: Navigation Tabs (Only on Home) */}
+                {/* Bottom Row: Navigation Tabs (Only on Desktop Web) */}
                 {isHome && (
-                    <div className="header-nav-section">
+                    <div className="header-nav-section desktop-only-nav">
                         <nav className="category-nav-inline">
                             <div className="category-list" ref={categoryListRef}>
                                 {categories.map((cat) => (

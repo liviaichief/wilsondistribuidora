@@ -119,7 +119,6 @@ const ProductDetail = () => {
                     <div className="product-detail-info">
                         <div className="product-meta">
                             <span className="product-category-detail">{product.category}</span>
-                            <span className="product-sku">SKU: {product.sku || product.id}</span>
                         </div>
 
                         <h1 className="product-title-detail">{product.title}</h1>
@@ -153,7 +152,15 @@ const ProductDetail = () => {
                         </div>
 
                         <div className="product-detail-actions">
-                            {quantity === 0 ? (
+                            {product.manage_stock && product.stock_quantity <= 0 && !product.allow_backorder ? (
+                                <button
+                                    className="btn-add-large"
+                                    disabled
+                                    style={{ background: '#333', color: '#888', cursor: 'not-allowed' }}
+                                >
+                                    Esgotado
+                                </button>
+                            ) : quantity === 0 ? (
                                 <button
                                     className="btn-add-large"
                                     onClick={handleAdd}

@@ -130,7 +130,8 @@ export const saveProduct = async (product) => {
             active: product.active !== false,
             manage_stock: !!product.manage_stock,
             stock_quantity: parseInt(product.stock_quantity) || 0,
-            allow_backorder: !!product.allow_backorder
+            allow_backorder: !!product.allow_backorder,
+            disable_on_zero_stock: !!product.disable_on_zero_stock
         };
 
         if (docId) {
@@ -255,6 +256,39 @@ export const createOrder = async (orderData) => {
                 Permission.write(Role.users())
             ]
         );
+
+        // --- STOCK DECREMENT LOGIC ---
+        try {
+            const itemsToProcess = typeof orderData.items === 'string' ? JSON.parse(orderData.items) : orderData.items;
+            for (const item of itemsToProcess) {
+                if (item.id) {
+                    const product = await databases.getDocument(DATABASE_ID, COLLECTIONS.PRODUCTS, item.id);
+                    if (product.manage_stock) {
+                        let newStock = (product.stock_quantity || 0) - item.quantity;
+                        let newActive = product.active;
+                        
+                        if (newStock <= 0) {
+                            newStock = 0; // prevent negative visually
+                            if (product.disable_on_zero_stock) {
+                                newActive = false;
+                            }
+                        }
+
+                        await databases.updateDocument(
+                            DATABASE_ID,
+                            COLLECTIONS.PRODUCTS,
+                            item.id,
+                            { 
+                                stock_quantity: newStock,
+                                active: newActive
+                            }
+                        );
+                    }
+                }
+            }
+        } catch (stockErr) {
+            console.error("Error decrementing stock:", stockErr);
+        }
 
         return {
             success: true,
