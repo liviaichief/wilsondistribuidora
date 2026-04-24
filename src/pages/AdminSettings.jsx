@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Loader2, Settings2, Activity } from 'lucide-react';
+import { Save, Loader2, Settings2, Activity, MessageSquare, MapPin, TrendingUp, Gift, Bot, DollarSign, Tag } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,73 @@ import AdminUOMs from './AdminUOMs';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
 
+/* ─── Helpers ─── */
+const Card = ({ children, icon, color = '#D4AF37', title, style = {} }) => (
+    <div style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '28px',
+        padding: '35px',
+        backdropFilter: 'blur(10px)',
+        ...style
+    }}>
+        {title && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
+                <div style={{ background: `${color}18`, padding: '10px', borderRadius: '12px', color, display: 'flex' }}>
+                    {icon}
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h3>
+            </div>
+        )}
+        {children}
+    </div>
+);
+
+const Field = ({ label, children }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <label style={{ fontWeight: 800, fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</label>
+        {children}
+    </div>
+);
+
+const inputStyle = {
+    background: 'rgba(0,0,0,0.3)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '14px',
+    padding: '14px 16px',
+    color: '#fff',
+    width: '100%',
+    fontSize: '0.9rem',
+    outline: 'none',
+    transition: 'border-color 0.2s'
+};
+
+const SaveBtn = ({ saving, color = '#D4AF37', label = 'SALVAR ALTERAÇÕES' }) => (
+    <button
+        type="submit"
+        disabled={saving}
+        style={{
+            background: color,
+            color: color === '#D4AF37' ? '#000' : '#fff',
+            border: 'none',
+            borderRadius: '14px',
+            padding: '15px',
+            fontWeight: 900,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'all 0.2s',
+            fontSize: '0.85rem'
+        }}
+    >
+        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+        {saving ? 'SALVANDO...' : label}
+    </button>
+);
+
+/* ─── Main Component ─── */
 const AdminSettings = () => {
     const { isAdmin } = useAuth();
     const [settings, setSettings] = useState({
@@ -19,28 +86,22 @@ const AdminSettings = () => {
         birthday_message: '',
         whatsapp_use_api: false,
         instagram_link: '',
-        // Google Cloud & Reviews
         google_api_key: '',
         google_place_id: '',
-        // Logistics & Maps
         shipping_free_radius: 5,
         shipping_fixed_rate: '',
         shipping_fixed_radius_max: 15,
         shipping_per_km_rate: '',
-        store_latitude: '', // Exemplo SP
+        store_latitude: '',
         store_longitude: '',
-        // Marketing & Analytics
         google_gtm_id: '',
         google_merchant_id: '',
-        // NOVO: Fidelidade & Cashback
         cashback_enabled: false,
         cashback_percentage: '2',
         cashback_min_order: '50',
-        // NOVO: Automação Pós-Venda
         wa_bot_delay_hours: '2',
         wa_feedback_message: 'Olá {cliente}! Como foi sua experiência com nossos cortes hoje? 🥩🔥',
-        wa_reminder_day: '4', // Quinta-feira
-        // NOVO: Financeiro
+        wa_reminder_day: '4',
         show_profit_dashboard: true
     });
     const [loading, setLoading] = useState(true);
@@ -53,11 +114,7 @@ const AdminSettings = () => {
         setLoading(true);
         try {
             const data = await getSettings();
-            setSettings(prev => ({
-                ...prev,
-                ...data,
-                whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*'
-            }));
+            setSettings(prev => ({ ...prev, ...data, whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*' }));
         } catch (error) { showAlert("Erro ao carregar configurações", "error"); } finally { setLoading(false); }
     };
 
@@ -65,13 +122,12 @@ const AdminSettings = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            const updates = [
+            await Promise.all([
                 updateSettings('whatsapp_number', settings.whatsapp_number),
                 updateSettings('whatsapp_message', settings.whatsapp_message),
                 updateSettings('birthday_message', settings.birthday_message),
                 updateSettings('whatsapp_use_api', settings.whatsapp_use_api),
                 updateSettings('instagram_link', settings.instagram_link),
-                // Google updates
                 updateSettings('google_api_key', settings.google_api_key),
                 updateSettings('google_place_id', settings.google_place_id),
                 updateSettings('shipping_free_radius', settings.shipping_free_radius),
@@ -88,9 +144,8 @@ const AdminSettings = () => {
                 updateSettings('wa_bot_delay_hours', settings.wa_bot_delay_hours),
                 updateSettings('wa_feedback_message', settings.wa_feedback_message),
                 updateSettings('wa_reminder_day', settings.wa_reminder_day),
-                updateSettings('show_profit_dashboard', settings.show_profit_dashboard)
-            ];
-            await Promise.all(updates);
+                updateSettings('show_profit_dashboard', settings.show_profit_dashboard),
+            ]);
             showAlert("Configurações salvas!", "success", null, 3000);
         } catch (error) { showAlert("Erro ao salvar.", "error"); } finally { setSaving(false); }
     };
@@ -98,192 +153,202 @@ const AdminSettings = () => {
     if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Loader2 className="animate-spin" size={40} color="#D4AF37" /></div>;
 
     return (
-        <div style={{ padding: '0 20px 40px' }}>
+        <div style={{ padding: '0 20px 60px' }}>
+            <form onSubmit={handleSave}>
 
-            <div className="admin-grid-2col">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                    <AdminCategories />
-                    <AdminUOMs />
+                {/* ══ ROW 1: Catálogo + Comunicação ══ */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+
+                    {/* Catálogo: Categorias */}
+                    <Card icon={<Tag size={22} />} color="#D4AF37" title="Categorias de Produto">
+                        <AdminCategories />
+                    </Card>
+
+                    {/* Catálogo: Unidades */}
+                    <Card icon={<Settings2 size={22} />} color="#a78bfa" title="Unidades de Medida">
+                        <AdminUOMs />
+                    </Card>
                 </div>
 
-                <div className="glass-card premium-shadow" style={{ padding: '40px', position: 'sticky', top: '20px' }}>
-                    <h3 style={{ margin: '0 0 30px', fontSize: '1.5rem', fontWeight: 800 }}>Comunicação</h3>
-                    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>WHATSAPP PARA PEDIDOS</label>
-                            <input value={settings.whatsapp_number} onChange={e => setSettings({...settings, whatsapp_number: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
+                {/* ══ ROW 2: Comunicação + Ecossistema Google ══ */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+
+                    {/* Comunicação */}
+                    <Card icon={<MessageSquare size={22} />} color="#22c55e" title="Comunicação & Canal">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <Field label="WhatsApp para Pedidos">
+                                <input value={settings.whatsapp_number} onChange={e => setSettings({...settings, whatsapp_number: e.target.value})} style={inputStyle} placeholder="5511999999999" />
+                            </Field>
+                            <Field label="Link do Instagram">
+                                <input value={settings.instagram_link} onChange={e => setSettings({...settings, instagram_link: e.target.value})} style={inputStyle} placeholder="https://instagram.com/..." />
+                            </Field>
+                            <Field label="Mensagem de Pedido (WhatsApp)">
+                                <textarea value={settings.whatsapp_message} onChange={e => setSettings({...settings, whatsapp_message: e.target.value})} style={{ ...inputStyle, minHeight: '90px', resize: 'none' }} />
+                            </Field>
+                            <Field label="Mensagem de Aniversário">
+                                <textarea value={settings.birthday_message} onChange={e => setSettings({...settings, birthday_message: e.target.value})} style={{ ...inputStyle, minHeight: '80px', resize: 'none' }} placeholder="Parabéns {cliente}! 🎂 Presente especial te aguarda..." />
+                            </Field>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>LINK DO INSTAGRAM</label>
-                            <input value={settings.instagram_link} onChange={e => setSettings({...settings, instagram_link: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
+                    </Card>
+
+                    {/* Google */}
+                    <Card icon={<Settings2 size={22} />} color="#4285F4" title="Ecossistema Google">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <Field label="Google Cloud API Key">
+                                <input type="password" value={settings.google_api_key} onChange={e => setSettings({...settings, google_api_key: e.target.value})} style={inputStyle} placeholder="AIza..." />
+                            </Field>
+                            <Field label="Place ID (Business Profile)">
+                                <input value={settings.google_place_id} onChange={e => setSettings({...settings, google_place_id: e.target.value})} style={inputStyle} placeholder="ChI..." />
+                            </Field>
+                            <Field label="Google Tag Manager ID">
+                                <input value={settings.google_gtm_id} onChange={e => setSettings({...settings, google_gtm_id: e.target.value})} style={inputStyle} placeholder="GTM-XXXXXXX" />
+                            </Field>
+                            <Field label="Merchant Center ID">
+                                <input value={settings.google_merchant_id} onChange={e => setSettings({...settings, google_merchant_id: e.target.value})} style={inputStyle} placeholder="123456789" />
+                            </Field>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>MENSAGEM INICIAL</label>
-                            <textarea value={settings.whatsapp_message} onChange={e => setSettings({...settings, whatsapp_message: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff', minHeight: '100px', resize: 'none' }} />
-                        </div>
-                        <button type="submit" disabled={saving} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '16px', padding: '18px', fontWeight: 900, cursor: 'pointer' }}>{saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}</button>
-                    </form>
+                    </Card>
                 </div>
 
-                {/* NOVO QUADRO: ECOSSISTEMA GOOGLE */}
-                <div className="glass-card premium-shadow" style={{ padding: '40px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '30px' }}>
-                        <div style={{ background: 'rgba(66, 133, 244, 0.1)', padding: '8px', borderRadius: '10px' }}>
-                            <Settings2 size={24} color="#4285F4" />
-                        </div>
-                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Ecossistema Google</h3>
-                    </div>
-                    
-                    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                        {/* API Keys */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>GOOGLE CLOUD API KEY</label>
-                                <input type="password" value={settings.google_api_key} onChange={e => setSettings({...settings, google_api_key: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} placeholder="AIza..." />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>PLACE ID (BUSINESS PROFILE)</label>
-                                <input value={settings.google_place_id} onChange={e => setSettings({...settings, google_place_id: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} placeholder="ChI..." />
-                            </div>
-                        </div>
+                {/* ══ ROW 3: Logística + Fidelidade ══ */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
 
-                        {/* Logistics */}
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <h4 style={{ margin: '0 0 20px', fontSize: '0.9rem', color: '#888' }}>Logística e Frete Inteligente</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>FRETE GRÁTIS ATÉ (KM)</label>
-                                    <input type="number" value={settings.shipping_free_radius} onChange={e => setSettings({...settings, shipping_free_radius: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>TAXA FIXA (R$)</label>
-                                    <input type="number" value={settings.shipping_fixed_rate} onChange={e => setSettings({...settings, shipping_fixed_rate: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
-                                </div>
+                    {/* Logística */}
+                    <Card icon={<MapPin size={22} />} color="#f59e0b" title="Logística & Frete Inteligente">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <Field label="Frete Grátis até (km)">
+                                    <input type="number" value={settings.shipping_free_radius} onChange={e => setSettings({...settings, shipping_free_radius: e.target.value})} style={inputStyle} />
+                                </Field>
+                                <Field label="Taxa Fixa (R$)">
+                                    <input type="number" value={settings.shipping_fixed_rate} onChange={e => setSettings({...settings, shipping_fixed_rate: e.target.value})} style={inputStyle} />
+                                </Field>
+                                <Field label="Raio Taxa Fixa até (km)">
+                                    <input type="number" value={settings.shipping_fixed_radius_max} onChange={e => setSettings({...settings, shipping_fixed_radius_max: e.target.value})} style={inputStyle} />
+                                </Field>
+                                <Field label="Taxa Extra por km Adicional (R$)">
+                                    <input type="number" value={settings.shipping_per_km_rate} onChange={e => setSettings({...settings, shipping_per_km_rate: e.target.value})} style={inputStyle} />
+                                </Field>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>RAIO TAXA FIXA ATÉ (KM)</label>
-                                    <input type="number" value={settings.shipping_fixed_radius_max} onChange={e => setSettings({...settings, shipping_fixed_radius_max: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
+                            <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: '16px', padding: '18px' }}>
+                                <p style={{ margin: '0 0 12px', fontSize: '0.75rem', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>📍 Coordenadas da Loja</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <Field label="Latitude">
+                                        <input value={settings.store_latitude} onChange={e => setSettings({...settings, store_latitude: e.target.value})} style={inputStyle} placeholder="-23.550520" />
+                                    </Field>
+                                    <Field label="Longitude">
+                                        <input value={settings.store_longitude} onChange={e => setSettings({...settings, store_longitude: e.target.value})} style={inputStyle} placeholder="-46.633308" />
+                                    </Field>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>TAXA EXTRA POR KM ADICIONAL (R$)</label>
-                                    <input type="number" value={settings.shipping_per_km_rate} onChange={e => setSettings({...settings, shipping_per_km_rate: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tracking */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>GOOGLE TAG MANAGER (GTM-XXXX)</label>
-                                <input value={settings.google_gtm_id} onChange={e => setSettings({...settings, google_gtm_id: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} placeholder="GTM-XXXXXXX" />
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: '#555' }}>MERCHANT CENTER ID</label>
-                                <input value={settings.google_merchant_id} onChange={e => setSettings({...settings, google_merchant_id: e.target.value})} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '15px', color: '#fff' }} placeholder="123456789" />
                             </div>
                         </div>
+                    </Card>
 
-                        <button type="submit" disabled={saving} style={{ background: '#4285F4', color: '#fff', border: 'none', borderRadius: '16px', padding: '18px', fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}>
-                            {saving ? 'SALVANDO...' : 'SALVAR CONFIGURAÇÕES GOOGLE'}
-                        </button>
-                    </form>
+                    {/* Fidelidade */}
+                    <Card icon={<Gift size={22} />} color="#ec4899" title="Fidelização & Cashback">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <Field label="Ativar Programa de Cashback">
+                                <select value={settings.cashback_enabled} onChange={e => setSettings({...settings, cashback_enabled: e.target.value === 'true'})} style={{ ...inputStyle, cursor: 'pointer' }}>
+                                    <option value="false" style={{ background: '#111' }}>❌ Desativado</option>
+                                    <option value="true" style={{ background: '#111' }}>✅ Ativado</option>
+                                </select>
+                            </Field>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <Field label="% de Cashback por Compra">
+                                    <input type="number" value={settings.cashback_percentage} onChange={e => setSettings({...settings, cashback_percentage: e.target.value})} style={inputStyle} />
+                                </Field>
+                                <Field label="Pedido Mínimo para Gerar (R$)">
+                                    <input type="number" value={settings.cashback_min_order} onChange={e => setSettings({...settings, cashback_min_order: e.target.value})} style={inputStyle} />
+                                </Field>
+                            </div>
+                            {/* Preview */}
+                            <div style={{ background: 'rgba(236,72,153,0.06)', border: '1px solid rgba(236,72,153,0.15)', borderRadius: '16px', padding: '18px', textAlign: 'center' }}>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#888' }}>Num pedido de <strong style={{ color: '#fff' }}>R$ 100,00</strong>, o cliente ganha</p>
+                                <p style={{ margin: '8px 0 0', fontSize: '1.8rem', fontWeight: 900, color: '#ec4899' }}>
+                                    R$ {((100 * parseFloat(settings.cashback_percentage || 0)) / 100).toFixed(2)}
+                                </p>
+                                <p style={{ margin: '4px 0 0', fontSize: '0.7rem', color: '#666' }}>em crédito para a próxima compra</p>
+                            </div>
+                        </div>
+                    </Card>
                 </div>
 
-                {/* NOVO QUADRO: FIDELIDADE E CASHBACK */}
-                <div className="glass-card premium-shadow" style={{ padding: '40px', marginTop: '40px' }}>
-                    <h3 style={{ margin: '0 0 20px', fontSize: '1.5rem', fontWeight: 800 }}>Fidelização & Cashback</h3>
-                    <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-                        <div className="setting-item">
-                            <label>Ativar Cashback?</label>
-                            <select 
-                                value={settings.cashback_enabled} 
-                                onChange={(e) => setSettings({...settings, cashback_enabled: e.target.value === 'true'})}
-                                className="settings-input"
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
-                            >
-                                <option value="false">Não</option>
-                                <option value="true">Sim</option>
-                            </select>
-                        </div>
-                        <div className="setting-item">
-                            <label>% de Cashback</label>
-                            <input 
-                                type="number" 
-                                value={settings.cashback_percentage} 
-                                onChange={(e) => setSettings({...settings, cashback_percentage: e.target.value})}
-                                className="settings-input"
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
-                            />
-                        </div>
-                        <div className="setting-item">
-                            <label>Pedido Mínimo p/ Gerar</label>
-                            <input 
-                                type="number" 
-                                value={settings.cashback_min_order} 
-                                onChange={(e) => setSettings({...settings, cashback_min_order: e.target.value})}
-                                className="settings-input"
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
-                            />
-                        </div>
-                    </div>
-                </div>
+                {/* ══ ROW 4: Automação + Financeiro ══ */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px' }}>
 
-                {/* NOVO QUADRO: AUTOMAÇÃO DE COMUNICAÇÃO */}
-                <div className="glass-card premium-shadow" style={{ padding: '40px', marginTop: '40px' }}>
-                    <h3 style={{ margin: '0 0 20px', fontSize: '1.5rem', fontWeight: 800 }}>Automação & Pós-Venda</h3>
-                    <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                            <div className="setting-item">
-                                <label>Delay Pesquisa Satistação (Horas)</label>
-                                <input 
-                                    type="number" 
-                                    value={settings.wa_bot_delay_hours} 
-                                    onChange={(e) => setSettings({...settings, wa_bot_delay_hours: e.target.value})}
-                                    className="settings-input"
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
+                    {/* Automação */}
+                    <Card icon={<Bot size={22} />} color="#8b5cf6" title="Automação & Pós-Venda (WhatsApp Bot)">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <Field label="Delay Pesquisa de Satisfação (Horas)">
+                                    <input type="number" value={settings.wa_bot_delay_hours} onChange={e => setSettings({...settings, wa_bot_delay_hours: e.target.value})} style={inputStyle} />
+                                </Field>
+                                <Field label="Dia do Lembrete Semanal (0=Dom, 6=Sáb)">
+                                    <select value={settings.wa_reminder_day} onChange={e => setSettings({...settings, wa_reminder_day: e.target.value})} style={{ ...inputStyle, cursor: 'pointer' }}>
+                                        <option value="0" style={{ background: '#111' }}>Domingo</option>
+                                        <option value="1" style={{ background: '#111' }}>Segunda-feira</option>
+                                        <option value="2" style={{ background: '#111' }}>Terça-feira</option>
+                                        <option value="3" style={{ background: '#111' }}>Quarta-feira</option>
+                                        <option value="4" style={{ background: '#111' }}>Quinta-feira</option>
+                                        <option value="5" style={{ background: '#111' }}>Sexta-feira</option>
+                                        <option value="6" style={{ background: '#111' }}>Sábado</option>
+                                    </select>
+                                </Field>
+                            </div>
+                            <Field label="Mensagem de Feedback (use {cliente} para o nome)">
+                                <textarea value={settings.wa_feedback_message} onChange={e => setSettings({...settings, wa_feedback_message: e.target.value})} style={{ ...inputStyle, minHeight: '90px', resize: 'none' }} />
+                            </Field>
+                        </div>
+                    </Card>
+
+                    {/* Financeiro */}
+                    <Card icon={<DollarSign size={22} />} color="#22c55e" title="Gestão Financeira">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', cursor: 'pointer', padding: '18px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.12)', borderRadius: '16px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={settings.show_profit_dashboard}
+                                    onChange={e => setSettings({...settings, show_profit_dashboard: e.target.checked})}
+                                    style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#22c55e', flexShrink: 0 }}
                                 />
-                            </div>
-                            <div className="setting-item">
-                                <label>Dia do Lembrete Semanal (0=Dom, 4=Qui)</label>
-                                <input 
-                                    type="number" 
-                                    value={settings.wa_reminder_day} 
-                                    onChange={(e) => setSettings({...settings, wa_reminder_day: e.target.value})}
-                                    className="settings-input"
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
-                                />
-                            </div>
+                                <div>
+                                    <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.9rem', marginBottom: '5px' }}>Exibir Lucro Real no Dashboard</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#666', lineHeight: 1.5 }}>Calcula margem de lucro com base no preço de custo cadastrado em cada produto.</div>
+                                </div>
+                            </label>
                         </div>
-                        <div className="setting-item">
-                            <label>Mensagem de Feedback</label>
-                            <textarea 
-                                value={settings.wa_feedback_message} 
-                                onChange={(e) => setSettings({...settings, wa_feedback_message: e.target.value})}
-                                className="settings-input"
-                                style={{ width: '100%', height: '80px', resize: 'none', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}
-                            />
-                            <small style={{ color: '#666' }}>Use &#123;cliente&#125; para o nome do cliente.</small>
-                        </div>
-                    </div>
+                    </Card>
                 </div>
 
-                {/* NOVO QUADRO: REGRAS FINANCEIRAS */}
-                <div className="glass-card premium-shadow" style={{ padding: '40px', marginTop: '40px' }}>
-                    <h3 style={{ margin: '0 0 20px', fontSize: '1.5rem', fontWeight: 800 }}>Gestão Financeira</h3>
-                    <div className="setting-item">
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                            <input 
-                                type="checkbox" 
-                                checked={settings.show_profit_dashboard} 
-                                onChange={(e) => setSettings({...settings, show_profit_dashboard: e.target.checked})}
-                            />
-                            Exibir Cálculo de Lucro Real no Dashboard (Baseado no Preço de Custo)
-                        </label>
-                    </div>
+                {/* ══ Botão de Salvar Global ══ */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        style={{
+                            background: 'linear-gradient(135deg, #D4AF37, #b8962e)',
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '18px',
+                            padding: '18px 50px',
+                            fontWeight: 900,
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            boxShadow: '0 10px 30px rgba(212, 175, 55, 0.25)',
+                            transition: 'all 0.3s',
+                            letterSpacing: '0.5px'
+                        }}
+                    >
+                        {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                        {saving ? 'SALVANDO TUDO...' : 'SALVAR TODAS AS CONFIGURAÇÕES'}
+                    </button>
                 </div>
-            </div>
+            </form>
 
+            {/* ══ Saúde do Sistema (Admin Only) ══ */}
             {isAdmin && (
                 <div style={{ marginTop: '50px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>

@@ -124,15 +124,38 @@ const AdminLayout = () => {
                 zIndex: 100,
                 backdropFilter: 'blur(20px)'
             }}>
-                <div style={{ padding: '40px 30px', textAlign: 'center' }}>
-                    <motion.img 
+                <div style={{ padding: '35px 30px 25px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        src="/logo.png" 
-                        alt="Logo" 
                         onClick={() => navigate('/')}
-                        style={{ width: '180px', cursor: 'pointer', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }} 
-                    />
+                        style={{
+                            width: '110px',
+                            height: '110px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            filter: 'drop-shadow(0 8px 24px rgba(212,175,55,0.25))',
+                            position: 'relative'
+                        }}
+                    >
+                        <img
+                            src="/logo.png"
+                            alt="Logo"
+                            style={{
+                                width: '150%',
+                                height: '150%',
+                                objectFit: 'cover',
+                                objectPosition: 'center',
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)'
+                            }}
+                        />
+                    </motion.div>
+                    <div style={{ fontSize: '0.65rem', color: '#333', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Painel Admin</div>
                 </div>
 
                 <nav style={{ flex: 1, padding: '0 20px', overflowY: 'auto' }}>
