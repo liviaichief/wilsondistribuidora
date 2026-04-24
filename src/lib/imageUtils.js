@@ -6,45 +6,56 @@ import { storage, BUCKET_ID, client } from './appwrite';
  * @param {string} imagePath - The image reference from the database (URL, Path, or ID).
  * @returns {string} - The fully qualified URL to display.
  */
+/**
+ * Generates a valid image URL from a variety of source formats (Appwrite File ID, URL, Legacy Path).
+ * Supports on-the-fly optimization via Appwrite's Preview API.
+ * @param {string} imagePath - The image reference from the database (URL, Path, or ID).
+ * @param {Object} options - Optimization options { width, height, quality, gravity }.
+ * @returns {string} - The fully qualified URL to display.
+ */
 export const getImageUrl = (imagePath, options = {}) => {
     if (!imagePath) {
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
     }
 
-    // 1. If it's already a full URL (External, blob, data, or already processed Appwrite URL)
+    // 1. If it's already a full external URL, return as is
     if (typeof imagePath === 'string' && (imagePath.startsWith('http') || imagePath.startsWith('blob:') || imagePath.startsWith('data:'))) {
         return imagePath;
     }
 
-    // 2. Process Appwrite File ID or Legacy Path
     try {
-        // Handle legacy paths if they exist
         const rawFileId = typeof imagePath === 'string' ? imagePath.replace('product-images/', '') : imagePath;
         const fileId = encodeURIComponent(rawFileId);
 
-        // Use the SDK method which is more reliable than manual construction
-        if (storage && fileId) {
-            const lowerFileId = rawFileId.toLowerCase();
-            const isMedia = lowerFileId.endsWith('.gif') || 
-                           lowerFileId.startsWith('v_') || 
-                           lowerFileId.endsWith('.mp4') || 
-                           lowerFileId.endsWith('.webm') || 
-                           lowerFileId.endsWith('.mov');
-
-            if (isMedia) {
-                return storage.getFileView(BUCKET_ID, rawFileId).toString();
-            }
-
-            return storage.getFileView(BUCKET_ID, rawFileId).toString();
-        }
-
-        // Fallback manual altamente resiliente
+        // Standard Appwrite Cloud/Self-hosted Preview API parameters
+        const { width, height, quality = 80, gravity = 'center' } = options;
+        
+        // Appwrite Preview API structure: /storage/buckets/{bucketId}/files/{fileId}/preview
+        // Params: width, height, quality, gravity, output (webp)
         const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
         const project = import.meta.env.VITE_APPWRITE_PROJECT_ID || '';
 
-        return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
+        // Se for um vídeo ou GIF animado que não suporta preview estático da mesma forma, usamos view
+        const lowerFileId = rawFileId.toLowerCase();
+        const isMedia = lowerFileId.endsWith('.mp4') || 
+                       lowerFileId.endsWith('.webm') || 
+                       lowerFileId.endsWith('.mov');
+
+        if (isMedia) {
+            return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
+        }
+
+        // Construção da URL de Preview (Otimizada)
+        // Adicionamos &output=webp para forçar compressão moderna
+        let url = `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/preview?project=${project}&output=webp&quality=${quality}`;
+        
+        if (width) url += `&width=${width}`;
+        if (height) url += `&height=${height}`;
+        if (gravity) url += `&gravity=${gravity}`;
+
+        return url;
     } catch (error) {
-        console.warn('Error generating Appwrite image URL:', error);
+        console.warn('Error generating optimized Appwrite image URL:', error);
         return 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+no+Link';
     }
 };

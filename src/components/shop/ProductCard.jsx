@@ -79,6 +79,17 @@ const ProductCard = ({ product }) => {
                         src={getImageUrl(images[currentImgIndex], { width: 400 })}
                         alt={product.title}
                         loading="lazy"
+                        drag={images.length > 1 ? "x" : false}
+                        dragConstraints={{ left: 0, right: 0 }}
+                        onDragEnd={(_, info) => {
+                            if (images.length <= 1) return;
+                            const swipeThreshold = 50;
+                            if (info.offset.x < -swipeThreshold) {
+                                nextImage({ stopPropagation: () => {} });
+                            } else if (info.offset.x > swipeThreshold) {
+                                prevImage({ stopPropagation: () => {} });
+                            }
+                        }}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -86,11 +97,16 @@ const ProductCard = ({ product }) => {
                         onLoad={() => setIsImageLoading(false)}
                         onError={(e) => {
                             setIsImageLoading(false);
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
+                            e.target.style.display = 'none';
+                            e.target.parentNode.classList.add('show-placeholder');
                         }}
                     />
                 </AnimatePresence>
+
+                <div className="no-image-placeholder">
+                    <Sparkles size={40} strokeWidth={1} />
+                    <span>PRODUTO PREMIUM</span>
+                </div>
 
                 {images.length > 1 && (
                     <>

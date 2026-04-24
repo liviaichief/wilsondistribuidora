@@ -1,8 +1,19 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "env": {
+    "VITE_APPWRITE_ENDPOINT": "https://sfo.cloud.appwrite.io/v1",
+    "VITE_APPWRITE_PROJECT_ID": "69ebf93f000372e879ff",
+    "VITE_DATABASE_ID": "main_db",
+    "VITE_COLLECTION_PRODUCTS": "products",
+    "VITE_COLLECTION_BANNERS": "banners",
+    "VITE_COLLECTION_ORDERS": "orders",
+    "VITE_COLLECTION_PROFILES": "profiles",
+    "VITE_APPWRITE_BUCKET_ID": "images_bucket"
+  }
 }

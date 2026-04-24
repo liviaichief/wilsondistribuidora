@@ -1,8 +1,8 @@
 import { Client, Databases, Users, ID } from 'node-appwrite';
 
 const ENDPOINT = 'https://sfo.cloud.appwrite.io/v1';
-const PROJECT_ID = '69d59db800358cca9f27';
-const API_KEY = 'standard_dc313f0ead20b43da4c50584f76ea0316cba57d539fc7586bc7dd8cb8de5d9903afecaa10aa40ebb11b0a63f73706bc9e61c1132d3342b85a40651096b43b9d04fdd54a0bc55317ef9b516542d4c10e91505aaae2d909025c7c779e2dfd09a060cf2e2d69b27f88f85eeb188ea0ada1614ecf6e01f6fb0e8d6932f6f9b37d140';
+const PROJECT_ID = '69ebf93f000372e879ff';
+const API_KEY = 'standard_06684859eef23fe37b1b2b5e69fba753f7637355c69fe55c029cd878bcc2ef835e1deb4b4f9fed425e938d81245cec097cffe9e3bd18692f28b3434cc5b73edc3b10dd447f75aec2c4f381bce89c56688ad8bed3bdaac0c0ec1876722e6259578a3a99aeb3802544082dd77cf6f438eedd16ee5a0a95e4b863cad153f5471e46';
 
 const client = new Client()
     .setEndpoint(ENDPOINT)
@@ -46,8 +46,6 @@ async function run() {
                 await databases.createDocument('main_db', 'profiles', userId, {
                     email: email,
                     full_name: name,
-                    first_name: 'Admin',
-                    last_name: '',
                     role: 'owner',
                     user_id: userId
                 });

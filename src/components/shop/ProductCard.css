@@ -140,6 +140,29 @@
     z-index: 1;
 }
 
+.no-image-placeholder {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color, #D4AF37);
+    gap: 10px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.card-media.show-placeholder .no-image-placeholder {
+    display: flex;
+}
+
+.no-image-placeholder svg {
+    opacity: 0.3;
+}
+
 .quick-view-btn {
     width: 50px;
     height: 50px;
@@ -183,20 +206,22 @@
     font-weight: 700;
 }
 
-/* Promo Active State (White Background) */
+/* Promo Active State (Glassmorphism Gold) */
 .card-price-float.promo-active {
-    background: #ffffff;
-    border: none;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    background: rgba(212, 175, 55, 0.15);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
 }
 
 .card-price-float.promo-active .main-price {
-    color: #000000;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .card-price-float.promo-active .old-price {
-    color: #ef4444; /* Vermelho para o preço riscado */
-    opacity: 0.8;
+    color: #ff8080; /* Vermelho mais suave para fundo escuro */
+    opacity: 0.9;
 }
 
 .main-price {
@@ -283,10 +308,10 @@
     background: #800020; /* Vermelho Borgonha conforme imagem */
     border: none;
     color: #ffffff;
-    padding: 10px 80px; /* Reduzido em 20% para melhor ajuste */
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 900;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -374,13 +399,33 @@
 }
 
 @media (max-width: 480px) {
-    .card-footer {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
+    .card-content {
+        padding: 12px;
     }
-    
-    .action-area > div {
-        justify-content: space-between;
+
+    .card-title {
+        font-size: 0.9rem;
+    }
+
+    .card-description {
+        font-size: 0.7rem;
+        -webkit-line-clamp: 3; /* More lines for better context */
+    }
+
+    .add-cart-btn {
+        padding: 10px 15px;
+        font-size: 0.7rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .card-price-float {
+        padding: 6px 12px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .main-price {
+        font-size: 0.95rem;
     }
 }

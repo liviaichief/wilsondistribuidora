@@ -36,7 +36,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — necessário pois o bundle atual é ~2.4 MB
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/cloud\.appwrite\.io\/v1\/storage\/buckets\/.*\/files\/.*\/view/,
+            urlPattern: /^https:\/\/cloud\.appwrite\.io\/v1\/storage\/buckets\/.*\/files\/.*\/(view|preview)/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'appwrite-images-cache',

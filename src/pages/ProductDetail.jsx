@@ -7,6 +7,7 @@ import { getImageUrl } from '../lib/imageUtils';
 import { trackEvent } from '../services/analytics';
 import { getProducts } from '../services/dataService';
 import Header from '../components/shop/Header';
+import { motion, AnimatePresence } from 'framer-motion';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -16,6 +17,15 @@ const ProductDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
+    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+    const images = [];
+    if (product?.image) images.push(product.image);
+    if (product?.image_2) images.push(product.image_2);
+    if (product?.image_3) images.push(product.image_3);
+
+    const nextImage = () => setCurrentImgIndex((prev) => (prev + 1) % images.length);
+    const prevImage = () => setCurrentImgIndex((prev) => (prev - 1 + images.length) % images.length);
 
     const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
 
@@ -144,20 +154,45 @@ const ProductDetail = () => {
                                 ></iframe>
                             </div>
                         ) : (
-                            <>
+                            <div className="detail-carousel-container" style={{ position: 'relative', width: '100%', aspectRatio: '1', overflow: 'hidden' }}>
                                 {isImageLoading && <div className="image-skeleton" />}
-                                <img
-                                    src={getImageUrl(product.image)}
-                                    alt={product.title}
-                                    className="product-detail-image"
-                                    onLoad={() => setIsImageLoading(false)}
-                                    onError={(e) => {
-                                        setIsImageLoading(false);
-                                        e.target.onerror = null;
-                                        e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Sem+Imagem';
-                                    }}
-                                />
-                            </>
+                                <AnimatePresence mode="wait">
+                                    <motion.img
+                                        key={images[currentImgIndex]}
+                                        src={getImageUrl(images[currentImgIndex], { width: 800 })}
+                                        alt={product.title}
+                                        className="product-detail-image"
+                                        drag={images.length > 1 ? "x" : false}
+                                        dragConstraints={{ left: 0, right: 0 }}
+                                        onDragEnd={(_, info) => {
+                                            if (images.length <= 1) return;
+                                            const threshold = 50;
+                                            if (info.offset.x < -threshold) nextImage();
+                                            else if (info.offset.x > threshold) prevImage();
+                                        }}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                        onLoad={() => setIsImageLoading(false)}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: images.length > 1 ? 'grab' : 'default' }}
+                                    />
+                                </AnimatePresence>
+                                
+                                {images.length > 1 && (
+                                    <>
+                                        <div className="detail-carousel-dots" style={{ position: 'absolute', bottom: '15px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+                                            {images.map((_, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    className={`dot ${idx === currentImgIndex ? 'active' : ''}`}
+                                                    style={{ width: idx === currentImgIndex ? '20px' : '8px', height: '8px', borderRadius: '4px', background: idx === currentImgIndex ? '#D4AF37' : 'rgba(255,255,255,0.3)', transition: '0.3s' }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         )}
                         {product.is_promotion && (
                             <div className="promo-badge-large">PROMOÇÃO</div>
