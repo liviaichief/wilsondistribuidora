@@ -130,8 +130,8 @@ const AdminLayout = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         onClick={() => navigate('/')}
                         style={{
-                            width: '110px',
-                            height: '110px',
+                            width: '140px',
+                            height: '140px',
                             borderRadius: '50%',
                             overflow: 'hidden',
                             cursor: 'pointer',
@@ -144,8 +144,8 @@ const AdminLayout = () => {
                             src="/logo.png"
                             alt="Logo"
                             style={{
-                                width: '150%',
-                                height: '150%',
+                                width: '105%',
+                                height: '105%',
                                 objectFit: 'cover',
                                 objectPosition: 'center',
                                 position: 'absolute',

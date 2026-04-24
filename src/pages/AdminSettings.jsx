@@ -47,6 +47,7 @@ const inputStyle = {
     padding: '14px 16px',
     color: '#fff',
     width: '100%',
+    boxSizing: 'border-box',
     fontSize: '0.9rem',
     outline: 'none',
     transition: 'border-color 0.2s'
@@ -157,7 +158,7 @@ const AdminSettings = () => {
             <form onSubmit={handleSave}>
 
                 {/* ══ ROW 1: Catálogo + Comunicação ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Catálogo: Categorias */}
                     <Card icon={<Tag size={22} />} color="#D4AF37" title="Categorias de Produto">
@@ -171,7 +172,7 @@ const AdminSettings = () => {
                 </div>
 
                 {/* ══ ROW 2: Comunicação + Ecossistema Google ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Comunicação */}
                     <Card icon={<MessageSquare size={22} />} color="#22c55e" title="Comunicação & Canal">
@@ -211,7 +212,7 @@ const AdminSettings = () => {
                 </div>
 
                 {/* ══ ROW 3: Logística + Fidelidade ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Logística */}
                     <Card icon={<MapPin size={22} />} color="#f59e0b" title="Logística & Frete Inteligente">
@@ -274,7 +275,7 @@ const AdminSettings = () => {
                 </div>
 
                 {/* ══ ROW 4: Automação + Financeiro ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Automação */}
                     <Card icon={<Bot size={22} />} color="#8b5cf6" title="Automação & Pós-Venda (WhatsApp Bot)">
