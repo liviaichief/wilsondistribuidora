@@ -16,7 +16,7 @@
 }
 
 .main-content {
-    padding: 120px 2rem 60px; /* Aumentado para 120px para acomodar o novo logo maior */
+    padding: 80px 2rem 60px; /* Reduzido em 40px para aproximar a barra de categorias do header */
     max-width: 1600px;
     margin: 0 auto;
     position: relative;
