@@ -70,11 +70,11 @@ export const AlertProvider = ({ children }) => {
 
     const getIcon = (type) => {
         switch (type) {
-            case 'success': return <CheckCircle className="text-emerald-500" size={64} />;
-            case 'error': return <XCircle className="text-red-500" size={64} />;
-            case 'warning': return <AlertCircle className="text-amber-500" size={64} />;
-            case 'confirm': return <HelpCircle className="text-amber-500" size={64} />;
-            default: return <Info className="text-blue-500" size={64} />;
+            case 'success': return <CheckCircle className="text-emerald-500" size={32} />;
+            case 'error': return <XCircle className="text-red-500" size={32} />;
+            case 'warning': return <AlertCircle className="text-amber-500" size={32} />;
+            case 'confirm': return <HelpCircle className="text-amber-500" size={32} />;
+            default: return <Info className="text-blue-500" size={32} />;
         }
     };
 
@@ -92,15 +92,15 @@ export const AlertProvider = ({ children }) => {
         <AlertContext.Provider value={{ showAlert, showConfirm, closeAlert }}>
             {children}
             {alertConfig && (
-                <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                    <div className="bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 max-w-sm w-full mx-4 p-8 text-center animate-fade-in-up relative">
-                        <div className="flex justify-center mb-6">
+                <div className="fixed inset-0 z-[999999] flex items-center justify-center pointer-events-none">
+                    <div className="bg-neutral-800 rounded-2xl shadow-2xl border border-neutral-700 max-w-[170px] w-full mx-4 p-5 text-center animate-fade-in-up relative pointer-events-auto">
+                        <div className="flex justify-center mb-3">
                             {getIcon(alertConfig.type)}
                         </div>
-                        <h2 className={`text-2xl font-bold mb-3 ${getTitleColor(alertConfig.type)}`}>
+                        <h2 className={`text-lg font-bold mb-1 ${getTitleColor(alertConfig.type)}`}>
                             {alertConfig.title}
                         </h2>
-                        <p className="text-gray-300 mb-8">
+                        <p className="text-xs text-gray-400 mb-4 px-2">
                             {alertConfig.message}
                         </p>
 

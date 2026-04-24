@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { useAuth } from '../context/AuthContext';
 import { Query } from 'appwrite';
-import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ClipboardList, ChevronRight, Package, Calendar, DollarSign, Clock, RefreshCcw, ArrowLeft, ShoppingBag, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Header from '../components/shop/Header';
 import './OrderHistory.css';
@@ -177,15 +177,37 @@ const OrderHistory = () => {
                                         color: order.status === 'error' ? '#991b1b' : ['pending', 'preparing'].includes(order.status) ? '#92400e' : '#065f46',
                                         padding: '0.25rem 0.75rem', borderRadius: '14px', fontSize: '0.8rem'
                                     }}>
-                                        {{
-                                            'pending': 'Pendente',
-                                            'confirmed': 'Confirmado',
-                                            'preparing': 'Em Preparo',
-                                            'delivered': 'Concluído',
-                                            'cancelled': 'Cancelado',
-                                            'error': 'Falha no Pedido'
-                                        }[order.status] || order.status || 'Concluído'}
+                                        {[order.status] || order.status || 'Concluído'}
                                     </span>
+                                </div>
+
+                                {/* BARRA DE RASTREIO VISUAL */}
+                                <div className="order-tracking-bar" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', position: 'relative', marginBottom: '10px' }}>
+                                    <div className="tracking-line" style={{ position: 'absolute', top: '35px', left: '10%', right: '10%', height: '2px', background: 'rgba(0,0,0,0.05)', zIndex: 1 }}></div>
+                                    
+                                    {[
+                                        { label: 'Recebido', icon: ClipboardList, status: ['pending', 'confirmed', 'preparing', 'shipped', 'delivered'] },
+                                        { label: 'Preparando', icon: Package, status: ['preparing', 'shipped', 'delivered'] },
+                                        { label: 'A caminho', icon: Clock, status: ['shipped', 'delivered'] },
+                                        { label: 'Entregue', icon: Check, status: ['delivered', 'concluido', 'concluído'] }
+                                    ].map((step, index) => {
+                                        const isActive = step.status.includes((order.status || '').toLowerCase());
+                                        return (
+                                            <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, flex: 1 }}>
+                                                <div style={{ 
+                                                    background: isActive ? '#D4AF37' : '#fff', 
+                                                    color: isActive ? '#000' : '#ddd',
+                                                    width: '32px', height: '32px', borderRadius: '50%', 
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    border: `2px solid ${isActive ? '#D4AF37' : '#eee'}`,
+                                                    transition: 'all 0.3s ease'
+                                                }}>
+                                                    <step.icon size={16} />
+                                                </div>
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isActive ? '#D4AF37' : '#bbb', textTransform: 'uppercase' }}>{step.label}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="order-items" style={{ marginBottom: '1rem' }}>

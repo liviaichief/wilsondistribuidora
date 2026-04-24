@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getBanners } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
@@ -90,17 +89,20 @@ const HeroCarousel = () => {
                     transition={{ duration: 0.8 }}
                     className="carousel-slide"
                     onClick={() => handleSlideClick(slides[currentIndex])}
-                    style={{ cursor: slides[currentIndex].product_id ? 'pointer' : 'default', backgroundColor: '#121212' }}
+                    style={{ cursor: slides[currentIndex].product_id ? 'pointer' : 'default' }}
                 >
                     {(() => {
-                        const mediaUrl = getImageUrl(slides[currentIndex].image_url || slides[currentIndex].image, { width: 1200 });
-                        // Appwrite serves files by ID in the URL. If the ID starts with v_, it's our video flag.
-                        const isVideo = mediaUrl && (
-                            mediaUrl.toLowerCase().includes('/files/v_') ||
-                            mediaUrl.toLowerCase().includes('.mp4') || 
-                            mediaUrl.toLowerCase().includes('.webm') || 
-                            mediaUrl.toLowerCase().includes('.mov')
-                        );
+                        const rawSource = slides[currentIndex].image_url || slides[currentIndex].image;
+                        const mediaUrl = getImageUrl(rawSource, { width: 1200 });
+                        
+                        // Check for video by prefix or file content
+                        const isVideo = (rawSource && typeof rawSource === 'string' && rawSource.startsWith('v_')) || 
+                                        (mediaUrl && (
+                                            mediaUrl.toLowerCase().includes('/files/v_') ||
+                                            mediaUrl.toLowerCase().includes('.mp4') || 
+                                            mediaUrl.toLowerCase().includes('.webm') || 
+                                            mediaUrl.toLowerCase().includes('.mov')
+                                        ));
 
                         if (isVideo) {
                             return (
@@ -112,7 +114,7 @@ const HeroCarousel = () => {
                                     loop
                                     playsInline
                                     className="carousel-image"
-                                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                                    style={{ width: '100%', height: '100%' }}
                                 />
                             );
                         }
@@ -122,7 +124,7 @@ const HeroCarousel = () => {
                                 src={mediaUrl}
                                 alt={slides[currentIndex].title}
                                 className="carousel-image"
-                                style={{ objectFit: 'cover' }}
+                                style={{ width: '100%', height: '100%' }}
                             />
                         );
                     })()}
@@ -149,12 +151,6 @@ const HeroCarousel = () => {
                 </motion.div>
             </AnimatePresence>
 
-            <button className="carousel-btn prev" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
-                <ChevronLeft size={32} />
-            </button>
-            <button className="carousel-btn next" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
-                <ChevronRight size={32} />
-            </button>
 
             <div className="carousel-indicators">
                 {slides.map((_, idx) => (

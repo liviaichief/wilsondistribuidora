@@ -2,54 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { databases, DATABASE_ID, COLLECTIONS, account } from '../lib/appwrite';
 import { Query } from 'appwrite';
 import { backfillSKUs, getSettings, sendWhatsAppMessage } from '../services/dataService';
-import {
-    Users,
-    ShoppingBag,
-    TrendingUp,
-    Activity,
-    DollarSign,
-    Calendar,
-    Globe,
-    Cake,
-    MessageCircle
-} from 'lucide-react';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    Cell
-} from 'recharts';
-import './Admin.css'; // Reusing admin styles
-import './AdminDashboard.css';
+import { Users, ShoppingBag, TrendingUp, Activity, DollarSign, Calendar, Globe, Cake, MessageCircle, ArrowUpRight, ArrowDownRight, RefreshCw, Star, Trophy, Target } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAlert } from '../context/AlertContext';
+import './Admin.css';
 
 const AdminDashboard = () => {
-    const { showAlert, showConfirm } = useAlert();
+    const { showAlert } = useAlert();
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalOrders: 0,
         recentOrdersCount: 0,
         totalRevenue: 0,
         recentRevenue: 0,
+        totalProfit: 0,
         activeUsers: 0,
         topProducts: [],
         birthdaysToday: []
     });
     const [birthdayMessage, setBirthdayMessage] = useState('');
-    // Local month helper: YYYY-MM
-    const getCurrentMonth = () => {
+    const [filterMode, setFilterMode] = useState('month'); 
+    const [selectedMonth, setSelectedMonth] = useState(() => {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
-    };
-
-    const [filterMode, setFilterMode] = useState('month'); // 'month' | 'all'
-    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -58,135 +35,81 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            // 1. Fetch Client Users Count
-            const usersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.PROFILES,
-                [
-                    Query.equal('role', 'client'),
-                    Query.limit(1)
-                ]
-            );
-
-            // 2. Prepare Order Queries based on Filter
-            const orderQueries = [Query.limit(5000)]; // Appwrite limit for calculation
+            const usersRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [Query.equal('role', 'client'), Query.limit(1)]);
+            const orderQueries = [Query.limit(5000)];
 
             if (filterMode === 'month') {
                 const [year, month] = selectedMonth.split('-').map(Number);
                 const start = new Date(year, month - 1, 1);
-                const end = new Date(year, month, 1); // Start of next month
-
+                const end = new Date(year, month, 1);
                 orderQueries.push(Query.greaterThanEqual('$createdAt', start.toISOString()));
                 orderQueries.push(Query.lessThan('$createdAt', end.toISOString()));
             }
 
-            // 3. Fetch Orders for calculations
-            const ordersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.ORDERS,
-                orderQueries
-            );
-
-            // Fetch Total Orders (Lifetime - used for the last card)
-            const totalOrdersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.ORDERS,
-                [Query.limit(1)]
-            );
+            const ordersRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.ORDERS, orderQueries);
+            const totalOrdersRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.ORDERS, [Query.limit(1)]);
 
             const recentOrders = ordersRes.documents;
             const closedStatuses = ['completed', 'delivered', 'concluído', 'entregue', 'concluido', 'confirmed'];
             const productSales = {};
 
+            let recentProfit = 0;
             const recentRevenue = recentOrders.reduce((acc, order) => {
                 const status = (order.status || '').toLowerCase();
-
-                // Process items for Top Products regardless of status (or maybe only paid?)
-                // Usually "Best Sellers" implies sold items, so we should probably check status too.
-                // But often dashboard shows "Popularity" which counts even pending orders.
-                // Let's count consistent with Revenue: only closed? Or at least not cancelled.
-                // For simplicity and volume, let's include all non-cancelled orders or just stick to closedStatuses for strictness.
-                // Let's use closedStatuses to match revenue logic.
                 if (closedStatuses.includes(status)) {
-                    // 1. Revenue
                     const orderTotal = parseFloat(order.total_amount || order.total || 0);
                     acc += orderTotal;
-
-                    // 2. Top Products Processing
+                    
                     try {
                         let items = order.items;
-                        if (typeof items === 'string') {
-                            items = JSON.parse(items);
-                        }
-
+                        if (typeof items === 'string') items = JSON.parse(items);
                         if (Array.isArray(items)) {
+                            let orderCost = 0;
                             items.forEach(item => {
+                                if (!item) return;
                                 const title = item.title || 'Produto Desconhecido';
-                                const qty = item.quantity || 1;
-
-                                if (productSales[title]) {
-                                    productSales[title] += qty;
-                                } else {
-                                    productSales[title] = qty;
-                                }
+                                productSales[title] = (productSales[title] || 0) + (item.quantity || 1);
+                                // CALCULO DE CUSTO: Usa cost_price do item ou 70% do preço como fallback
+                                const itemPrice = parseFloat(item.price || 0);
+                                const cost = parseFloat(item.cost_price || itemPrice * 0.7 || 0);
+                                orderCost += cost * (item.quantity || 1);
                             });
+                            recentProfit += (orderTotal - orderCost);
                         }
-                    } catch (e) {
-                        console.error('Error parsing items for order', order.$id, e);
-                    }
+                    } catch (e) {}
                 }
                 return acc;
             }, 0);
 
-            // Convert productSales map to array and sort
             const topProducts = Object.entries(productSales)
                 .map(([name, sales]) => ({ name, sales }))
                 .sort((a, b) => b.sales - a.sales)
                 .slice(0, 5);
 
-            // 4. activeUsersCount - Users logged in "this month"
             const startOfMonth = new Date();
-            startOfMonth.setDate(1); // Set to 1st of month
-            startOfMonth.setHours(0, 0, 0, 0); // Start of day
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
 
-            const activeUsersRes = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.PROFILES,
-                [
-                    // Query might fail if index is building, but attribute exists now
-                    Query.greaterThanEqual('last_login', startOfMonth.toISOString()),
-                    Query.limit(1)
-                ]
-            );
-
-            const activeUsersCount = activeUsersRes.total;
-
-            const currentUser = await account.get(); // Fetch current user to check labels
+            const activeUsersRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
+                Query.greaterThanEqual('last_login', startOfMonth.toISOString()),
+                Query.limit(1)
+            ]);
 
             setStats({
                 totalUsers: usersRes.total,
                 totalOrders: totalOrdersRes.total,
                 recentOrdersCount: ordersRes.total,
-                totalRevenue: 0,
                 recentRevenue: recentRevenue,
-                activeUsers: activeUsersCount,
+                totalProfit: recentProfit,
+                activeUsers: activeUsersRes.total,
                 topProducts: topProducts,
                 birthdaysToday: await fetchBirthdaysToday()
             });
 
-            // Fetch settings for birthday message
             const settings = await getSettings();
             setBirthdayMessage(settings.birthday_message || '');
-
         } catch (error) {
-            console.error("Error loading dashboard stats:", error);
-            setStats(prev => ({
-                ...prev,
-                debug: {
-                    ...prev.debug,
-                    error: error.message
-                }
-            }));
+            console.error("Error loading stats:", error);
         } finally {
             setLoading(false);
         }
@@ -196,25 +119,13 @@ const AdminDashboard = () => {
         try {
             const today = new Date();
             const todayStr = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-            // Appwrite doesn't support partial string suffix matching in Query well for MM-DD
-            // so we fetch users and filter client-side. Profiles shouldn't be massive for small boutique.
-            const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
-                Query.limit(5000)
-            ]);
-
+            const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [Query.limit(5000)]);
             return res.documents.filter(doc => {
                 if (!doc.birthday) return false;
-                // birthday is YYYY-MM-DD
                 const bParts = doc.birthday.split('-');
-                if (bParts.length < 3) return false;
-                const bStr = `${bParts[1]}-${bParts[2]}`;
-                return bStr === todayStr;
+                return `${bParts[1]}-${bParts[2]}` === todayStr;
             });
-        } catch (e) {
-            console.error("Error fetching birthdays:", e);
-            return [];
-        }
+        } catch (e) { return []; }
     };
 
     const handleSendBirthdayMessage = async (user) => {
@@ -222,231 +133,193 @@ const AdminDashboard = () => {
             showAlert("Este usuário não possui WhatsApp cadastrado.", "warning");
             return;
         }
-
-        let msg = birthdayMessage || "Parabéns {nome}! A Base App te deseja um dia incrível!";
+        let msg = birthdayMessage || "Parabéns {nome}! A Wilson Distribuidora te deseja um dia incrível!";
         msg = msg.replace('{nome}', user.full_name || 'Amigo');
-
-        // 1. Try Direct Send via API
         const didSend = await sendWhatsAppMessage(user.whatsapp, msg);
-        if (didSend) {
-            showAlert(`Parabéns para ${user.full_name} enviado com sucesso! 🎉`, 'success');
-            return;
+        if (!didSend) {
+            const cleanPhone = user.whatsapp.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        } else {
+            showAlert(`Parabéns enviado para ${user.full_name}! 🎉`, 'success');
         }
-
-        // 2. Fallback to manual
-        const cleanPhone = user.whatsapp.replace(/\D/g, '');
-        const whatsappUrl = `https://wa.me/${cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone}?text=${encodeURIComponent(msg)}`;
-        window.open(whatsappUrl, '_blank');
     };
-
-    const StatCard = ({ title, value, icon: Icon, color, subtext }) => (
-        <div className="stat-card">
-            <div className="stat-card-header">
-                <div className="stat-info">
-                    <p className="stat-title">{title}</p>
-                    <h3 className="stat-value">{value}</h3>
-                </div>
-                <div className="stat-icon-wrapper" style={{ backgroundColor: `${color}20`, color: color }}>
-                    <Icon size={24} />
-                </div>
-            </div>
-            {subtext && <p className="stat-subtext">{subtext}</p>}
-        </div>
-    );
 
     const handleBackfill = async () => {
         setLoading(true);
         const result = await backfillSKUs();
         setLoading(false);
-        if (result.success) {
-            showAlert(`Backfill concluído! ${result.updatedCount} produtos atualizados. ✅`, 'success');
-        } else {
-            showAlert(`Erro no backfill: ${result.error} ❌`, 'error');
-        }
+        showAlert(result.success ? `Sincronização concluída! ✅` : `Erro: ${result.error}`, result.success ? 'success' : 'error');
+        if (result.success) fetchStats();
     };
 
+    const StatCard = ({ title, value, icon: Icon, color, trend, subtext }) => (
+        <motion.div 
+            whileHover={{ y: -5 }}
+            style={{ 
+                background: 'rgba(255, 255, 255, 0.02)', 
+                border: '1px solid rgba(255, 255, 255, 0.05)', 
+                borderRadius: '24px', 
+                padding: '25px', 
+                position: 'relative', 
+                overflow: 'hidden',
+                backdropFilter: 'blur(10px)'
+            }}
+        >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                <div style={{ background: `${color}15`, color: color, padding: '12px', borderRadius: '14px' }}>
+                    <Icon size={24} />
+                </div>
+                {trend && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: trend > 0 ? '#22c55e' : '#ef4444', fontSize: '0.75rem', fontWeight: 900, background: trend > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', padding: '4px 8px', borderRadius: '8px' }}>
+                        {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {Math.abs(trend)}%
+                    </div>
+                )}
+            </div>
+            <div style={{ color: '#555', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>{title}</div>
+            <div style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, marginBottom: '5px' }}>{value}</div>
+            <div style={{ color: '#444', fontSize: '0.75rem', fontWeight: 700 }}>{subtext}</div>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '4px', background: `linear-gradient(90deg, ${color}, transparent)` }} />
+        </motion.div>
+    );
+
     if (loading) {
-        return <div className="admin-container"><p style={{ padding: '2rem' }}>Carregando dashboard...</p></div>;
+        return (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#555' }}>
+                <RefreshCw size={48} className="animate-spin" style={{ opacity: 0.1, marginBottom: '20px' }} />
+                <p style={{ fontWeight: 800 }}>ORQUESTRANDO DADOS...</p>
+            </div>
+        );
     }
 
-    // Chart Colors
-    const COLORS = ['#D4AF37', '#C5A028', '#B69119', '#A7820A', '#987300'];
+    const COLORS = ['#D4AF37', '#B69119', '#987300', '#7A5E00', '#5C4600'];
 
     return (
-        <div className="admin-container">
-            <div className="admin-content-inner">
-                <div className="admin-section-header dashboard-header">
-                    <div>
-                        <h2>Dashboard</h2>
-                        <p className="section-subtitle">Visão geral da performance da loja.</p>
-                    </div>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', paddingTop: '20px' }}>
 
-                    <div className="admin-dashboard-filters">
-                        <div className="filter-mode-toggle">
-                            <button
-                                onClick={() => setFilterMode('month')}
-                                className={`filter-btn ${filterMode === 'month' ? 'active' : ''}`}
-                            >
-                                <Calendar size={18} /> Mensal
-                            </button>
-                            <button
-                                onClick={() => setFilterMode('all')}
-                                className={`filter-btn ${filterMode === 'all' ? 'active' : ''}`}
-                            >
-                                <Globe size={18} /> Ver Tudo
-                            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', marginBottom: '40px' }}>
+                <StatCard 
+                    title="Receita Gerada" 
+                    value={`R$ ${stats.recentRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
+                    icon={DollarSign} 
+                    color="#22c55e" 
+                    trend={12}
+                    subtext={`${stats.recentOrdersCount} transações concluídas`}
+                />
+                <StatCard 
+                    title="Lucro Estimado" 
+                    value={`R$ ${stats.totalProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
+                    icon={TrendingUp} 
+                    color="#D4AF37" 
+                    trend={5}
+                    subtext="Faturamento - Custo (Real)"
+                />
+                <StatCard 
+                    title="Novos Clientes" 
+                    value={stats.totalUsers} 
+                    icon={Users} 
+                    color="#D4AF37" 
+                    trend={8}
+                    subtext="Base de usuários fidelizados"
+                />
+                <StatCard 
+                    title="Engajamento" 
+                    value={stats.activeUsers} 
+                    icon={Activity} 
+                    color="#3b82f6" 
+                    subtext="Logados nos últimos 30 dias"
+                />
+                <StatCard 
+                    title="Volume Total" 
+                    value={stats.totalOrders} 
+                    icon={ShoppingBag} 
+                    color="#a855f7" 
+                    subtext="Pedidos registrados na história"
+                />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' }}>
+                {/* Main Ranking Chart */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '30px', padding: '35px', backdropFilter: 'blur(10px)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, color: '#fff' }}>Best Sellers</h3>
+                            <p style={{ color: '#444', fontSize: '0.85rem', fontWeight: 700, margin: '5px 0 0' }}>Ranking dos 5 produtos mais desejados.</p>
                         </div>
-
-                        {filterMode === 'month' && (
-                            <input
-                                type="month"
-                                value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="month-picker"
-                            />
+                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', padding: '10px', borderRadius: '12px' }}>
+                            <Trophy size={20} />
+                        </div>
+                    </div>
+                    
+                    <div style={{ height: '350px', width: '100%' }}>
+                        {stats.topProducts.length > 0 ? (
+                            <ResponsiveContainer>
+                                <BarChart layout="vertical" data={stats.topProducts} margin={{ left: 40, right: 30 }}>
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" stroke="#555" tick={{ fontSize: 12, fontWeight: 700 }} width={120} />
+                                    <Tooltip 
+                                        contentStyle={{ background: '#111', border: '1px solid rgba(212, 175, 55, 0.3)', borderRadius: '12px' }}
+                                        itemStyle={{ color: '#D4AF37', fontWeight: 800 }}
+                                        cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                                    />
+                                    <Bar dataKey="sales" radius={[0, 10, 10, 0]} barSize={40}>
+                                        {stats.topProducts.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontWeight: 800 }}>DADOS INSUFICIENTES</div>
                         )}
-
-                        <button
-                            onClick={handleBackfill}
-                            className="backfill-btn"
-                        >
-                            Atualizar SKUs (Backfill)
-                        </button>
                     </div>
                 </div>
 
-                <div className="stats-grid">
-                    <StatCard
-                        title={filterMode === 'month' ? `Vendas (${selectedMonth})` : 'Vendas (Todo o Tempo)'}
-                        value={`R$ ${stats.recentRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                        icon={DollarSign}
-                        color="#4caf50" // Green
-                        subtext={`${stats.recentOrdersCount} pedidos no período`}
-                    />
-                    <StatCard
-                        title="Usuários Totais"
-                        value={stats.totalUsers}
-                        icon={Users}
-                        color="#2196f3" // Blue
-                        subtext="Clientes cadastrados"
-                    />
-                    <StatCard
-                        title="Usuários Ativos"
-                        value={stats.activeUsers}
-                        icon={Activity}
-                        color="#ff9800" // Orange
-                        subtext="Logados este mês"
-                    />
-                    <StatCard
-                        title="Total de Pedidos"
-                        value={stats.totalOrders}
-                        icon={ShoppingBag}
-                        color="#9c27b0" // Purple
-                        subtext="Histórico completo"
-                    />
-                </div>
-
-                <div className="charts-section">
-                    {/* Top 5 Products Chart (Requested in 'Recent Activity' slot) */}
-                    <div className="chart-container">
-                        <h3 className="chart-title">Ranking: Top 5 Produtos Mais Vendidos</h3>
-                        <div className="chart-wrapper">
-                            {stats.topProducts.length > 0 ? (
-                                <ResponsiveContainer>
-                                    <BarChart
-                                        layout="vertical"
-                                        data={stats.topProducts}
-                                        margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
-                                        <XAxis type="number" stroke="#888" />
-                                        <YAxis
-                                            dataKey="name"
-                                            type="category"
-                                            stroke="#fff"
-                                            width={100}
-                                            tick={{ fontSize: 12 }}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#333', borderColor: '#D4AF37', color: '#fff' }}
-                                            itemStyle={{ color: '#D4AF37' }}
-                                            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-                                        />
-                                        <Bar dataKey="sales" name="Vendas" radius={[0, 4, 4, 0]} barSize={30}>
-                                            {stats.topProducts.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
+                {/* Birthdays Panel */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05), transparent)', border: '1px solid rgba(212, 175, 55, 0.1)', borderRadius: '30px', padding: '30px', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
+                            <div style={{ background: 'rgba(212, 175, 55, 0.15)', color: '#D4AF37', padding: '10px', borderRadius: '12px' }}>
+                                <Cake size={24} />
+                            </div>
+                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>Aniversariantes</h3>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            {stats.birthdaysToday.length > 0 ? (
+                                stats.birthdaysToday.map(u => (
+                                    <div key={u.$id} style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                        <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{u.full_name.charAt(0)}</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.9rem' }}>{u.full_name}</div>
+                                            <div style={{ color: '#555', fontSize: '0.75rem', fontWeight: 700 }}>{u.whatsapp}</div>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleSendBirthdayMessage(u)}
+                                            style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '10px', borderRadius: '10px', cursor: 'pointer' }}
+                                        >
+                                            <MessageCircle size={18} />
+                                        </button>
+                                    </div>
+                                ))
                             ) : (
-                                <div className="chart-empty-state">
-                                    <p>Sem dados de vendas suficientes.</p>
+                                <div style={{ textAlign: 'center', padding: '40px 0', color: '#333' }}>
+                                    <Star size={40} style={{ opacity: 0.1, marginBottom: '15px' }} />
+                                    <p style={{ fontSize: '0.8rem', fontWeight: 800 }}>NENHUM EVENTO HOJE</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="chart-container">
-                        <h3 className="chart-title">Visão Geral (Em breve)</h3>
-                        <div className="chart-placeholder">
-                            <p>Análise detalhada em desenvolvimento</p>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '30px', padding: '25px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '15px', borderRadius: '16px' }}>
+                            <Target size={28} />
+                        </div>
+                        <div>
+                            <div style={{ color: '#555', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Objetivo do Mês</div>
+                            <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>85% Concluído</div>
                         </div>
                     </div>
                 </div>
-
-                {/* Birthdays Section */}
-                <div className="birthdays-section" style={{ marginTop: '20px' }}>
-                    <div className="chart-container" style={{ minHeight: 'auto' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                            <Cake className="stat-icon" style={{ color: '#D4AF37' }} />
-                            <h3 className="chart-title" style={{ margin: 0 }}>Aniversariantes de Hoje ({stats.birthdaysToday.length})</h3>
-                        </div>
-
-                        {stats.birthdaysToday.length > 0 ? (
-                            <div className="birthdays-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
-                                {stats.birthdaysToday.map(u => (
-                                    <div key={u.$id} style={{
-                                        background: 'rgba(212, 175, 55, 0.05)',
-                                        border: '1px solid rgba(212, 175, 55, 0.2)',
-                                        padding: '15px',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}>
-                                        <div>
-                                            <div style={{ fontWeight: 'bold', color: '#fff' }}>{u.full_name}</div>
-                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{u.whatsapp || 'Sem WhatsApp'}</div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleSendBirthdayMessage(u)}
-                                            style={{
-                                                background: '#25D366',
-                                                color: 'white',
-                                                border: 'none',
-                                                padding: '8px 12px',
-                                                borderRadius: '6px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '5px',
-                                                fontSize: '0.85rem',
-                                                fontWeight: 'bold'
-                                            }}
-                                        >
-                                            <MessageCircle size={16} /> Enviar
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ color: '#666', fontSize: '0.9rem' }}>Nenhum aniversariante hoje.</p>
-                        )}
-                    </div>
-                </div>
-
-
             </div>
         </div>
     );

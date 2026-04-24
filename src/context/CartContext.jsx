@@ -31,7 +31,21 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem('cart', JSON.stringify(cartItems));
     }, [cartItems]);
 
+    // Trava o scroll do body quando o carrinho está aberto
+    useEffect(() => {
+        if (isCartOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [isCartOpen]);
+
     const addToCart = (product, quantity = 1) => {
+        triggerHaptic();
         setCartItems(prev => {
             const existing = prev.find(item => item.id === product.id);
             const proposedQuantity = existing ? existing.quantity + quantity : quantity;
@@ -63,6 +77,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const updateQuantity = (id, newQuantity) => {
+        triggerHaptic();
         if (newQuantity < 1) {
             removeFromCart(id);
             return;
@@ -90,6 +105,13 @@ export const CartProvider = ({ children }) => {
 
     const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+
+    // Haptic Feedback Helper
+    const triggerHaptic = () => {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(40);
+        }
+    };
 
     return (
         <CartContext.Provider value={{

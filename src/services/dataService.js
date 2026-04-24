@@ -1,10 +1,21 @@
 import { databases, functions, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 import { Query, ID, Permission, Role } from 'appwrite';
 import axios from 'axios';
+export { ID };
 
 // Function IDs - Should be in environment variables in production
 const PLACE_ORDER_FUNC_ID = import.meta.env.VITE_FUNC_PLACE_ORDER || 'place_order';
 const CREATE_PRODUCT_FUNC_ID = import.meta.env.VITE_FUNC_CREATE_PRODUCT || 'create_product';
+
+// Security Helper: Basic Sanitization to prevent XSS
+const sanitize = (val) => {
+    if (typeof val !== 'string') return val;
+    return val
+        .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+        .replace(/on\w+="[^"]*"/gim, "")
+        .replace(/javascript:/gim, "")
+        .trim();
+};
 
 // Helper to expand image URL if needed (Appwrite might return file ID)
 const processDoc = (doc) => ({
@@ -112,6 +123,39 @@ const getNextSKU = async () => {
     }
 };
 
+// Helper to get next Order Number
+const getNextOrderNumber = async () => {
+    try {
+        // Buscamos os últimos 100 pedidos para garantir que achamos um no padrão WD
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.ORDERS, [
+            Query.orderDesc('$createdAt'),
+            Query.limit(100)
+        ]);
+
+        if (response.documents.length === 0) return 'WD0001';
+
+        // Encontrar o maior número entre os que seguem o padrão WD
+        let maxNumber = 0;
+        response.documents.forEach(doc => {
+            if (doc.$id && doc.$id.startsWith('WD')) {
+                const numPart = doc.$id.substring(2);
+                const parsed = parseInt(numPart, 10);
+                if (!isNaN(parsed) && parsed > maxNumber) {
+                    maxNumber = parsed;
+                }
+            }
+        });
+
+        // Se não achou nenhum no padrão WD entre os últimos 100, assume que começa agora ou 
+        // incrementa baseado no total se for o caso, mas o mais seguro é WD0001 se for o primeiro padrão.
+        const nextNum = maxNumber + 1;
+        return `WD${String(nextNum).padStart(4, '0')}`;
+    } catch (error) {
+        console.error("Error generating sequential Order Number:", error);
+        return `WD${Date.now().toString().slice(-6)}`; // Fallback baseado em timestamp
+    }
+};
+
 export const saveProduct = async (product) => {
     try {
         let response;
@@ -119,14 +163,14 @@ export const saveProduct = async (product) => {
         const docId = product.id || product.$id;
 
         const payload = {
-            title: product.title,
-            description: product.description,
-            price: parseFloat(product.price),
+            title: sanitize(product.title),
+            description: sanitize(product.description),
+            price: parseFloat(product.price) || 0,
             category: product.category,
             image: product.image, // Should be File ID or URL
             uom: product.uom || 'KG',
             is_promotion: !!product.is_promotion,
-            promo_price: product.promo_price ? parseFloat(product.promo_price) : null,
+            promo_price: product.promo_price ? (parseFloat(product.promo_price) || 0) : null,
             active: product.active !== false,
             manage_stock: !!product.manage_stock,
             stock_quantity: parseInt(product.stock_quantity) || 0,
@@ -155,8 +199,9 @@ export const saveProduct = async (product) => {
                 sku, // <--- Aqui o ID do banco se torna o SKU
                 payload,
                 [
-                    Permission.read(Role.any()),
-                    Permission.write(Role.users())
+                    Permission.read(Role.any())
+                    // Removida permissão de escrita Role.users(). 
+                    // A escrita deve ser configurada via Console para Role.team("admin").
                 ]
             );
         }
@@ -207,9 +252,9 @@ export const createOrder = async (orderData) => {
     try {
         // 1. Prepare standardized order object
         const payload = {
-            customer_name: orderData.customer_name,
-            customer_phone: orderData.customer_phone,
-            payment_method: orderData.paymentMethod || 'A combinar',
+            customer_name: sanitize(orderData.customer_name),
+            customer_phone: sanitize(orderData.customer_phone),
+            payment_method: sanitize(orderData.paymentMethod || 'A combinar'),
             total: parseFloat(orderData.total || 0),
             user_id: orderData.user_id || null,
             items: typeof orderData.items === 'string' ? orderData.items : JSON.stringify(orderData.items || []),
@@ -246,14 +291,17 @@ export const createOrder = async (orderData) => {
 
         // 3. Direct DB Write (Fallback or Default if no function)
         // This ensures the order IS registered as requested by the user.
+        const nextOrderNumber = await getNextOrderNumber();
         const res = await databases.createDocument(
             DATABASE_ID,
             COLLECTIONS.ORDERS,
-            ID.unique(),
+            nextOrderNumber,
             payload,
-            [
-                Permission.read(Role.any()), // Client can see their own (or all if public read, though user_id filter is applied)
-                Permission.write(Role.users())
+            orderData.user_id ? [
+                Permission.read(Role.user(orderData.user_id)),
+                Permission.write(Role.user(orderData.user_id))
+            ] : [
+                Permission.read(Role.any()) // Fallback para convidados, mas idealmente restrito
             ]
         );
 
@@ -293,7 +341,7 @@ export const createOrder = async (orderData) => {
         return {
             success: true,
             $id: res.$id,
-            order_number: res.$id.slice(-6).toUpperCase(), // Fallback order number
+            order_number: res.$id, // Agora o ID já é o WD0000
             status: res.status
         };
 
@@ -417,6 +465,20 @@ export const getSettings = async () => {
             }
             settings[doc.key] = val;
         });
+
+        // [SECURITY] Filter sensitive keys for non-admin requests if this is called in public context
+        // Note: In a real scenario, this filter should be even stricter.
+        const sensitiveKeys = ['whatsapp_api_key', 'whatsapp_api_url', 'smtp_password'];
+        const isClientSide = typeof window !== 'undefined';
+        
+        // This is a last-resort client-side filter. 
+        // Real security MUST be in Appwrite Collection Rules (Read permissions).
+        if (isClientSide && !window.location.pathname.startsWith('/admin')) {
+            sensitiveKeys.forEach(key => {
+                if (settings[key]) settings[key] = '********';
+            });
+        }
+
         return settings;
     } catch (e) {
         console.error("Error fetching settings:", e);
@@ -437,8 +499,9 @@ export const updateSettings = async (key, value) => {
                     key: key,
                     value: stringValue
                 }, [
-                    Permission.read(Role.any()),
-                    Permission.write(Role.users())
+                    Permission.read(Role.any())
+                    // Removida permissão de escrita Role.users().
+                    // Escrita permitida apenas para o time admin no Console.
                 ]);
                 return true;
             }
@@ -579,5 +642,100 @@ export const saveUOMs = async (uoms) => {
     } catch (e) {
         console.error("Error saving UOMs:", e);
         throw e;
+    }
+};
+
+// --- ORDERS MANAGEMENT ---
+
+export const getOrders = async () => {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            [Query.orderDesc('$createdAt'), Query.limit(100)]
+        );
+        return response;
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        throw error;
+    }
+};
+
+export const updateOrderStatus = async (orderId, status) => {
+    try {
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            orderId,
+            { status }
+        );
+        return true;
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+};
+
+// --- PROFILES / USERS MANAGEMENT ---
+
+export const getProfiles = async () => {
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.PROFILES,
+            [Query.limit(100)]
+        );
+        return response;
+    } catch (error) {
+        console.error("Error fetching profiles:", error);
+        throw error;
+    }
+};
+
+export const updateProfile = async (profileId, data) => {
+    try {
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.PROFILES,
+            profileId,
+            data
+        );
+        return true;
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        throw error;
+    }
+};
+
+export const deleteProfile = async (profileId) => {
+    try {
+        await databases.deleteDocument(
+            DATABASE_ID,
+            COLLECTIONS.PROFILES,
+            profileId
+        );
+        return true;
+    } catch (error) {
+        console.error("Error deleting profile:", error);
+        throw error;
+    }
+};
+
+export const createProfile = async (profileId, data) => {
+    try {
+        await databases.createDocument(
+            DATABASE_ID,
+            COLLECTIONS.PROFILES,
+            profileId,
+            data,
+            [
+                Permission.read(Role.user(profileId)),
+                Permission.write(Role.user(profileId))
+            ]
+        );
+        return true;
+    } catch (error) {
+        console.error("Error creating profile:", error);
+        throw error;
     }
 };

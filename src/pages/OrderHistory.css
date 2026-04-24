@@ -2,6 +2,7 @@
     min-height: 100vh;
     background: #121212;
     color: #fff;
+    padding-top: 130px; /* Aumentado para acomodar o novo logo maior */
     padding-bottom: 2rem;
 }
 

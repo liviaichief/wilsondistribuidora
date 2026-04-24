@@ -1,35 +1,30 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HeroCarousel from '../components/shop/HeroCarousel';
 import Header from '../components/shop/Header';
+import CategoryBar from '../components/shop/CategoryBar';
 import ProductCard from '../components/shop/ProductCard';
 import { getProducts } from '../services/dataService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, AlertCircle } from 'lucide-react';
+import GoogleReviews from '../components/shop/GoogleReviews';
 import './Home.css';
 
-const ITEMS_PER_PAGE = 8; // Aumentado um pouco para preencher telas iniciais maiores
-
-
+const ITEMS_PER_PAGE = 50; // Increased to show more products instantly
 
 const Home = () => {
-    // Banco em cache local 
     const [allProducts, setAllProducts] = useState([]);
     const [isSystemBlocked, setIsSystemBlocked] = useState(false);
     const [showBlockMessage, setShowBlockMessage] = useState(true);
-
-    // Visão atual
     const [filteredItems, setFilteredItems] = useState([]);
     const [displayItems, setDisplayItems] = useState([]);
     const [activeCategory, setActiveCategory] = useState('all');
     const [page, setPage] = useState(1);
-
-    // Status de loading global apenas para o primeiro carregamento
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const loader = useRef(null);
 
     const hasMore = displayItems.length < filteredItems.length;
 
-    // 1. Carrega todos os produtos de uma VEZ SÓ quando a tela abre.
-    // Isso economiza incontáveis requisições ao Appwrite.
     useEffect(() => {
         const fetchInitialData = async () => {
             setLoading(true);
@@ -40,20 +35,15 @@ const Home = () => {
                     getCategories()
                 ]);
 
-                if (data.system_blocked) {
-                    setIsSystemBlocked(true);
-                } else {
-                    setIsSystemBlocked(false);
-                }
+                if (data.system_blocked) setIsSystemBlocked(true);
+                else setIsSystemBlocked(false);
 
-                // Lista de IDs de categorias ativas
                 const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
-
-                // Filtramos produtos desativados E produtos de categorias desativadas para o cliente:
-                const activeOnly = data.documents.filter(d => 
-                    d.active !== false && 
-                    activeCatIds.includes(d.category)
-                );
+                const activeOnly = data.documents.filter(d => {
+                    const isVisible = d.active !== false && activeCatIds.includes(d.category);
+                    const isStockDisabled = d.manage_stock && d.stock_quantity <= 0 && d.disable_on_zero_stock;
+                    return isVisible && !isStockDisabled;
+                });
                 
                 setAllProducts(activeOnly);
             } catch (err) {
@@ -63,43 +53,26 @@ const Home = () => {
                 setLoading(false);
             }
         };
-
         fetchInitialData();
     }, []);
 
     useEffect(() => {
-        if (isSystemBlocked && showBlockMessage) {
-            const timer = setTimeout(() => {
-                setShowBlockMessage(false);
-            }, 20000);
-            return () => clearTimeout(timer);
-        }
-    }, [isSystemBlocked, showBlockMessage]);
-
-    // 2. Filtra a base local (Memória) toda vez que a Categoria muda, instântaneamente.
-    useEffect(() => {
         let newFiltered = [];
         if (activeCategory === 'all') {
-            // Aba Promoções: Mostrar promoções + Cópia de todos os outros produtos ordenados por categoria
             const promoProducts = allProducts.filter(d => d.is_promotion === true);
             const otherProducts = allProducts.filter(d => d.is_promotion !== true);
-
             newFiltered = [...promoProducts, ...otherProducts];
         } else {
-            // Abas Específicas
-            newFiltered = allProducts.filter(d => (d.category || '').toLowerCase() === activeCategory.toLowerCase());
+            newFiltered = allProducts.filter(d => (d.category || '').toString().trim().toLowerCase() === activeCategory.toString().trim().toLowerCase());
         }
-
         setFilteredItems(newFiltered);
-        setPage(1); // Reseta a paginação (scroll) pro topo ao trocar aba
+        setPage(1);
     }, [activeCategory, allProducts]);
 
-    // 3. Gerencia o "Slice" da lista para evitar criar 100 cartões HTML de uma vez (Performance do Navegador)
     useEffect(() => {
         setDisplayItems(filteredItems.slice(0, page * ITEMS_PER_PAGE));
     }, [filteredItems, page]);
 
-    // Lógica do Infinite Scroll Local (Apenas revela mais HTML, sem chamar o banco)
     const handleObserver = useCallback((entries) => {
         const target = entries[0];
         if (target.isIntersecting && !loading && hasMore) {
@@ -108,76 +81,94 @@ const Home = () => {
     }, [loading, hasMore]);
 
     useEffect(() => {
-        const option = {
-            root: null,
-            rootMargin: "20px",
-            threshold: 0
-        };
+        const option = { root: null, rootMargin: "200px", threshold: 0 };
         const observer = new IntersectionObserver(handleObserver, option);
         if (loader.current) observer.observe(loader.current);
-
-        return () => {
-            if (loader.current) observer.unobserve(loader.current);
-        }
+        return () => { if (loader.current) observer.unobserve(loader.current); }
     }, [handleObserver]);
 
     return (
         <div className="home-container">
             {isSystemBlocked && showBlockMessage && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', padding: '20px' }}>
-                    <div style={{ backgroundColor: '#141414', border: '1px solid #333', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                        <div style={{ fontSize: '100px', marginBottom: '10px', animation: 'pulse 2s infinite' }}>😔</div>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', padding: '20px' }}>
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glass-card" 
+                        style={{ padding: '50px', maxWidth: '450px', width: '100%', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                        <div style={{ fontSize: '80px', marginBottom: '20px' }}>🔐</div>
                         <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '15px', letterSpacing: '-1px' }}>Sistema Indisponível</h2>
-                        <p style={{ color: '#aaa', fontSize: '1rem', lineHeight: 1.6, marginBottom: '30px' }}>
-                            No momento, nossa plataforma encontra-se temporariamente fora do ar devido a problemas financeiros. Por favor, regularize as pendências para restaurar a operação da loja.
+                        <p style={{ color: '#888', fontSize: '1rem', lineHeight: 1.6, marginBottom: '30px', fontWeight: 600 }}>
+                            No momento, nossa plataforma encontra-se temporariamente fora do ar. Por favor, entre em contato com o administrador para restaurar a operação.
                         </p>
-                        <div style={{ display: 'inline-block', padding: '10px 20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>
-                            Aguardando Pagamento
+                        <div style={{ display: 'inline-block', padding: '12px 24px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>
+                            Acesso Restrito
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
 
-            <Header
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-            />
+            <Header />
 
             <main className="main-content">
-                <HeroCarousel />
+                <CategoryBar activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+                
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                >
+                    <HeroCarousel />
+                </motion.div>
 
                 <div className="products-grid">
-                    {error && (
-                        <div className="error-message" style={{ textAlign: 'center', color: 'red', gridColumn: '1 / -1', padding: '2rem' }}>
-                            <p>{error}</p>
-                            <button onClick={() => window.location.reload()} style={{ marginTop: '1rem', padding: '0.5rem 1rem', cursor: 'pointer' }}>
-                                Tentar novamente
-                            </button>
-                        </div>
-                    )}
+                    <AnimatePresence mode="popLayout">
+                        {error ? (
+                            <motion.div 
+                                key="error"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                className="no-products"
+                                style={{ gridColumn: '1 / -1' }}
+                            >
+                                <AlertCircle size={50} color="#ef4444" style={{ marginBottom: '20px' }} />
+                                <h3>Opa! Algo deu errado.</h3>
+                                <p>{error}</p>
+                                <button onClick={() => window.location.reload()} style={{ marginTop: '20px', padding: '12px 30px', borderRadius: '14px', background: '#D4AF37', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Tentar Novamente</button>
+                            </motion.div>
+                        ) : loading ? (
+                            Array.from({ length: 8 }).map((_, i) => (
+                                <div key={`skeleton-${i}`} className="premium-card" style={{ height: '320px', opacity: 0.1 }}>
+                                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)' }} />
+                                </div>
+                            ))
+                        ) : displayItems.length > 0 ? (
+                            displayItems.map((item, index) => (
+                                <ProductCard key={item.$id || index} product={item} />
+                            ))
+                        ) : (
+                            <motion.div 
+                                key="empty"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                className="no-products"
+                                style={{ gridColumn: '1 / -1' }}
+                            >
+                                <div style={{ fontSize: '50px', marginBottom: '20px' }}>📦</div>
+                                <h3>Nenhum produto encontrado</h3>
+                                <p>Estamos preparando novidades para esta categoria. Tente voltar mais tarde!</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
-                    {loading ? (
-                        <></> // Espera carregar a primeira vez para não pipocar erros
-                    ) : displayItems.length > 0 ? (
-                        displayItems.map((item, index) => (
-                            <ProductCard key={item.id || index} product={item} />
-                        ))
-                    ) : (
-                        !error && (
-                            <div className="no-products" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: '#888' }}>
-                                <h3>Nenhum produto nesta sessão!</h3>
-                                <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
-                                    Estamos abastecendo o estoque. Tente verificar outras categorias.
-                                </p>
-                            </div>
-                        )
+                <div ref={loader} style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {hasMore && !loading && (
+                        <div className="spinner"></div>
                     )}
                 </div>
 
-                <div ref={loader} className="loading-indicator" style={{ height: '40px', padding: '10px' }}>
-                    {/* Se estiver arrastando a tela para baixo e ainda tiver itens locais escondidos, mostra loader */}
-                    {hasMore && !loading && <div className="spinner"></div>}
-                </div>
+                {/* Google Social Proof */}
+                {!loading && !isSystemBlocked && <GoogleReviews />}
             </main>
         </div>
     );

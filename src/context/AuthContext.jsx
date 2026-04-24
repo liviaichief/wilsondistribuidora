@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalView, setAuthModalView] = useState('login');
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [guestMode, setGuestMode] = useState(false); // Guest Mode
 
     // Safety timeout to prevent infinite loading screen
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         $id: acc.$id,
         email: acc.email,
         full_name: acc.name,
+        labels: acc.labels || [], // [SECURITY] Real roles come from here
         user_metadata: { full_name: acc.name }
     });
 
@@ -44,7 +46,8 @@ export const AuthProvider = ({ children }) => {
                 userId
             );
             setProfile(doc);
-            setRole(doc.role || 'client');
+            
+            // Note: role state is now set separately based on labels for security
 
             // Track Last Activity (Login) for Dashboard KPIs
             const now = new Date();
@@ -102,7 +105,13 @@ export const AuthProvider = ({ children }) => {
             try {
                 const session = await account.get();
                 console.log("[Auth] Session active:", session.$id, session.email);
-                setUser(mapUser(session));
+                const mappedUser = mapUser(session);
+                setUser(mappedUser);
+
+                // [SECURITY] Set role based on official account labels
+                if (mappedUser.labels.includes('admin')) setRole('admin');
+                else if (mappedUser.labels.includes('owner')) setRole('owner');
+                else setRole('client');
 
                 // Ensure profile document exists
                 try {
@@ -124,7 +133,12 @@ export const AuthProvider = ({ children }) => {
                                     last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
                                     user_id: session.$id,
                                     role: defaultRole
-                                }
+                                },
+                                [
+                                    Permission.read(Role.any()),
+                                    Permission.read(Role.user(session.$id)),
+                                    Permission.write(Role.user(session.$id))
+                                ]
                             );
                             console.log("[Auth] Profile created successfully");
                             await fetchProfile(session.$id);
@@ -206,6 +220,19 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
+    // Trava o scroll do body quando modais estão abertos
+    useEffect(() => {
+        if (isAuthModalOpen || isProfileModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [isAuthModalOpen, isProfileModalOpen]);
+
     const openAuthModal = (view = 'login') => {
         setAuthModalView(view);
         setIsAuthModalOpen(true);
@@ -213,12 +240,21 @@ export const AuthProvider = ({ children }) => {
 
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
+    const openProfileModal = () => setIsProfileModalOpen(true);
+    const closeProfileModal = () => setIsProfileModalOpen(false);
+
     const signIn = async (email, password) => {
         setLoading(true);
         try {
             await account.createEmailPasswordSession(email, password);
             const acc = await account.get();
-            setUser(mapUser(acc));
+            const mappedUser = mapUser(acc);
+            setUser(mappedUser);
+            
+            if (mappedUser.labels.includes('admin')) setRole('admin');
+            else if (mappedUser.labels.includes('owner')) setRole('owner');
+            else setRole('client');
+
             await fetchProfile(acc.$id);
             localStorage.setItem('app_auth_sync_login', Date.now().toString());
             return { data: { user: mapUser(acc) } };
@@ -282,7 +318,12 @@ export const AuthProvider = ({ children }) => {
                     DATABASE_ID,
                     COLLECTIONS.PROFILES,
                     acc.$id,
-                    profilePayload
+                    profilePayload,
+                    [
+                        Permission.read(Role.any()),
+                        Permission.read(Role.user(acc.$id)),
+                        Permission.write(Role.user(acc.$id))
+                    ]
                 );
             } catch (dbError) {
                 console.error("Error creating profile document during signup:", dbError);
@@ -354,10 +395,7 @@ export const AuthProvider = ({ children }) => {
         );
     };
 
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    const openProfileModal = () => setIsProfileModalOpen(true);
-    const closeProfileModal = () => setIsProfileModalOpen(false);
 
     const updateProfile = async (data, docId = null) => {
         if (!user || !user.$id) {

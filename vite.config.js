@@ -6,32 +6,51 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    /* VitePWA({
+    VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'logo.png'],
+      includeAssets: ['favicon.png', 'logo.png', 'robots.txt'],
       manifest: {
         name: 'Wilson Distribuidora',
         short_name: 'Wilson',
-        description: 'Wilson Distribuidora - Carnes e Eventos',
-        theme_color: '#000000',
-        background_color: '#000000',
+        description: 'Qualidade em carnes e produtos selecionados.',
+        theme_color: '#800020',
+        background_color: '#080808',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
             src: 'favicon.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any'
+            purpose: 'any maskable'
           },
           {
             src: 'logo.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable'
+            purpose: 'any'
           }
         ]
-      }
-    }) */
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/cloud\.appwrite\.io\/v1\/storage\/buckets\/.*\/files\/.*\/view/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'appwrite-images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+      },
+    })
   ],
   test: {
     globals: true,

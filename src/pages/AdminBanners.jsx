@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save, GripVertical, AlertCircle, ExternalLink, ImagePlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
-import './Admin.css'; // Reuse admin styles
+import './Admin.css';
 
 const AdminBanners = () => {
     const { showAlert, showConfirm } = useAlert();
@@ -27,8 +27,10 @@ const AdminBanners = () => {
         thumbnail_url: ''
     });
     const [imageFile, setImageFile] = useState(null);
-    const [thumbFile, setThumbFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState('');
+    const [thumbPreviewUrl, setThumbPreviewUrl] = useState('');
 
     useEffect(() => {
         loadData();
@@ -37,37 +39,18 @@ const AdminBanners = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            console.log('Fetching banners and products...');
             const [bannersResponse, productsResponse] = await Promise.all([
-                databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTIONS.BANNERS,
-                    [Query.orderAsc('display_order')]
-                ),
-                databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTIONS.PRODUCTS,
-                    [Query.orderAsc('title'), Query.limit(100)]
-                )
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.BANNERS, [Query.orderAsc('display_order')]),
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [Query.orderAsc('title'), Query.limit(100)])
             ]);
 
-            // Map Appwrite docs
-            const mappedBanners = bannersResponse.documents.map(doc => ({
+            setBanners(bannersResponse.documents.map(doc => ({
                 ...doc,
                 id: doc.$id,
-                // Handle product relationship if expanded, or just ID
                 product_id: doc.product ? (typeof doc.product === 'object' ? doc.product.$id : doc.product) : null
-            }));
-
-            const mappedProducts = productsResponse.documents.map(doc => ({
-                id: doc.$id,
-                title: doc.title
-            }));
-
-            setBanners(mappedBanners);
-            setProducts(mappedProducts);
+            })));
+            setProducts(productsResponse.documents.map(doc => ({ id: doc.$id, title: doc.title })));
         } catch (error) {
-            console.error('Error loading data:', error);
             showAlert('Erro ao carregar dados: ' + error.message, 'error');
         } finally {
             setLoading(false);
@@ -76,475 +59,243 @@ const AdminBanners = () => {
 
     const handleOpenModal = (banner = null) => {
         setImageFile(null);
-        setThumbFile(null);
+        setPreviewUrl('');
+        setThumbPreviewUrl('');
         if (banner) {
             setEditingBanner(banner);
             setFormData({
-                title: banner.title,
-                image_url: banner.image_url,
-                product_id: banner.product_id || (banner.product ? (typeof banner.product === 'object' ? banner.product.$id : banner.product) : ''),
-                active: banner.active,
-                display_order: banner.display_order,
+                title: banner.title || '',
+                image_url: banner.image_url || '',
+                product_id: banner.product_id || '',
+                active: banner.active ?? true,
+                display_order: banner.display_order || 0,
                 duration: banner.duration || 5,
                 thumbnail_url: banner.thumbnail_url || ''
             });
+            setPreviewUrl(getImageUrl(banner.image_url));
+            if (banner.thumbnail_url) setThumbPreviewUrl(getImageUrl(banner.thumbnail_url));
         } else {
             setEditingBanner(null);
-            setFormData({
-                title: '',
-                image_url: '',
-                product_id: '',
-                active: true,
-                display_order: banners.length + 1,
-                duration: 5,
-                thumbnail_url: ''
-            });
+            setFormData({ title: '', image_url: '', product_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '' });
         }
         setIsModalOpen(true);
     };
 
-    const handleImageChange = (e) => {
+    const uploadFileToAppwrite = async (file, isVideo = false) => {
+        let fileToUpload = file;
+        if (!isVideo && file.type.startsWith('image/')) {
+            const options = { maxSizeMB: 0.15, maxWidthOrHeight: 1280, useWebWorker: true };
+            const compressedBlob = await imageCompression(file, options);
+            fileToUpload = new File([compressedBlob], file.name, { type: file.type });
+        }
+        const result = await storage.createFile(BUCKET_ID, isVideo ? `v_${ID.unique()}` : ID.unique(), fileToUpload, [Permission.read(Role.any()), Permission.write(Role.users())]);
+        return result.$id;
+    };
+
+    const handleImageChange = async (e) => {
         if (e.target.files && e.target.files[0]) {
-            setImageFile(e.target.files[0]);
+            const file = e.target.files[0];
+            setImageFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+            setIsUploading(true);
+            try {
+                const fileId = await uploadFileToAppwrite(file, file.type.startsWith('video/'));
+                setFormData(prev => ({ ...prev, image_url: fileId }));
+            } catch (err) { showAlert("Erro ao subir arquivo: " + err.message, "error"); } finally { setIsUploading(false); }
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isUploading) return;
         setIsSaving(true);
-
         try {
-            let finalImageUrl = formData.image_url;
-            let finalThumbUrl = formData.thumbnail_url;
-
-            // Helper for uploading
-            const uploadFile = async (file, isVideo = false) => {
-                let fileToUpload = file;
-                if (!isVideo && file.type.startsWith('image/')) {
-                    const options = {
-                        maxSizeMB: 0.15, // Reduzido drasticamente para 150KB (antes 1MB)
-                        maxWidthOrHeight: 1280, // Reduzido para HD (antes 1920px)
-                        useWebWorker: true,
-                        initialQuality: 0.75
-                    };
-                    const compressedBlob = await imageCompression(file, options);
-                    fileToUpload = new File([compressedBlob], file.name, { type: file.type });
-                }
-
-                const fileId = isVideo ? `v_${ID.unique()}` : ID.unique();
-                const result = await storage.createFile(
-                    BUCKET_ID,
-                    fileId,
-                    fileToUpload,
-                    [
-                        Permission.read(Role.any()),
-                        Permission.write(Role.users())
-                    ]
-                );
-                return storage.getFileView(BUCKET_ID, result.$id).href;
-            };
-
-            // Upload Main File if selected
-            if (imageFile) {
-                finalImageUrl = await uploadFile(imageFile, imageFile.type.startsWith('video/'));
-                
-                // Cleanup previous image
-                if (editingBanner?.image_url) {
-                    try {
-                        const oldId = editingBanner.image_url.split('/files/')[1]?.split('/')[0];
-                        if (oldId) await storage.deleteFile(BUCKET_ID, oldId);
-                    } catch (e) { console.warn(e); }
-                }
-            }
-
-            // Upload Thumbnail if selected
-            if (thumbFile) {
-                finalThumbUrl = await uploadFile(thumbFile, false);
-                
-                // Cleanup previous thumb
-                if (editingBanner?.thumbnail_url) {
-                    try {
-                        const oldId = editingBanner.thumbnail_url.split('/files/')[1]?.split('/')[0];
-                        if (oldId) await storage.deleteFile(BUCKET_ID, oldId);
-                    } catch (e) { console.warn(e); }
-                }
-            }
-
             const payload = {
                 title: formData.title,
-                image_url: finalImageUrl,
-                thumbnail_url: finalThumbUrl,
+                image_url: formData.image_url,
+                thumbnail_url: formData.thumbnail_url,
                 product: formData.product_id || null,
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
                 duration: parseInt(formData.duration)
             };
-
             if (editingBanner) {
-                try {
-                    await databases.updateDocument(
-                        DATABASE_ID,
-                        COLLECTIONS.BANNERS,
-                        editingBanner.id,
-                        payload,
-                        [Permission.read(Role.any()), Permission.write(Role.users())]
-                    );
-                    showAlert('Banner atualizado com sucesso!', 'success', null, 1000);
-                } catch (err) {
-                    throw new Error(`DATABASE (Update): ${err.message}`);
-                }
+                await databases.updateDocument(DATABASE_ID, COLLECTIONS.BANNERS, editingBanner.id, payload);
+                showAlert('Banner atualizado!', 'success', null, 3000);
             } else {
-                try {
-                    await databases.createDocument(
-                        DATABASE_ID,
-                        COLLECTIONS.BANNERS,
-                        ID.unique(),
-                        payload,
-                        [Permission.read(Role.any()), Permission.write(Role.users())]
-                    );
-                    showAlert('Banner criado com sucesso!', 'success', null, 1000);
-                } catch (err) {
-                    throw new Error(`DATABASE (Create): ${err.message}`);
-                }
+                await databases.createDocument(DATABASE_ID, COLLECTIONS.BANNERS, ID.unique(), payload);
+                showAlert('Banner criado!', 'success', null, 3000);
             }
-
             setIsModalOpen(false);
             loadData();
-        } catch (error) {
-            console.error('Error saving banner:', error);
-            showAlert('ERRO IDENTIFICADO: ' + error.message, 'error');
-        } finally {
-            setIsSaving(false);
-        }
+        } catch (error) { showAlert('Erro: ' + error.message, 'error'); } finally { setIsSaving(false); }
     };
 
     const handleDelete = (banner) => {
-        showConfirm(
-            'Tem certeza que deseja excluir este banner?',
-            async () => {
-                try {
-                    // Delete document
-                    await databases.deleteDocument(
-                        DATABASE_ID,
-                        COLLECTIONS.BANNERS,
-                        banner.id
-                    );
-
-                    // Delete file from storage if it exists
-                    if (banner.image_url) {
-                        try {
-                            const fileId = banner.image_url.split('/files/')[1]?.split('/')[0];
-                            if (fileId) {
-                                await storage.deleteFile(BUCKET_ID, fileId);
-                                console.log('Banner file deleted:', fileId);
-                            }
-                        } catch (e) {
-                            console.warn('Could not delete banner file:', e);
-                        }
-                    }
-
-                    showAlert('Banner excluído com sucesso!', 'success', null, 1000);
-                    loadData();
-                } catch (error) {
-                    console.error('Error deleting banner:', error);
-                    showAlert('Erro ao excluir banner: ' + error.message, 'error');
-                }
-            }
-        );
+        showConfirm('Excluir este banner?', async () => {
+            try {
+                await databases.deleteDocument(DATABASE_ID, COLLECTIONS.BANNERS, banner.id);
+                showAlert('Excluído!', 'success', null, 3000);
+                loadData();
+            } catch (error) { showAlert('Erro: ' + error.message, 'error'); }
+        });
     };
 
     const toggleActive = async (banner) => {
         try {
-            await databases.updateDocument(
-                DATABASE_ID,
-                COLLECTIONS.BANNERS,
-                banner.id,
-                { active: !banner.active }
-            );
+            await databases.updateDocument(DATABASE_ID, COLLECTIONS.BANNERS, banner.id, { active: !banner.active });
             loadData();
-        } catch (error) {
-            console.error('Error toggling banner:', error);
-            showAlert('Erro ao atualizar status: ' + error.message, 'error');
-        }
+        } catch (e) { showAlert('Erro: ' + e.message, 'error'); }
     };
 
     return (
-        <div className="admin-container">
-            <div className="admin-content">
-                <div className="header-title" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h2>Gestão de Banners</h2>
-                        <p style={{ color: '#888' }}>Gerencie os banners da página inicial.</p>
-                    </div>
-                    <button onClick={() => handleOpenModal()} className="add-btn">
-                        <Plus size={20} /> Novo Banner
-                    </button>
-                </div>
+        <div style={{ padding: '0 20px 40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px', marginTop: '20px' }}>
+                <button 
+                    onClick={() => handleOpenModal()} 
+                    style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '16px', padding: '16px 28px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)', transition: 'all 0.3s' }}
+                >
+                    <Plus size={20} strokeWidth={3} /> NOVO BANNER
+                </button>
+            </div>
 
-                {loading ? (
-                    <p style={{ textAlign: 'center', padding: '20px' }}>Carregando banners...</p>
-                ) : banners.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-                        <p>Nenhum banner encontrado.</p>
-                        <button onClick={() => handleOpenModal()} className="add-btn" style={{ margin: '10px auto' }}>Criar Primeiro Banner</button>
-                    </div>
-                ) : (
-                    <div className="banners-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                        {banners.map((banner) => (
-                            <div key={banner.id} className="banner-card" style={{ background: '#1e1e1e', borderRadius: '8px', overflow: 'hidden', border: '1px solid #333' }}>
-                                <div className="banner-image" style={{ height: '150px', position: 'relative', backgroundColor: '#000' }}>
+            {loading ? (
+                <div style={{ padding: '100px', textAlign: 'center' }}>
+                    <Loader2 className="animate-spin" size={48} color="#D4AF37" style={{ opacity: 0.2 }} />
+                </div>
+            ) : banners.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '100px', background: 'rgba(255,255,255,0.02)', borderRadius: '30px', border: '2px dashed rgba(255,255,255,0.05)' }}>
+                    <ImageIcon size={64} style={{ opacity: 0.1, marginBottom: '20px' }} />
+                    <h3 style={{ color: '#555' }}>Nenhum banner ativo.</h3>
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px' }}>
+                    <AnimatePresence>
+                        {banners.map((banner, index) => (
+                            <motion.div 
+                                key={banner.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.05 }}
+                                onDoubleClick={() => handleOpenModal(banner)}
+                                style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '28px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                                className="banner-card-hover"
+                            >
+                                <div style={{ aspectRatio: '16/9', background: '#000', position: 'relative' }}>
                                     {(() => {
                                         const mediaUrl = getImageUrl(banner.image_url);
-                                        const isVideo = mediaUrl && (
-                                            mediaUrl.toLowerCase().includes('/files/v_') ||
-                                            mediaUrl.toLowerCase().includes('.mp4') ||
-                                            mediaUrl.toLowerCase().includes('.webm')
-                                        );
-
-                                        if (banner.thumbnail_url) {
-                                            return <img src={getImageUrl(banner.thumbnail_url)} alt="Thumbnail" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
-                                        }
-
-                                        if (isVideo) {
-                                            return (
-                                                <video 
-                                                    src={mediaUrl} 
-                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                                                    muted 
-                                                    onMouseOver={e => e.target.play()} 
-                                                    onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
-                                                />
-                                            );
-                                        }
-
-                                        return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                                        const isVideo = banner.image_url?.startsWith('v_');
+                                        if (isVideo) return <video src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />;
+                                        return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+no+Carregamento';
+                                        }} />;
                                     })()}
-                                    <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '5px' }}>
-                                        <div style={{ background: 'rgba(0,0,0,0.7)', borderRadius: '4px', padding: '4px 8px' }}>
-                                            <span style={{ color: banner.active ? '#4CAF50' : '#888', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
-                                                {banner.active ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                                                {banner.active ? 'Ativo' : 'Inativo'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.7)', borderRadius: '4px', padding: '4px 8px' }}>
-                                        <span style={{ color: '#fff', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Clock size={14} /> {banner.duration || 5}s
-                                        </span>
+                                    <div style={{ position: 'absolute', top: 20, left: 20, background: banner.active ? '#22c55e' : '#444', color: '#fff', padding: '6px 14px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 900 }}>{banner.active ? 'ATIVO' : 'PAUSADO'}</div>
+                                    <div style={{ position: 'absolute', bottom: 20, right: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Clock size={14} /> {banner.duration}s
                                     </div>
                                 </div>
-                                <div className="banner-info" style={{ padding: '15px' }}>
-                                    <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>{banner.title}</h3>
-                                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#888' }}>Produto: {products.find(p => p.id === banner.product_id)?.title || 'Nenhum'}</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#666' }}>Ordem: {banner.display_order}</span>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button
-                                                onClick={() => toggleActive(banner)}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: banner.active ? '#ffeb3b' : '#4CAF50' }}
-                                                title={banner.active ? "Desativar" : "Ativar"}
-                                            >
-                                                {banner.active ? <XCircle size={18} /> : <CheckCircle size={18} />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleOpenModal(banner)}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2196F3' }}
-                                                title="Editar"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(banner)}
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff4444' }}
-                                                title="Excluir"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                <div style={{ padding: '25px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                                        <div>
+                                            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>{banner.title || `Banner #${banner.id.substring(0, 6)}`}</h3>
+                                            <div style={{ color: '#555', fontSize: '0.85rem', marginTop: '4px', fontWeight: 700 }}>{products.find(p => p.id === banner.product_id)?.title || 'Sem link externo'}</div>
                                         </div>
+                                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{banner.display_order}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <button onClick={() => toggleActive(banner)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: banner.active ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', color: banner.active ? '#ef4444' : '#22c55e', cursor: 'pointer', fontWeight: 800 }}>{banner.active ? 'Pausar' : 'Ativar'}</button>
+                                        <button onClick={() => handleOpenModal(banner)} style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}><Edit size={20} /></button>
+                                        <button onClick={() => handleDelete(banner)} style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={20} /></button>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
-                )}
+                    </AnimatePresence>
+                </div>
+            )}
 
-                {/* Modal */}
+            <AnimatePresence>
                 {isModalOpen && (
-                    <div className="modal-overlay">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h2>{editingBanner ? 'Editar Banner' : 'Novo Banner'}</h2>
-                                <button className="close-btn" onClick={() => setIsModalOpen(false)}>
-                                    <X size={24} />
-                                </button>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '35px', padding: '40px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', position: 'relative' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                                <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#fff' }}>{editingBanner ? 'Configurar Banner' : 'Novo Banner'}</h2>
+                                <button onClick={() => setIsModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><X size={24} /></button>
                             </div>
 
-                            <div className="info-banner" style={{
-                                backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                                border: '1px solid #fff',
-                                borderRadius: '4px',
-                                padding: '10px',
-                                marginBottom: '15px',
-                                fontSize: '0.9rem',
-                                color: '#e0e0e0'
-                            }}>
-                                <p><strong>Dica de Imagem:</strong> A proporção ideal para banners é <strong>16:9</strong> (ex: 1920x1080). Caso a imagem seja menor ou tenha outra proporção, o fundo será preenchido automaticamente com a cor do site.</p>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="product-form">
-                                <div className="form-group">
-                                    <label>Título</label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                        placeholder="Ex: Promoção de Picanha (Opcional)"
-                                    />
+                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Título Interno</label>
+                                    <input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }} />
                                 </div>
 
-                                <div className="form-group">
-                                    <label>Imagem do Banner</label>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        <div style={{ position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
-                                            <input
-                                                type="file"
-                                                accept="image/*,video/*"
-                                                onChange={handleImageChange}
-                                                style={{
-                                                    padding: '10px',
-                                                    background: '#333',
-                                                    border: '1px solid #444',
-                                                    borderRadius: '4px',
-                                                    width: '100%',
-                                                    color: '#fff'
-                                                }}
-                                            />
-                                        </div>
-                                        {(imageFile || formData.image_url) && (
-                                            <div style={{
-                                                marginTop: '10px',
-                                                height: '250px',
-                                                background: '#000',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid #444',
-                                                borderRadius: '4px',
-                                                overflow: 'hidden'
-                                            }}>
-                                                {((imageFile?.type.startsWith('video/')) || (formData.image_url && (formData.image_url.includes('/files/v_') || formData.image_url.includes('.mp4') || formData.image_url.includes('.webm')))) ? (
-                                                    <video 
-                                                        src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)} 
-                                                        controls 
-                                                        muted
-                                                        poster={formData.thumbnail_url ? getImageUrl(formData.thumbnail_url) : undefined}
-                                                        style={{ maxHeight: '100%', maxWidth: '100%' }}
-                                                    />
-                                                ) : (
-                                                    <img
-                                                        src={imageFile ? URL.createObjectURL(imageFile) : getImageUrl(formData.image_url)}
-                                                        alt="Preview"
-                                                        style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                                                    />
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                {(imageFile?.type.startsWith('video/') || (formData.image_url && (formData.image_url.includes('/files/v_') || formData.image_url.includes('.mp4') || formData.image_url.includes('.webm')))) && (
-                                    <div className="form-group" style={{ marginTop: '10px', backgroundColor: 'rgba(212, 175, 55, 0.05)', padding: '15px', borderRadius: '8px', border: '1px dashed rgba(212, 175, 55, 0.3)' }}>
-                                        <label style={{ color: '#D4AF37', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                            <ImageIcon size={18} /> IMAGEM DE CAPA DO VÍDEO
-                                        </label>
-                                        <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>Esta imagem será exibida enquanto o vídeo carrega no site.</p>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => e.target.files[0] && setThumbFile(e.target.files[0])}
-                                            style={{
-                                                padding: '10px',
-                                                background: '#1a1a1a',
-                                                border: '1px solid #333',
-                                                borderRadius: '4px',
-                                                width: '100%',
-                                                color: '#fff'
-                                            }}
-                                        />
-                                        {(thumbFile || formData.thumbnail_url) && (
-                                            <div style={{ marginTop: '10px', height: '100px', width: '180px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #444' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Conteúdo Visual (16:9)</label>
+                                    <div style={{ height: '200px', background: 'rgba(0,0,0,0.3)', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '20px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {previewUrl ? (
+                                            formData.image_url?.startsWith('v_') || (imageFile && imageFile.type.startsWith('video/')) ? (
+                                                <video src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls muted />
+                                            ) : (
                                                 <img 
-                                                    src={thumbFile ? URL.createObjectURL(thumbFile) : getImageUrl(formData.thumbnail_url)} 
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                                    alt="Thumbnail Preview"
+                                                    src={previewUrl} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                                    alt="Preview" 
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+no+Preview';
+                                                    }}
                                                 />
-                                            </div>
+                                            )
+                                        ) : (
+                                            <div style={{ textAlign: 'center', color: '#444' }}><ImagePlus size={48} style={{ marginBottom: '10px' }} /><p style={{ fontSize: '0.8rem', fontWeight: 700 }}>Clique para selecionar arquivo</p></div>
                                         )}
+                                        <input type="file" accept="image/*,video/*" onChange={handleImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                                        {isUploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" color="#D4AF37" /></div>}
                                     </div>
-                                )}
+                                </div>
 
-                                <div className="form-group">
-                                    <label>Vincular Produto (Opcional)</label>
-                                    <select
-                                        value={formData.product_id}
-                                        onChange={e => setFormData({ ...formData, product_id: e.target.value })}
-                                        style={{ width: '100%', padding: '0.8rem', background: '#333', border: '1px solid #444', color: 'white', borderRadius: '4px' }}
-                                    >
-                                        <option value="">-- Selecione um produto --</option>
-                                        {products.map(p => (
-                                            <option key={p.id} value={p.id}>{p.title}</option>
-                                        ))}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Vincular a Produto</label>
+                                    <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }}>
+                                        <option value="">Sem vínculo (apenas destaque)</option>
+                                        {products.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                                     </select>
                                 </div>
 
-                                <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label>Ordem</label>
-                                        <input
-                                            type="number"
-                                            value={formData.display_order}
-                                            onChange={e => setFormData({ ...formData, display_order: e.target.value })}
-                                        />
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Ordem</label>
+                                        <input type="number" value={formData.display_order} onChange={e => setFormData({ ...formData, display_order: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff', fontWeight: 900 }} />
                                     </div>
-                                    <div className="form-group" style={{ flex: 1 }}>
-                                        <label>Duração (seg)</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={formData.duration}
-                                            onChange={e => setFormData({ ...formData, duration: e.target.value })}
-                                        />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Duração (s)</label>
+                                        <input type="number" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff', fontWeight: 900 }} />
                                     </div>
                                 </div>
 
-                                <div className="form-group" style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '10px' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.active}
-                                            onChange={e => setFormData({ ...formData, active: e.target.checked })}
-                                        />
-                                        Ativo
+                                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>Ativar Banner</span>
+                                    <label className="switch">
+                                        <input type="checkbox" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} />
+                                        <span className="slider round"></span>
                                     </label>
                                 </div>
 
-                                <button type="submit" className="save-btn" disabled={isSaving}>
-                                    {isSaving ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={20} />
-                                            <span>Salvando...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={20} />
-                                            <span>{editingBanner ? 'Salvar Alterações' : 'Criar Banner'}</span>
-                                        </>
-                                    )}
+                                <button type="submit" disabled={isSaving || isUploading} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '18px', padding: '20px', fontWeight: 900, fontSize: '1.1rem', cursor: 'pointer', marginTop: '10px' }}>
+                                    {isSaving ? 'SALVANDO...' : 'SALVAR BANNER'}
                                 </button>
                             </form>
-                        </div>
+                        </motion.div>
                     </div>
                 )}
-            </div>
+            </AnimatePresence>
+
+            <style>{`
+                .banner-card-hover:hover { transform: translateY(-5px); border-color: rgba(212, 175, 55, 0.4) !important; box-shadow: 0 30px 60px rgba(0,0,0,0.5); background: rgba(255,255,255,0.05) !important; }
+            `}</style>
         </div>
     );
 };

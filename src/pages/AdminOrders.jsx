@@ -1,185 +1,193 @@
-
-import React, { useEffect, useState } from 'react';
-import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
-import { Query } from 'appwrite';
-import { Search, Filter, Calendar, User, Package, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { getOrders, updateOrderStatus } from '../services/dataService';
+import { ShoppingBag, Search, Clock, CheckCircle2, XCircle, ChevronDown, Package, User, Phone, MapPin, Calendar, Loader2 } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { showAlert } = useAlert();
-
-    // Filters
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [expandedOrder, setExpandedOrder] = useState(null);
+    const { showAlert } = useAlert();
 
-    useEffect(() => {
-        loadOrders();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
-    const loadOrders = async () => {
+    const loadData = async () => {
         setLoading(true);
         try {
-            const response = await databases.listDocuments(
-                DATABASE_ID,
-                COLLECTIONS.ORDERS,
-                [Query.orderDesc('$createdAt'), Query.limit(100)]
-            );
-            setOrders(response.documents);
-        } catch (error) {
-            console.error("Error loading orders:", error);
-            showAlert("Erro ao carregar pedidos", "error");
-        } finally {
-            setLoading(false);
-        }
+            const data = await getOrders();
+            setOrders(data.documents || []);
+        } catch (err) { showAlert('Erro ao carregar pedidos', 'error'); } finally { setLoading(false); }
     };
 
-    const filteredOrders = orders.filter(order => {
-        const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-        const matchesSearch = !search ||
-            (order.customer_name && order.customer_name.toLowerCase().includes(search.toLowerCase())) ||
-            (order.order_number && order.order_number.toString().includes(search));
+    const handleStatusUpdate = async (orderId, newStatus) => {
+        try {
+            await updateOrderStatus(orderId, newStatus);
+            setOrders(orders.map(o => o.$id === orderId ? { ...o, status: newStatus } : o));
+            showAlert('Status atualizado!', 'success', null, 3000);
+        } catch (err) { showAlert('Erro ao atualizar status', 'error'); }
+    };
+
+    const filteredOrders = orders.filter(o => {
+        const matchesStatus = filter === 'all' || o.status === filter;
+        const matchesSearch = (o.customer_name || '').toLowerCase().includes(search.toLowerCase()) || (o.$id || '').includes(search);
         return matchesStatus && matchesSearch;
     });
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    };
+    if (loading) return null;
 
     return (
-        <div className="admin-content-inner">
-            <div className="admin-section-header">
-                <h2>Gerenciar Pedidos</h2>
-            </div>
+        <div style={{ padding: '0 20px 40px' }}>
 
-            <div className="filters-bar">
-                <div className="search-input-wrapper" style={{ flex: 1 }}>
-                    <Search size={18} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por cliente ou nº pedido..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="filter-input-main"
-                    />
+            <div className="glass-card" style={{ padding: '30px', marginBottom: '30px' }}>
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 15px' }}>
+                        <Search size={20} color="#555" />
+                        <input placeholder="Buscar por cliente ou ID..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '15px 12px', width: '100%', outline: 'none' }} />
+                    </div>
+                    <select value={filter} onChange={e => setFilter(e.target.value)} style={{ background: 'rgba(0,0,0,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '0 20px', cursor: 'pointer', fontWeight: 700 }}>
+                        <option value="all">Todos os Status</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="processing">Em Processamento</option>
+                        <option value="completed">Concluídos</option>
+                        <option value="cancelled">Cancelados</option>
+                    </select>
                 </div>
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="filter-select-main"
-                >
-                    <option value="all">Todos os Status</option>
-                    <option value="pending">Pendente</option>
-                    <option value="processing">Em Processamento</option>
-                    <option value="completed">Concluído</option>
-                    <option value="cancelled">Cancelado</option>
-                    <option value="success">Sucesso</option>
-                </select>
             </div>
 
-            {loading ? (
-                <p style={{ textAlign: 'center', padding: '40px' }}>Carregando pedidos...</p>
-            ) : filteredOrders.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '40px', color: '#888' }}>Nenhum pedido encontrado.</p>
-            ) : (
-                <div className="orders-list">
-                    {filteredOrders.map(order => (
-                        <div key={order.$id} className={`order-card ${expandedOrder === order.$id ? 'expanded' : ''}`}
-                            style={{ background: '#1a1a1a', borderRadius: '8px', marginBottom: '15px', border: '1px solid #333', overflow: 'hidden' }}>
-                            <div className="order-summary-row" onClick={() => setExpandedOrder(expandedOrder === order.$id ? null : order.$id)}
-                                style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-                                <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Pedido</div>
-                                        <div style={{ fontWeight: 'bold', color: '#fff' }}>#{order.order_number || order.$id.slice(-6).toUpperCase()}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {filteredOrders.map(order => (
+                    <motion.div key={order.$id} layout className="glass-card" style={{ overflow: 'hidden', border: expandedOrder === order.$id ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.08)' }}>
+                        <div onClick={() => setExpandedOrder(expandedOrder === order.$id ? null : order.$id)} style={{ padding: '25px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '14px' }}><Package size={24} color="#D4AF37" /></div>
+                                <div>
+                                    <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>{order.customer_name || 'Cliente Final'}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#D4AF37', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {order.$id.startsWith('WD') ? `#${order.$id}` : `ID: ${order.$id.substring(0, 8).toUpperCase()}`} • <span style={{ color: '#555', fontSize: '0.75rem' }}>{new Date(order.$createdAt).toLocaleString()}</span>
                                     </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Cliente</div>
-                                        <div style={{ fontWeight: 'bold' }}>{order.customer_name}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Data/Hora</div>
-                                        <div style={{ fontSize: '0.9rem' }}>{formatDate(order.$createdAt)}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Total</div>
-                                        <div style={{ fontWeight: 'bold', color: '#fff' }}>R$ {parseFloat(order.total || 0).toFixed(2)}</div>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <span className={`badge status-${order.status || 'pending'}`}
-                                        style={{ padding: '5px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', backgroundColor: '#333' }}>
-                                        {String(order.status || 'pendente').toUpperCase()}
-                                    </span>
-                                    {expandedOrder === order.$id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
                             </div>
-
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '0.75rem', color: '#555', fontWeight: 800 }}>TOTAL</div>
+                                    <div style={{ fontWeight: 900, color: '#fff', fontSize: '1.2rem' }}>R$ {parseFloat(order.total || 0).toFixed(2)}</div>
+                                </div>
+                                <div style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 900, background: order.status === 'completed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)', color: order.status === 'completed' ? '#22c55e' : '#fbbf24' }}>
+                                    {order.status?.toUpperCase() || 'PENDENTE'}
+                                </div>
+                                <ChevronDown size={20} style={{ transform: expandedOrder === order.$id ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }} />
+                            </div>
+                        </div>
+                        <AnimatePresence>
                             {expandedOrder === order.$id && (
-                                <div className="order-details-expanded" style={{ padding: '20px', borderTop: '1px solid #333', background: '#121212' }}>
-                                    <div className="order-details-grid">
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)', padding: '30px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '30px' }}>
                                         <div>
-                                            <h4 style={{ color: '#fff', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <User size={16} /> Dados do Cliente
-                                            </h4>
-                                            <p><strong>Nome:</strong> {order.customer_name}</p>
-                                            <p><strong>WhatsApp:</strong> {order.customer_phone}</p>
-                                            <p><strong>Pagamento:</strong> {order.payment_method || 'A combinar'}</p>
+                                            <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ITENS DO PEDIDO</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {JSON.parse(order.items || '[]').map((item, idx) => (
+                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                                        <span>{item.quantity}x {item.title}</span>
+                                                        <span style={{ fontWeight: 800 }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div>
-                                            <h4 style={{ color: '#fff', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <Package size={16} /> Itens do Pedido
-                                            </h4>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                {(() => {
-                                                    let items = [];
-                                                    try {
-                                                        items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
-                                                    } catch (e) {
-                                                        console.error("Error parsing items:", e);
-                                                        items = [];
-                                                    }
-
-                                                    if (!Array.isArray(items) || items.length === 0) {
-                                                        return <p style={{ color: '#666' }}>Lista de itens não disponível</p>;
-                                                    }
-
-                                                    return items.map((item, idx) => (
-                                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #222', paddingBottom: '8px', alignItems: 'center' }}>
-                                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                                                <span style={{
-                                                                    background: '#333',
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '0.8rem',
-                                                                    color: '#fff',
-                                                                    fontWeight: 'bold'
-                                                                }}>
-                                                                    {item.quantity}x
-                                                                </span>
-                                                                <span style={{ fontSize: '0.9rem' }}>{item.title || item.name || 'Produto'}</span>
-                                                            </div>
-                                                            <span style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                                                R$ {parseFloat((item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                                                            </span>
-                                                        </div>
-                                                    ));
-                                                })()}
+                                            <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>DADOS DE ENTREGA</h4>
+                                            <div style={{ fontSize: '0.85rem', color: '#888', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                                    <Phone size={16} color="#D4AF37" style={{ marginTop: '2px' }} />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: 900, textTransform: 'uppercase' }}>WhatsApp</div>
+                                                        <div style={{ fontWeight: 700, color: '#fff' }}>{order.customer_phone || 'N/A'}</div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                                    <MapPin size={16} color="#D4AF37" style={{ marginTop: '2px' }} />
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px' }}>Endereço de Entrega</div>
+                                                        {(() => {
+                                                            try {
+                                                                const addr = JSON.parse(order.delivery_address);
+                                                                if (typeof addr !== 'object') throw new Error();
+                                                                return (
+                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                                                        <div style={{ gridColumn: 'span 2' }}>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>RUA</span>
+                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_street || addr.street || '---'}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>NÚMERO</span>
+                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_number || addr.number || 'S/N'}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>BAIRRO</span>
+                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_neighborhood || addr.neighborhood || '---'}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>CIDADE</span>
+                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_city || addr.city || '---'} - {addr.address_state || addr.state || ''}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>CEP</span>
+                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_cep || addr.cep || '---'}</span>
+                                                                        </div>
+                                                                        { (addr.address_complement || addr.complement) && (
+                                                                            <div style={{ gridColumn: 'span 2' }}>
+                                                                                <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>COMPLEMENTO</span>
+                                                                                <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_complement || addr.complement}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            } catch (e) {
+                                                                return <div style={{ fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>{order.delivery_address || 'Retirada na Loja'}</div>;
+                                                            }
+                                                        })()}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div style={{ marginTop: '15px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                                TOTAL: R$ {parseFloat(order.total || 0).toFixed(2)}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                            <div>
+                                                <h4 style={{ margin: '0 0 10px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ALTERAR STATUS</h4>
+                                                <select 
+                                                    value={order.status || 'pending'} 
+                                                    onChange={(e) => handleStatusUpdate(order.$id, e.target.value)}
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', outline: 'none' }}
+                                                >
+                                                    <option value="pending" style={{ background: '#111' }}>Recebido</option>
+                                                    <option value="processing" style={{ background: '#111' }}>Em Processamento</option>
+                                                    <option value="completed" style={{ background: '#111' }}>Concluído</option>
+                                                    <option value="cancelled" style={{ background: '#111' }}>Cancelado</option>
+                                                </select>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button 
+                                                    onClick={() => handleStatusUpdate(order.$id, 'completed')} 
+                                                    style={{ flex: 1, background: '#22c55e', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                                                >
+                                                    <CheckCircle2 size={14} /> CONCLUIR
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleStatusUpdate(order.$id, 'cancelled')} 
+                                                    style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                                                >
+                                                    <XCircle size={14} /> CANCELAR
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
-                        </div>
-                    ))}
-                </div>
-            )}
+                        </AnimatePresence>
+                    </motion.div>
+                ))}
+            </div>
         </div>
     );
 };

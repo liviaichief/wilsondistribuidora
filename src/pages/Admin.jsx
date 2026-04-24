@@ -1,53 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, saveProduct, deleteProduct, getSettings, updateSettings, getCategories, getUOMs } from '../services/dataService';
-import { storage, BUCKET_ID } from '../lib/appwrite';
+import { getProducts, saveProduct, deleteProduct, getCategories, getUOMs } from '../services/dataService';
+import { storage, BUCKET_ID, account } from '../lib/appwrite';
 import { ID, Permission, Role } from 'appwrite';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ShoppingBag, Search, Filter, ClipboardList, Settings, CheckCircle, Save, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search, Save, Loader2, Package, Eye, EyeOff, TrendingUp, Check } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
-import AdminBanners from './AdminBanners';
-import AdminOrders from './AdminOrders';
 import { useAlert } from '../context/AlertContext';
+import { maskCurrency, parseCurrency } from '../lib/utils';
 import imageCompression from 'browser-image-compression';
+import { motion, AnimatePresence } from 'framer-motion';
 import './Admin.css';
 
 const Admin = () => {
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
-    const [settingsData, setSettingsData] = useState({ whatsapp_number: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [isUploadingImage2, setIsUploadingImage2] = useState(false);
     const [previewUrl, setPreviewUrl] = useState('');
-
+    const [previewUrl2, setPreviewUrl2] = useState('');
     const { showAlert, showConfirm } = useAlert();
     const [categories, setCategories] = useState([]);
     const [uoms, setUoms] = useState([]);
+    const [originalProduct, setOriginalProduct] = useState(null);
 
-    // Filter State
-    const [filterTitle, setFilterTitle] = useState('');
-    const [filterCategory, setFilterCategory] = useState({ value: 'all', label: 'Todas' });
     const [categoryFilter, setCategoryFilter] = useState('all');
-    const [skuFilter, setSkuFilter] = useState('');
     const [titleFilter, setTitleFilter] = useState('');
 
-    // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
-        title: '',
-        description: '',
-        price: '',
-        category: '',
-        image: '',
-        is_promotion: false,
-        promo_price: '',
-        active: true
+        title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, video_url: ''
     });
-
-    const [editingPromoId, setEditingPromoId] = useState(null);
-    const [tempPromoPrice, setTempPromoPrice] = useState('');
-
-    // Zoom Modal State
-    const [zoomedImage, setZoomedImage] = useState(null);
 
     useEffect(() => {
         loadProducts();
@@ -55,719 +37,510 @@ const Admin = () => {
         loadUOMs();
     }, []);
 
-    const loadUOMs = async () => {
-        try {
-            const data = await getUOMs();
-            setUoms(data);
-            if (data.length > 0 && !currentProduct.uom) {
-                setCurrentProduct(prev => ({ ...prev, uom: data[0].name }));
-            }
-        } catch (e) {
-            console.error("Admin: Error loading UOMs:", e);
-        }
-    };
-
-    const loadCategories = async () => {
-        try {
-            const data = await getCategories();
-            setCategories(data);
-            if (data.length > 0 && !currentProduct.category) {
-                setCurrentProduct(prev => ({ ...prev, category: data[0].id }));
-            }
-        } catch (e) {
-            console.error("Admin: Error loading categories:", e);
-        }
-    };
-
-    const loadProducts = async (silent = false) => {
-        if (!silent) setLoading(true);
-        setError(null);
-
+    const loadUOMs = async () => { try { const data = await getUOMs(); setUoms(data); } catch (e) { console.error(e); } };
+    const loadCategories = async () => { try { const data = await getCategories(); setCategories(data); } catch (e) { console.error(e); } };
+    const loadProducts = async () => {
+        setLoading(true);
         try {
             const data = await getProducts();
-
-            if (data && data.documents) {
-                setProducts(data.documents);
-            } else {
-                setProducts([]);
-            }
-        } catch (err) {
-            console.error('Admin: Load error:', err);
-            setError(err.message);
-            showAlert('Não foi possível carregar os produtos.', 'error', 'Erro ao carregar');
-        } finally {
-            setLoading(false);
-        }
+            if (data && data.documents) setProducts(data.documents);
+        } catch (err) { showAlert('Erro ao carregar produtos.', 'error'); } finally { setLoading(false); }
     };
 
     const handleEdit = (product) => {
         setCurrentProduct(product);
+        setOriginalProduct(product);
         setPreviewUrl(getImageUrl(product.image));
+        setPreviewUrl2(getImageUrl(product.image_2));
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (product) => {
-        showConfirm(
-            'Tem certeza que deseja excluir este produto?',
-            async () => {
-                try {
-                    // First delete the file if it exists
-                    if (product.image) {
-                        try {
-                            await storage.deleteFile(BUCKET_ID, product.image);
-                        } catch (e) {
-                            console.warn('Failed to delete product image:', e);
-                        }
-                    }
-                    
-                    // Then delete the document
-                    await deleteProduct(product.id || product.$id);
-                    loadProducts();
-                    showAlert('O produto foi removido com sucesso.', 'success', 'Produto excluído');
-                } catch (err) {
-                    showAlert(err.message, 'error', 'Erro ao excluir');
-                }
-            },
-            'Excluir Produto',
-            'Sim, Excluir',
-            'Cancelar'
-        );
+    const handleDelete = (product) => {
+        showConfirm('Excluir este produto?', async () => {
+            try {
+                if (product.image) { try { await storage.deleteFile(BUCKET_ID, product.image); } catch (e) { } }
+                if (product.image_2) { try { await storage.deleteFile(BUCKET_ID, product.image_2); } catch (e) { } }
+                await deleteProduct(product.id || product.$id);
+                loadProducts();
+                showAlert('Produto removido.', 'success', null, 3000);
+            } catch (err) { showAlert(err.message, 'error'); }
+        });
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
         if (isSaving) return;
-
         setIsSaving(true);
         try {
             await saveProduct(currentProduct);
             setIsModalOpen(false);
-            setPreviewUrl('');
             loadProducts();
-            showAlert('Produto salvo com sucesso.', 'success', 'Sucesso!', 1000);
-        } catch (err) {
-            console.error('Save error:', err);
-            showAlert(err.message, 'error', 'Erro ao salvar');
-        } finally {
-            setIsSaving(false);
-        }
+            showAlert('Produto salvo!', 'success', null, 3000);
+        } catch (err) { showAlert(err.message, 'error'); } finally { setIsSaving(false); }
     };
 
     const openNewModal = () => {
-        setCurrentProduct({
-            title: '',
-            description: '',
-            price: '',
-            category: categories.length > 0 ? categories[0].id : '',
-            image: '',
-            uom: 'KG',
-            is_promotion: false,
-            promo_price: '',
-            active: true,
-            manage_stock: false,
-            stock_quantity: 0,
-            allow_backorder: false,
-            disable_on_zero_stock: false
-        });
+        const empty = {
+            title: '', description: '', price: '', category: categories.length > 0 ? categories[0].id : '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, video_url: ''
+        };
+        setCurrentProduct(empty);
+        setOriginalProduct(empty);
         setPreviewUrl('');
+        setPreviewUrl2('');
         setIsModalOpen(true);
     };
 
-    const handleTogglePromotion = async (product) => {
-        const newStatus = !product.is_promotion;
-        try {
-            await saveProduct({
-                ...product,
-                is_promotion: newStatus,
-                promo_price: newStatus ? (product.promo_price || product.price) : null
-            });
-            loadProducts(true);
-            if (newStatus) {
-                setEditingPromoId(product.id);
-                setTempPromoPrice(product.promo_price || product.price);
-            }
-        } catch (err) {
-            showAlert('Erro ao atualizar promoção: ' + err.message, 'error');
-        }
+    const checkChanges = () => {
+        if (!originalProduct) return false;
+        // Deep comparison of relevant fields
+        return (
+            currentProduct.title !== originalProduct.title ||
+            currentProduct.description !== originalProduct.description ||
+            currentProduct.price !== originalProduct.price ||
+            currentProduct.category !== originalProduct.category ||
+            currentProduct.image !== originalProduct.image ||
+            currentProduct.image_2 !== originalProduct.image_2 ||
+            currentProduct.uom !== originalProduct.uom ||
+            currentProduct.is_promotion !== originalProduct.is_promotion ||
+            currentProduct.promo_price !== originalProduct.promo_price ||
+            currentProduct.active !== originalProduct.active ||
+            currentProduct.manage_stock !== originalProduct.manage_stock ||
+            currentProduct.stock_quantity !== originalProduct.stock_quantity ||
+            currentProduct.allow_backorder !== originalProduct.allow_backorder ||
+            currentProduct.disable_on_zero_stock !== originalProduct.disable_on_zero_stock
+        );
     };
 
-    const handleSavePromoPrice = async (product) => {
-        try {
-            await saveProduct({
-                ...product,
-                promo_price: parseFloat(tempPromoPrice)
-            });
-            setEditingPromoId(null);
-            loadProducts(true);
-            showAlert('Preço promocional atualizado!', 'success', null, 1000);
-        } catch (err) {
-            showAlert('Erro ao salvar preço: ' + err.message, 'error');
-        }
-    };
-
-    // Filter Logic
-    const filteredProducts = products.filter(product => {
-        const matchSku = (product.sku || '').toLowerCase().includes(skuFilter.toLowerCase());
-        const matchTitle = (product.title || '').toLowerCase().includes(titleFilter.toLowerCase());
-        const matchCategory = categoryFilter === 'all' || (product.category || '').toLowerCase() === categoryFilter.toLowerCase();
-
-        return matchSku && matchTitle && matchCategory;
+    const filteredProducts = products.filter(p => {
+        const matchTitle = (p.title || '').toLowerCase().includes(titleFilter.toLowerCase());
+        const matchCategory = categoryFilter === 'all' || (p.category || '').toLowerCase() === categoryFilter.toLowerCase();
+        return matchTitle && matchCategory;
     });
 
     return (
-        <>
-            {/* Removed NotificationModal component */}
-
-            <div className="admin-content-inner">
-                    <div className="admin-section-header">
-                        <h2>Gerenciar Produtos</h2>
-                        <button onClick={openNewModal} className="add-btn">
-                            <Plus size={20} /> <span className="add-text">Novo Produto</span>
-                        </button>
+        <div style={{ padding: '0 20px 40px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', marginTop: '20px' }}>
+                <div style={{ marginBottom: '30px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 15px' }}>
+                        <Search size={20} color="#555" />
+                        <input placeholder="Buscar produtos..." value={titleFilter} onChange={e => setTitleFilter(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '15px 12px', width: '100%', outline: 'none' }} />
                     </div>
-
-                    {/* Filters Bar */}
-                    <div className="filters-bar">
-                        <input
-                            type="text"
-                            placeholder="Filtrar por Título..."
-                            value={titleFilter}
-                            onChange={(e) => setTitleFilter(e.target.value)}
-                            className="filter-input-main"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Filtrar por SKU..."
-                            value={skuFilter}
-                            onChange={(e) => setSkuFilter(e.target.value)}
-                            className="filter-input-main"
-                        />
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="filter-select-main"
-                        >
-                            <option value="all">Todas as Categorias</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                        {/* Clear Filters Button */}
-                        {(titleFilter || skuFilter || categoryFilter !== 'all') && (
-                            <button
-                                onClick={() => { setTitleFilter(''); setSkuFilter(''); setCategoryFilter('all'); }}
-                                style={{
-                                    padding: '8px 12px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #ff4444',
-                                    background: 'transparent',
-                                    color: '#ff4444',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Limpar
-                            </button>
-                        )}
-                    </div>
-
-                    {loading ? (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-                            Carregando produtos...
-                        </div>
-                    ) : error ? (
-                        <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(255,0,0,0.1)', borderRadius: '8px', color: '#ff6666' }}>
-                            <h3>Erro ao carregar</h3>
-                            <p>{error}</p>
-                            <button onClick={loadProducts} className="icon-btn" style={{ width: 'auto', padding: '0 20px', margin: '10px auto' }}>Tentar Novamente</button>
-                        </div>
-                    ) : products.length === 0 ? (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                            <h3>Nenhum produto encontrado.</h3>
-                            <p>Comece adicionando itens ao seu cardápio.</p>
-                            <button onClick={openNewModal} className="add-btn" style={{ margin: '20px auto' }}>
-                                <Plus size={20} /> Adicionar Primeiro Produto
-                            </button>
-                        </div>
-                    ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="products-table">
-                                <thead>
-                                    <tr>
-                                        <th>Imagem</th>
-                                        <th>SKU</th>
-                                        <th>Título</th>
-                                        <th>Categoria</th>
-                                        <th>Preço</th>
-                                        <th>Ativo</th>
-                                        <th>Promoção</th>
-                                        <th style={{ textAlign: 'center' }}>Estoque</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredProducts.length > 0 ? (
-                                        filteredProducts.map((item) => (
-                                            <tr key={item.id} onDoubleClick={() => handleEdit(item)} style={{ cursor: 'pointer' }} title="Clique duas vezes para editar">
-                                                <td onClick={(e) => { e.stopPropagation(); setZoomedImage(item); }}>
-                                                    {item.image ? (
-                                                        <img
-                                                            src={getImageUrl(item.image)}
-                                                            alt={item.title}
-                                                            className="thumb-img"
-                                                            style={{ cursor: 'zoom-in' }}
-                                                        />
-                                                    ) : (
-                                                        <div className="thumb-img" style={{ background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
-                                                    )}
-                                                </td>
-                                                <td style={{ fontSize: '0.8rem', color: '#888' }}>{item.sku || '-'}</td>
-                                                <td>{item.title}</td>
-                                                <td><span className="badge">{item.category}</span></td>
-                                                <td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(item.price || 0))}</td>
-                                                <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', minHeight: '42px' }}>
-                                                        <label className="switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={item.active !== false}
-                                                                onChange={async () => {
-                                                                    try {
-                                                                        await saveProduct({ ...item, active: !item.active });
-                                                                        loadProducts(true);
-                                                                        showAlert(item.active ? 'Produto desativado' : 'Produto ativado', 'success', null, 1000);
-                                                                    } catch (err) {
-                                                                        showAlert(err.message, 'error');
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <span className="slider round"></span>
-                                                        </label>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <label className="switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={item.is_promotion}
-                                                                onChange={() => handleTogglePromotion(item)}
-                                                            />
-                                                            <span className="slider round"></span>
-                                                        </label>
-                                                        {item.is_promotion && (
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                <span style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 'bold' }}>EDITAR VALOR:</span>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                                    <div style={{
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        backgroundColor: '#1a1a1a',
-                                                                        border: '1px solid #333',
-                                                                        borderRadius: '4px',
-                                                                        padding: '0 8px'
-                                                                    }}>
-                                                                        <span style={{ color: '#888', fontSize: '0.8rem', marginRight: '4px' }}>R$</span>
-                                                                        <input
-                                                                            type="number"
-                                                                            step="0.01"
-                                                                            value={editingPromoId === item.id ? tempPromoPrice : (item.promo_price || '')}
-                                                                            onChange={(e) => {
-                                                                                setEditingPromoId(item.id);
-                                                                                setTempPromoPrice(e.target.value);
-                                                                            }}
-                                                                            style={{
-                                                                                width: '70px',
-                                                                                padding: '4px 0',
-                                                                                fontSize: '0.9rem',
-                                                                                backgroundColor: 'transparent',
-                                                                                border: 'none',
-                                                                                color: '#fff',
-                                                                                outline: 'none'
-                                                                            }}
-                                                                            placeholder="Valor"
-                                                                        />
-                                                                    </div>
-                                                                    {editingPromoId === item.id && (
-                                                                        <button
-                                                                            onClick={() => handleSavePromoPrice(item)}
-                                                                            className="icon-btn"
-                                                                            style={{ width: '24px', height: '24px', background: 'var(--primary-color)', color: '#000' }}
-                                                                        >
-                                                                            <CheckCircle size={14} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    {item.manage_stock ? (
-                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                                                            <span style={{ 
-                                                                fontWeight: 'bold', 
-                                                                color: item.stock_quantity > 0 ? '#4ade80' : '#f87171',
-                                                                fontSize: '1rem' 
-                                                            }}>
-                                                                {item.stock_quantity}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span style={{ color: '#aaa', fontSize: '1.2rem'}} title="Estoque Infinito">∞</span>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <div className="actions">
-                                                        <button className="icon-btn edit" onClick={() => handleEdit(item)} title="Editar Produto">
-                                                            <Edit2 size={18} />
-                                                        </button>
-                                                        <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDelete(item); }} title="Excluir">
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                                                Nenhum produto encontrado com os filtros atuais.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '16px 20px', cursor: 'pointer', fontWeight: 700 }}>
+                        <option value="all">Todas as Categorias</option>
+                        {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
+                    </select>
+                    <button onClick={openNewModal} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '16px', padding: '16px 28px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', whiteSpace: 'nowrap' }}>
+                        <Plus size={20} strokeWidth={3} /> NOVO PRODUTO
+                    </button>
                 </div>
 
-            {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h2>{currentProduct.id ? 'Editar Produto' : 'Novo Produto'}</h2>
-                            <button className="close-btn" onClick={() => setIsModalOpen(false)}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSave} className="product-form">
-                            <div className="form-group">
-                                <label>Título</label>
-                                <input
-                                    required
-                                    value={currentProduct.title}
-                                    onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })}
-                                    placeholder="Ex: Picanha Angus"
-                                />
+                {loading ? (
+                    <div style={{ padding: '60px', textAlign: 'center' }}><Loader2 className="animate-spin" size={40} color="#D4AF37" /></div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
+                            <thead>
+                                <tr style={{ color: '#555', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    <th style={{ textAlign: 'left', padding: '0 20px' }}>PRODUTO</th>
+                                    <th style={{ textAlign: 'left', padding: '0 20px' }}>ID PRODUTO</th>
+                                    <th style={{ textAlign: 'left', padding: '0 20px' }}>CATEGORIA</th>
+                                    <th style={{ textAlign: 'left', padding: '0 20px' }}>PREÇO</th>
+                                    <th style={{ textAlign: 'center', padding: '0 20px' }}>ESTOQUE</th>
+                                    <th style={{ textAlign: 'center', padding: '0 20px' }}>STATUS</th>
+                                    <th style={{ textAlign: 'right', padding: '0 20px' }}>AÇÕES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredProducts.map((p) => (
+                                    <tr key={p.id || p.$id} style={{ background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }} onClick={() => handleEdit(p)}>
+                                        <td style={{ padding: '15px 20px', borderRadius: '18px 0 0 18px', border: '1px solid rgba(255,255,255,0.05)', borderRight: 'none' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                {p.image ? <img src={getImageUrl(p.image)} alt="" style={{ width: '50px', height: '50px', borderRadius: '12px', objectFit: 'cover' }} /> : <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#333" /></div>}
+                                                <div style={{ fontWeight: 800, color: '#fff' }}>{p.title}</div>
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <code style={{ fontSize: '0.75rem', color: '#D4AF37', background: 'rgba(212, 175, 55, 0.05)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.1)', fontFamily: 'monospace' }}>
+                                                {p.sku || (p.$id ? p.$id.substring(0, 6).toUpperCase() : '---')}
+                                            </code>
+                                        </td>
+                                        <td style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
+                                                {categories.find(c => c.id === p.category)?.name?.toUpperCase() || p.category?.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ fontWeight: 900, color: '#fff' }}>R$ {maskCurrency(p.price)}</div>
+                                            {p.is_promotion && <div style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 800 }}>PROMO: R$ {maskCurrency(p.promo_price)}</div>}
+                                        </td>
+                                        <td style={{ padding: '15px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ fontWeight: 900, color: (p.stock_quantity || 0) > 0 ? '#22c55e' : (p.manage_stock && !p.allow_backorder ? '#ef4444' : '#555') }}>
+                                                {p.manage_stock ? p.stock_quantity : '∞'}
+                                            </div>
+                                            {p.manage_stock && (
+                                                <div style={{ fontSize: '0.6rem', marginTop: '4px', fontWeight: 900, textTransform: 'uppercase' }}>
+                                                    {p.allow_backorder ? (
+                                                        <span style={{ color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>VENDER SEM ESTOQUE</span>
+                                                    ) : p.disable_on_zero_stock ? (
+                                                        <span style={{ color: '#f97316', background: 'rgba(249, 115, 22, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>AUTO-OCULTAR</span>
+                                                    ) : (
+                                                        <span style={{ color: '#555' }}>LIMITADO</span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td style={{ padding: '15px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            {p.active !== false ? (
+                                                p.manage_stock && p.stock_quantity <= 0 && p.disable_on_zero_stock ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                        <EyeOff size={16} color="#f97316" />
+                                                        <span style={{ fontSize: '0.55rem', color: '#f97316', fontWeight: 900 }}>SEM ESTOQUE</span>
+                                                    </div>
+                                                ) : (
+                                                    <Eye size={18} color="#22c55e" />
+                                                )
+                                            ) : (
+                                                <EyeOff size={18} color="#ef4444" />
+                                            )}
+                                        </td>
+                                        <td style={{ padding: '15px 20px', borderRadius: '0 18px 18px 0', border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                <button onClick={e => { e.stopPropagation(); handleEdit(p); }} style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}><Edit2 size={16} /></button>
+                                                <button onClick={e => { e.stopPropagation(); handleDelete(p); }} style={{ padding: '8px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '30px', maxWidth: '800px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+                            {/* Header Fixo */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+                                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, display: 'flex', alignItems: 'center' }}>
+                                    {currentProduct.id || currentProduct.$id ? 'Editar Produto' : 'Novo Produto'}
+                                    {currentProduct.sku && (
+                                        <span style={{ marginLeft: '12px', fontSize: '0.8rem', color: '#D4AF37', background: 'rgba(212, 175, 55, 0.1)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.2)', letterSpacing: '1px' }}>
+                                            {currentProduct.sku}
+                                        </span>
+                                    )}
+                                </h2>
+                                <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '8px', borderRadius: '12px', cursor: 'pointer' }}><X size={20} /></button>
                             </div>
-                            <div className="form-group">
-                                <label>Descrição</label>
-                                <textarea
-                                    required
-                                    rows="3"
-                                    value={currentProduct.description}
-                                    onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })}
-                                    placeholder="Detalhes do produto..."
-                                />
-                            </div>
-                                          <div className="form-group">
-                                <label>Imagem do Produto</label>
-                                <label className="custom-file-upload">
-                                    <ImageIcon size={32} color="#a855f7" />
-                                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: 600 }}>Escolher Imagem</span>
-                                    <span style={{ color: '#666', fontSize: '0.8rem' }}>PNG, JPG ou WEBP (Max 800px)</span>
-                                    <input
-                                        type="file"
-                                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                                        style={{ display: 'none' }}
-                                        onChange={async (e) => {
-                                            const file = e.target.files[0];
-                                            if (file) {
-                                                setIsUploadingImage(true);
-                                                try {
-                                                    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                                                    if (!validTypes.includes(file.type)) throw new Error('Apenas JPG/PNG/WEBP.');
 
-                                                    const localUrl = URL.createObjectURL(file);
-                                                    setPreviewUrl(localUrl);
+                            {/* Conteúdo Rolável */}
+                            <div style={{ overflowY: 'auto', padding: '30px', flexGrow: 1 }}>
+                                <form onSubmit={handleSave} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Imagem do Produto</span>
+                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                                {previewUrl ? <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px', marginBottom: '20px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setCurrentProduct({ ...currentProduct, image: '' }); setPreviewUrl(''); }}
+                                                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                                    title="Remover Imagem Principal"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                                <label style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontWeight: 800, fontSize: '0.85rem', transition: 'all 0.2s' }}>
+                                                    {isUploadingImage ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={18} />}
+                                                    {isUploadingImage ? 'ENVIANDO...' : 'FOTO PRINCIPAL'}
+                                                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setIsUploadingImage(true);
+                                                            try {
+                                                                const localUrl = URL.createObjectURL(file);
+                                                                setPreviewUrl(localUrl);
+                                                                const compressed = await imageCompression(file, { maxSizeMB: 0.15, maxWidthOrHeight: 1024 });
+                                                                const permissions = [Permission.read(Role.any())];
+                                                                
+                                                                // Se o admin estiver logado, garante que ele pode gerenciar o arquivo
+                                                                try {
+                                                                    const session = await account.get();
+                                                                    permissions.push(Permission.write(Role.user(session.$id)));
+                                                                    permissions.push(Permission.update(Role.user(session.$id)));
+                                                                    permissions.push(Permission.delete(Role.user(session.$id)));
+                                                                } catch (e) {}
 
-                                                    const options = {
-                                                        maxSizeMB: 0.15, 
-                                                        maxWidthOrHeight: 1024,
-                                                        useWebWorker: true,
-                                                        initialQuality: 0.7
-                                                    };
-                                                    
-                                                    console.log('Admin: Iniciando compressão da imagem...', file.name);
-                                                    const compressedBlob = await imageCompression(file, options);
-                                                    const compressedFile = new File([compressedBlob], file.name, { type: file.type });
-                                                    console.log('Admin: Imagem comprimida:', (compressedFile.size / 1024).toFixed(2), 'KB');
-
-                                                    console.log('Admin: Enviando para o Storage (Bucket:', BUCKET_ID, ')...');
-                                                    const result = await storage.createFile(
-                                                        BUCKET_ID,
-                                                        ID.unique(),
-                                                        compressedFile,
-                                                        [
-                                                            Permission.read(Role.any()),
-                                                            Permission.write(Role.users()),
-                                                            Permission.update(Role.users()),
-                                                            Permission.delete(Role.users())
-                                                        ]
-                                                    );
-                                                    console.log('Admin: Upload concluído com sucesso! ID:', result.$id);
-
-                                                    if (currentProduct.image && currentProduct.image !== result.$id) {
-                                                        try {
-                                                            await storage.deleteFile(BUCKET_ID, currentProduct.image);
-                                                        } catch (e) {
-                                                            console.warn('Admin: Erro ao deletar imagem antiga (não crítico):', e);
+                                                                const res = await storage.createFile(BUCKET_ID, ID.unique(), new File([compressed], file.name), permissions);
+                                                                setCurrentProduct({ ...currentProduct, image: res.$id });
+                                                            } catch (err) { showAlert('Erro no upload', 'error'); } finally { setIsUploadingImage(false); }
                                                         }
-                                                    }
+                                                    }} />
+                                                </label>
+                                            </div>
 
-                                                    setCurrentProduct(prev => ({ ...prev, image: result.$id }));
-                                                } catch (err) {
-                                                    console.error('Admin: ERRO CRÍTICO NO UPLOAD:', err);
-                                                    showAlert('Erro no upload: ' + (err.response?.message || err.message), 'error');
-                                                } finally {
-                                                    setIsUploadingImage(false);
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </label>
-                                
-                                {previewUrl && (
-                                    <div className="image-preview-container">
-                                        <img src={previewUrl} alt="Preview" />
-                                        <div className="preview-overlay">
-                                            <span className="preview-badge">Visualização da Distribuidora</span>
+                                            {/* SEGUNDA FOTO */}
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Segunda Imagem (Carrossel)</span>
+                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginTop: '6px' }}>
+                                                {previewUrl2 ? <img src={previewUrl2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setCurrentProduct({ ...currentProduct, image_2: '' }); setPreviewUrl2(''); }}
+                                                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                                    title="Remover Segunda Imagem"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                                <label style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontWeight: 800, fontSize: '0.85rem', transition: 'all 0.2s' }}>
+                                                    {isUploadingImage2 ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={18} />}
+                                                    {isUploadingImage2 ? 'ENVIANDO...' : 'SEGUNDA FOTO'}
+                                                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setIsUploadingImage2(true);
+                                                            try {
+                                                                const localUrl = URL.createObjectURL(file);
+                                                                setPreviewUrl2(localUrl);
+                                                                const compressed = await imageCompression(file, { maxSizeMB: 0.15, maxWidthOrHeight: 1024 });
+                                                                const permissions = [Permission.read(Role.any())];
+                                                                
+                                                                // Se o admin estiver logado, garante que ele pode gerenciar o arquivo
+                                                                try {
+                                                                    const session = await account.get();
+                                                                    permissions.push(Permission.write(Role.user(session.$id)));
+                                                                    permissions.push(Permission.update(Role.user(session.$id)));
+                                                                    permissions.push(Permission.delete(Role.user(session.$id)));
+                                                                } catch (e) {}
+
+                                                                const res = await storage.createFile(BUCKET_ID, ID.unique(), new File([compressed], file.name), permissions);
+                                                                setCurrentProduct({ ...currentProduct, image_2: res.$id });
+                                                            } catch (err) { showAlert('Erro no upload', 'error'); } finally { setIsUploadingImage2(false); }
+                                                        }
+                                                    }} />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Disponibilidade</span>
                                             <button
                                                 type="button"
-                                                className="remove-image-btn"
-                                                onClick={() => {
-                                                    setPreviewUrl('');
-                                                    setCurrentProduct(prev => ({ ...prev, image: '' }));
-                                                }}
-                                                title="Remover Imagem"
+                                                onClick={() => setCurrentProduct({ ...currentProduct, active: !currentProduct.active })}
+                                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', background: currentProduct.active !== false ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', borderRadius: '15px', border: '1px solid', borderColor: currentProduct.active !== false ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)', cursor: 'pointer', transition: 'all 0.2s' }}
                                             >
-                                                <Trash2 size={18} />
+                                                <span style={{ fontWeight: 900, fontSize: '0.85rem', color: currentProduct.active !== false ? '#22c55e' : '#ef4444' }}>
+                                                    {currentProduct.active !== false ? 'VISÍVEL NA LOJA' : 'OCULTO NA LOJA'}
+                                                </span>
+                                                {currentProduct.active !== false ? <Eye size={20} color="#22c55e" /> : <EyeOff size={20} color="#ef4444" />}
                                             </button>
                                         </div>
                                     </div>
-                                )}
-                            </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div className="form-group">
-                                    <label>Categoria</label>
-                                    <select
-                                        value={currentProduct.category}
-                                        onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })}
-                                    >
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Preço (R$)</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#a855f7', fontWeight: 'bold' }}>R$</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required
-                                            value={currentProduct.price}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, price: e.target.value })}
-                                            style={{ paddingLeft: '40px' }}
-                                            placeholder="0,00"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Informações Básicas</span>
+                                            <input placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff' }} />
+                                            <textarea placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
+                                        </div>
 
-                            <div className="form-group">
-                                <label>Unidade de Medida</label>
-                                <select
-                                    value={currentProduct.uom || (uoms.length > 0 ? uoms[0].name : 'KG')}
-                                    onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        background: '#1a1a1a',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        borderRadius: '8px',
-                                        color: '#fff',
-                                        fontSize: '1rem',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    {uoms.filter(u => u.active !== false).map(u => (
-                                        <option key={u.id} value={u.name} style={{ background: '#1a1a1a', color: '#fff' }}>
-                                            {u.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            {/* Stock Management Section */}
-                            <div className="form-group" style={{ 
-                                background: 'rgba(34, 211, 238, 0.05)', 
-                                padding: '15px 20px', 
-                                borderRadius: '15px', 
-                                border: '1px solid rgba(34, 211, 238, 0.1)',
-                                marginTop: '15px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: currentProduct.manage_stock ? '15px' : '0' }}>
-                                    <span style={{ color: '#fff', fontWeight: 600 }}>Gerenciar Estoque deste Produto?</span>
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={currentProduct.manage_stock}
-                                            onChange={e => setCurrentProduct({ ...currentProduct, manage_stock: e.target.checked })}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </div>
-                                
-                                {currentProduct.manage_stock && (
-                                    <div style={{ display: 'flex', gap: '20px', paddingTop: '15px', borderTop: '1px solid rgba(34, 211, 238, 0.1)', flexWrap: 'wrap' }}>
-                                        <div className="form-group" style={{ marginBottom: 0, width: '120px' }}>
-                                            <label style={{ color: '#aaa', fontSize: '0.9rem' }}>Quantidade</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={currentProduct.stock_quantity !== undefined ? currentProduct.stock_quantity : 0}
-                                                onChange={e => setCurrentProduct({ ...currentProduct, stock_quantity: parseInt(e.target.value) || 0 })}
-                                                placeholder="0"
-                                                style={{ border: '1px solid rgba(34, 211, 238, 0.3)', width: '100%' }}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>URL do Vídeo (Youtube/Shorts/TikTok)</span>
+                                            <input 
+                                                type="text" 
+                                                placeholder="https://..." 
+                                                value={currentProduct.video_url || ''} 
+                                                onChange={e => setCurrentProduct({ ...currentProduct, video_url: e.target.value })} 
+                                                style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none' }} 
                                             />
                                         </div>
-                                        <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', flex: 1, gap: '10px', minWidth: '250px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '8px' }}>
-                                                <label style={{ marginBottom: 0, color: '#ddd', fontSize: '0.9rem', cursor: 'pointer', flex: 1 }} htmlFor="allow_backorder">
-                                                    1 - Vender sem estoque
-                                                </label>
-                                                <input
-                                                    id="allow_backorder"
-                                                    type="checkbox"
-                                                    checked={currentProduct.allow_backorder || false}
-                                                    onChange={e => setCurrentProduct({ ...currentProduct, allow_backorder: e.target.checked, disable_on_zero_stock: e.target.checked ? false : currentProduct.disable_on_zero_stock })}
-                                                    style={{ width: '20px', height: '20px', cursor: 'pointer', margin: 0 }}
-                                                />
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Categoria</span>
+                                                <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
+                                                    {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
+                                                </select>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '10px 15px', borderRadius: '8px' }}>
-                                                <label style={{ marginBottom: 0, color: '#ddd', fontSize: '0.9rem', cursor: 'pointer', flex: 1 }} htmlFor="disable_on_zero_stock">
-                                                    2 - Desabilitar produto ao zerar
-                                                </label>
-                                                <input
-                                                    id="disable_on_zero_stock"
-                                                    type="checkbox"
-                                                    checked={currentProduct.disable_on_zero_stock || false}
-                                                    onChange={e => setCurrentProduct({ ...currentProduct, disable_on_zero_stock: e.target.checked, allow_backorder: e.target.checked ? false : currentProduct.allow_backorder })}
-                                                    style={{ width: '20px', height: '20px', cursor: 'pointer', margin: 0 }}
-                                                />
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Unidade</span>
+                                                <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
+                                                    {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
+                                                </select>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
 
-                            <div className="form-group" style={{ 
-                                background: 'rgba(168, 85, 247, 0.05)', 
-                                padding: '15px 20px', 
-                                borderRadius: '15px', 
-                                border: '1px solid rgba(168, 85, 247, 0.1)',
-                                marginTop: '15px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ display: 'block', marginBottom: '8px' }}>Preço Promocional (R$)</label>
-                                        <div style={{ position: 'relative', opacity: currentProduct.is_promotion ? 1 : 0.5, transition: 'opacity 0.3s' }}>
-                                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981', fontWeight: 'bold' }}>R$</span>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                required={currentProduct.is_promotion}
-                                                value={currentProduct.promo_price || ''}
-                                                onChange={e => setCurrentProduct({ ...currentProduct, promo_price: e.target.value })}
-                                                placeholder="0,00"
-                                                style={{ paddingLeft: '40px', borderColor: 'rgba(16, 185, 129, 0.3)', width: '100%', margin: 0, background: 'rgba(0,0,0,0.2)' }}
-                                                disabled={!currentProduct.is_promotion}
-                                            />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="0,00"
+                                                    value={maskCurrency(currentProduct.price)}
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, price: parseCurrency(e.target.value) })}
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px 15px 15px 45px', color: '#fff', fontWeight: 900, fontSize: '1.1rem', outline: 'none' }}
+                                                />
+                                                <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
+                                            </div>
                                         </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo (Opcional - p/ Lucro Real)</span>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="0,00"
+                                                    value={maskCurrency(currentProduct.cost_price || 0)}
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, cost_price: parseCurrency(e.target.value) })}
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px 10px 10px 35px', color: '#888', fontWeight: 700, fontSize: '0.9rem', outline: 'none' }}
+                                                />
+                                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', fontWeight: 900 }}>R$</span>
+                                            </div>
+                                        </div>
+
+                                        {/* SEÇÃO DE PROMOÇÃO */}
+                                        <div style={{ padding: '15px', background: 'rgba(147, 51, 234, 0.05)', borderRadius: '20px', border: '1px solid rgba(147, 51, 234, 0.1)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', opacity: currentProduct.is_promotion ? 1 : 0.5, transition: 'all 0.3s' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#9333ea', textTransform: 'uppercase' }}>Preço Promocional</span>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="0,00"
+                                                            readOnly={!currentProduct.is_promotion}
+                                                            value={maskCurrency(currentProduct.promo_price)}
+                                                            onChange={e => setCurrentProduct({ ...currentProduct, promo_price: parseCurrency(e.target.value) })}
+                                                            style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px 10px 10px 35px', color: '#fff', fontWeight: 900, fontSize: '0.9rem', outline: 'none', cursor: currentProduct.is_promotion ? 'text' : 'not-allowed' }}
+                                                        />
+                                                        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9333ea', fontWeight: 900, fontSize: '0.8rem' }}>R$</span>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ marginLeft: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#9333ea', textTransform: 'uppercase' }}>Ativar promoção</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCurrentProduct({ ...currentProduct, is_promotion: !currentProduct.is_promotion })}
+                                                        style={{ width: '44px', height: '22px', background: currentProduct.is_promotion ? '#9333ea' : '#333', borderRadius: '11px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s', marginTop: '5px' }}
+                                                    >
+                                                        <div style={{ width: '16px', height: '16px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.is_promotion ? '25px' : '3px', transition: 'all 0.3s' }} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* SEÇÃO DE ESTOQUE */}
+                                        <div style={{ padding: '15px', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '20px', border: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#D4AF37', textTransform: 'uppercase' }}>Gerenciar Estoque</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentProduct({ ...currentProduct, manage_stock: !currentProduct.manage_stock })}
+                                                    style={{ width: '44px', height: '22px', background: currentProduct.manage_stock ? '#D4AF37' : '#333', borderRadius: '11px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                >
+                                                    <div style={{ width: '16px', height: '16px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.manage_stock ? '25px' : '3px', transition: 'all 0.3s' }} />
+                                                </button>
+                                            </div>
+
+                                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px', opacity: currentProduct.manage_stock ? 1 : 0.3, pointerEvents: currentProduct.manage_stock ? 'all' : 'none', transition: 'all 0.3s' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888' }}>Qtd</span>
+                                                    <input
+                                                        type="number"
+                                                        value={currentProduct.stock_quantity}
+                                                        placeholder="0"
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val === '') {
+                                                                setCurrentProduct({ ...currentProduct, stock_quantity: 0 });
+                                                                return;
+                                                            }
+                                                            let num = parseInt(val);
+                                                            if (isNaN(num)) num = 0;
+                                                            if (num < 0) num = 0;
+                                                            // O limite de 3 dígitos é aplicado aqui de forma segura
+                                                            if (num > 999) return;
+                                                            setCurrentProduct({ ...currentProduct, stock_quantity: num });
+                                                        }}
+                                                        onFocus={e => e.target.select()}
+                                                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', color: '#fff', fontWeight: 900, textAlign: 'center', fontSize: '1rem' }}
+                                                    />
+                                                </div>
+
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newVal = !currentProduct.allow_backorder;
+                                                            setCurrentProduct({
+                                                                ...currentProduct,
+                                                                allow_backorder: newVal,
+                                                                disable_on_zero_stock: newVal ? false : currentProduct.disable_on_zero_stock
+                                                            });
+                                                        }}
+                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', cursor: 'pointer', color: '#fff' }}
+                                                    >
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Vender sem estoque</span>
+                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #fff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentProduct.allow_backorder ? '#fff' : 'transparent' }}>
+                                                            {currentProduct.allow_backorder && <Check size={12} color="#000" />}
+                                                        </div>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newVal = !currentProduct.disable_on_zero_stock;
+                                                            setCurrentProduct({
+                                                                ...currentProduct,
+                                                                disable_on_zero_stock: newVal,
+                                                                allow_backorder: newVal ? false : currentProduct.allow_backorder
+                                                            });
+                                                        }}
+                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', cursor: 'pointer', color: '#fff' }}
+                                                    >
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Desativar ao zerar</span>
+                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #fff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentProduct.disable_on_zero_stock ? '#fff' : 'transparent' }}>
+                                                            {currentProduct.disable_on_zero_stock && <Check size={12} color="#000" />}
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            type="submit" 
+                                            disabled={isSaving || isUploadingImage || isUploadingImage2 || !checkChanges()} 
+                                            style={{ 
+                                                width: '100%', 
+                                                background: (isSaving || isUploadingImage || isUploadingImage2 || !checkChanges()) ? '#333' : '#D4AF37', 
+                                                color: (isSaving || isUploadingImage || isUploadingImage2 || !checkChanges()) ? '#666' : '#000', 
+                                                border: 'none', 
+                                                borderRadius: '14px', 
+                                                padding: '16px', 
+                                                fontWeight: 900, 
+                                                cursor: (isSaving || isUploadingImage || isUploadingImage2 || !checkChanges()) ? 'not-allowed' : 'pointer', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                marginTop: '10px',
+                                                transition: 'all 0.3s'
+                                            }}
+                                        >
+                                            {isSaving ? 'SALVANDO...' : 'SALVAR PRODUTO'}
+                                        </button>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                        <label style={{ fontSize: '0.85rem', marginBottom: '8px', color: '#ccc' }}>Ativar Promoção</label>
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={currentProduct.is_promotion}
-                                                onChange={e => setCurrentProduct({ ...currentProduct, is_promotion: e.target.checked })}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </div>
-                                </div>
+                                </form>
                             </div>
-
-                            <button
-                                type="submit"
-                                className="save-btn"
-                                disabled={isSaving || isUploadingImage}
-                                style={{ width: '100%', justifyContent: 'center', marginTop: '20px', opacity: (isSaving || isUploadingImage) ? 0.7 : 1 }}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={20} />
-                                        <span>Salvando...</span>
-                                    </>
-                                ) : isUploadingImage ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={20} />
-                                        <span>Enviando Imagem...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save size={20} />
-                                        <span>Salvar Produto</span>
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-
-            {/* Image Zoom Modal */}
-            {zoomedImage && (
-                <div className="modal-overlay" onClick={() => setZoomedImage(null)} style={{ zIndex: 1000000 }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'transparent', border: 'none', boxShadow: 'none', maxWidth: '90vw', maxHeight: '90vh' }}>
-                        <div className="modal-header" style={{ position: 'absolute', right: '-10px', top: '-10px', zIndex: 1, padding: 0 }}>
-                            <button className="close-btn" onClick={() => setZoomedImage(null)} style={{ background: '#fff', color: '#000', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <img
-                            src={getImageUrl(zoomedImage.image)}
-                            alt={zoomedImage.title}
-                            style={{
-                                width: '100%',
-                                height: 'auto',
-                                maxHeight: '85vh',
-                                objectFit: 'contain',
-                                borderRadius: '8px',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
-                            }}
-                        />
-                        <div style={{ textAlign: 'center', marginTop: '15px', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                            {zoomedImage.title}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 

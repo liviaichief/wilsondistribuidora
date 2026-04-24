@@ -5,10 +5,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAlert } from '../../context/AlertContext';
 import { createOrder, getSettings, sendWhatsAppMessage } from '../../services/dataService';
-import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Banknote, Landmark, QrCode, Loader2 } from 'lucide-react'; // Added icons
+import { X, Trash2, ShoppingBag, Plus, Minus, CreditCard, Box, ChevronRight, User, Loader2 } from 'lucide-react'; // Added icons
 import { getImageUrl } from '../../lib/imageUtils';
 import { formatTitleCase } from '../../lib/utils';
+import { fetchGoogleReviews } from '../../services/googleService';
 import './CartSidebar.css';
+
+// Load Google Maps Script
+const loadGoogleMapsScript = (apiKey) => {
+    if (window.google) return;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+};
 
 const CartSidebar = () => {
     const {
@@ -33,12 +44,19 @@ const CartSidebar = () => {
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
     const [address, setAddress] = useState({
-        cep: '', street: '', neighborhood: '', city: '', state: '', number: '', complement: ''
+        cep: '', street: '', neighborhood: '', city: '', state: '', number: '', complement: '',
+        lat: null, lng: null
     });
     const [isFetchingCep, setIsFetchingCep] = useState(false);
+    const [googleConfig, setGoogleConfig] = useState(null);
+    const [deliveryDistance, setDeliveryDistance] = useState(null); // in KM
+    const [deliveryFee, setDeliveryFee] = useState(0);
+    const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
 
     const { showAlert } = useAlert(); // Moved up
     const { addOrder } = useOrder(); // Moved up
+    const [useCashback, setUseCashback] = useState(false);
+    const [cashbackAvailable, setCashbackAvailable] = useState(0);
 
     // Helper to format phone
     const formatPhone = (val) => {
@@ -93,13 +111,98 @@ const CartSidebar = () => {
     React.useEffect(() => {
         if (isCartOpen) {
             if (user) refreshProfile();
-            // Fetch system settings for WhatsApp number
+            // Fetch system settings for WhatsApp and Google
             getSettings().then(data => {
+                setGoogleConfig(data);
                 if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
                 if (data.whatsapp_message) setWhatsappMessage(data.whatsapp_message);
+                if (data.google_api_key) loadGoogleMapsScript(data.google_api_key);
             });
         }
     }, [isCartOpen, user]);
+
+    // Initialize Autocomplete
+    const autocompleteRef = React.useRef(null);
+    const initAutocomplete = () => {
+        if (!window.google || !autocompleteRef.current) return;
+        const autocomplete = new window.google.maps.places.Autocomplete(autocompleteRef.current, {
+            componentRestrictions: { country: 'BR' },
+            fields: ['address_components', 'geometry', 'formatted_address']
+        });
+
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+
+            const components = place.address_components;
+            const find = (type) => components.find(c => c.types.includes(type))?.long_name || '';
+
+            const newAddress = {
+                ...address,
+                street: find('route'),
+                neighborhood: find('sublocality_level_1') || find('neighborhood'),
+                city: find('administrative_area_level_2') || find('locality'),
+                state: find('administrative_area_level_1'),
+                cep: find('postal_code'),
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+            };
+            setAddress(newAddress);
+            calculateShipping(place.geometry.location.lat(), place.geometry.location.lng());
+        });
+    };
+
+    React.useEffect(() => {
+        if (deliveryMode === 'delivery' && googleConfig?.google_api_key) {
+            setTimeout(initAutocomplete, 500);
+        }
+    }, [deliveryMode, googleConfig]);
+
+    const calculateShipping = async (destLat, destLng) => {
+        if (!googleConfig?.google_api_key || !googleConfig?.store_latitude) return;
+        
+        setIsCalculatingDistance(true);
+        try {
+            const origin = new window.google.maps.LatLng(googleConfig.store_latitude, googleConfig.store_longitude);
+            const destination = new window.google.maps.LatLng(destLat, destLng);
+            const service = new window.google.maps.DistanceMatrixService();
+
+            service.getDistanceMatrix({
+                origins: [origin],
+                destinations: [destination],
+                travelMode: 'DRIVING',
+            }, (response, status) => {
+                if (status === 'OK' && response.rows[0]?.elements[0]?.status === 'OK') {
+                    const distance = response.rows[0].elements[0].distance.value / 1000; // to KM
+                    setDeliveryDistance(distance);
+                    
+                    // FREIGHT LOGIC
+                    let fee = 0;
+                    const freeRadius = parseFloat(googleConfig.shipping_free_radius || 5);
+                    const fixedRadius = parseFloat(googleConfig.shipping_fixed_radius_max || 15);
+                    const fixedRate = parseFloat(googleConfig.shipping_fixed_rate || 15);
+                    const perKmRate = parseFloat(googleConfig.shipping_per_km_rate || 2.5);
+
+                    if (distance <= freeRadius) {
+                        fee = 0;
+                    } else if (distance <= fixedRadius) {
+                        fee = fixedRate;
+                    } else {
+                        const extraKm = distance - fixedRadius;
+                        fee = fixedRate + (extraKm * perKmRate);
+                    }
+                    setDeliveryFee(fee);
+                } else {
+                    console.warn("Distance Matrix status not OK, using fixed fee fallback.");
+                    setDeliveryFee(parseFloat(googleConfig.shipping_fixed_rate || 15));
+                }
+                setIsCalculatingDistance(false);
+            });
+        } catch (e) {
+            console.error("Distance Matrix error:", e);
+            setIsCalculatingDistance(false);
+        }
+    };
 
     React.useEffect(() => {
         if (user) {
@@ -109,6 +212,11 @@ const CartSidebar = () => {
 
             if (nameToUse) setCustomerName(nameToUse);
             if (rawPhone) setCustomerPhone(formatPhone(rawPhone));
+
+            // Set cashback balance from profile
+            if (profile?.cashback_balance) {
+                setCashbackAvailable(parseFloat(profile.cashback_balance));
+            }
 
             // Auto fill address from profile if it exists
             if (profile?.address_cep) {
@@ -128,6 +236,43 @@ const CartSidebar = () => {
     const handlePhoneChange = (e) => {
         setCustomerPhone(formatPhone(e.target.value));
     };
+
+    // Auto-sync function to save data in background
+    const handleAutoSync = async (field, value) => {
+        if (!user) return;
+        
+        const updates = {};
+        if (field === 'name') {
+            const parts = value.split(' ');
+            updates.first_name = parts[0] || '';
+            updates.last_name = parts.slice(1).join(' ') || '';
+            updates.full_name = value;
+        } else if (field === 'phone') {
+            updates.whatsapp = value;
+        } else if (field.startsWith('addr_')) {
+            const addrField = field.replace('addr_', 'address_');
+            updates[addrField] = value;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            try {
+                await updateProfile(updates);
+            } catch (e) {
+                console.warn("Background sync failed:", e);
+            }
+        }
+    };
+
+    // [NEW] Clear form data when user logs out
+    React.useEffect(() => {
+        if (!user) {
+            setCustomerName('');
+            setCustomerPhone('');
+            setAddress({
+                cep: '', street: '', neighborhood: '', city: '', state: '', number: '', complement: ''
+            });
+        }
+    }, [user]);
 
     // [NEW] Auto-open checkout form if guest mode is enabled while cart is open
     React.useEffect(() => {
@@ -179,11 +324,17 @@ const CartSidebar = () => {
             customer_name: customerName,
             customer_phone: customerPhone,
             paymentMethod: 'A combinar', // Default value since selection is removed
-            total: cartTotal,
+            total: cartTotal + deliveryFee,
+            subtotal: cartTotal,
+            delivery_fee: deliveryFee,
+            distance_km: deliveryDistance,
             user_id: user ? user.id : null,
             items: cartItems, // Sending array directly to backend function
             delivery_mode: deliveryMode,
-            delivery_address: deliveryMode === 'delivery' ? address : null
+            delivery_address: deliveryMode === 'delivery' ? address : null,
+            cashback_applied: useCashback ? cashbackAvailable : 0,
+            cashback_to_earn: (cartTotal * (parseFloat(googleConfig?.cashback_percentage) || 2)) / 100,
+            status: 'Pendente' // Novo: Status inicial do rastreio
         };
 
         // 0. Update User Profile if phone changed (Sync logic)
@@ -285,10 +436,11 @@ const CartSidebar = () => {
 
         const message = `${headerText}\n\n` +
             `*Itens do Pedido:*\n${itemsList}\n\n` +
-            `*Dados do Cliente:*\n` +
             `Nome: ${customerName}\n` +
             `WhatsApp: ${customerPhone}\n\n` +
-            `*Entrega/Retirada:*\n${addressText}`;
+            `*Entrega/Retirada:*\n${addressText}\n` +
+            (deliveryMode === 'delivery' ? `Distância: ${deliveryDistance?.toFixed(1)} km\nFrete: R$ ${deliveryFee.toFixed(2)}\n` : '') +
+            `*TOTAL: R$ ${(cartTotal + deliveryFee).toFixed(2)}*`;
 
         const phoneNumber = String(whatsappNumber).replace(/\D/g, '');
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
@@ -331,196 +483,218 @@ const CartSidebar = () => {
 
     return (
         <>
-            <div className="cart-backdrop" onClick={toggleCart}></div>
+            <div className={`cart-backdrop ${isCartOpen ? 'visible' : ''}`} onClick={toggleCart}></div>
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
-                    <h2 style={{ color: 'white' }}><ShoppingBag size={20} color="white" /> Seu Carrinho</h2>
+                    <h2><ShoppingBag size={24} /> Meu Carrinho</h2>
                     <button className="close-cart" onClick={toggleCart}>
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
 
-                <div className="cart-scrollable-area" style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                    <div className="cart-items" style={{ flexGrow: 1, overflowY: 'visible', paddingBottom: cartItems.length > 0 ? '0' : '1rem' }}>
+                <div className="cart-scrollable-area">
+                    {/* Itens do Carrinho */}
+                    <div className="cart-section">
+                        <span className="section-title"><Box size={14} /> Produtos Selecionados</span>
                         {cartItems.length === 0 ? (
-                            <div className="empty-cart">
-                                <ShoppingBag size={48} opacity={0.3} />
+                            <div className="empty-cart-state">
+                                <ShoppingBag size={48} />
                                 <p>Seu carrinho está vazio.</p>
                             </div>
                         ) : (
-                            cartItems.map(item => (
-                                <div key={item.id} className="cart-item">
-                                    <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
-                                    <div className="cart-item-info">
-                                        <h4 style={{ color: 'white' }}>{formatTitleCase(item.title)}</h4>
-                                        <p className="cart-item-price" style={{ color: 'white' }}>
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
-                                        </p>
-                                        <div className="cart-item-controls">
-                                            <div className="qty-selector small">
-                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
-                                                <span>{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
+                            <div className="cart-items-list">
+                                {cartItems.map(item => (
+                                    <div key={item.id} className="cart-item">
+                                        <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
+                                        <div className="cart-item-info">
+                                            <h4>{formatTitleCase(item.title)}</h4>
+                                            <p className="cart-item-price">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
+                                            </p>
+                                            <div className="cart-item-controls">
+                                                <div className="qty-selector-mini">
+                                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
+                                                    <span>{item.quantity}</span>
+                                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={14} /></button>
+                                                </div>
+                                                <button className="remove-btn-mini" onClick={() => removeFromCart(item.id)}>
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
-                                            <button className="remove-btn" style={{ color: 'white' }} onClick={() => removeFromCart(item.id)}>
-                                                <Trash2 size={16} color="white" />
-                                            </button>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </div>
 
                     {cartItems.length > 0 && (
-                        <div className="cart-total-display" style={{ padding: '15px', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderTop: '1px solid rgba(212, 175, 55, 0.1)', marginBottom: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.2rem', fontWeight: '900', color: 'white' }}>
-                                <span>Subtotal:</span>
-                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {cartItems.length > 0 && (
-                        <div className="checkout-form" style={{ marginTop: 'auto' }}>
-                            <h3><ShoppingBag size={16} style={{ marginBottom: -2 }} /> Cliente</h3>
-                            <div className="form-group">
-                                <input
-                                    type="text"
-                                    placeholder="Seu Nome"
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                    className="checkout-input"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <input
-                                    type="tel"
-                                    placeholder="Seu WhatsApp"
-                                    value={customerPhone}
-                                    onChange={handlePhoneChange}
-                                    className="checkout-input"
-                                    maxLength={15}
-                                />
+                        <>
+                            {/* Identificação */}
+                            <div className="cart-section">
+                                <span className="section-title"><User size={14} /> Seus Dados</span>
+                                <div className="checkout-input-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Nome completo"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        onBlur={(e) => handleAutoSync('name', e.target.value)}
+                                        className="checkout-input"
+                                    />
+                                    <input
+                                        type="tel"
+                                        placeholder="WhatsApp (DDD + Número)"
+                                        value={customerPhone}
+                                        onChange={handlePhoneChange}
+                                        onBlur={(e) => handleAutoSync('phone', e.target.value)}
+                                        className="checkout-input"
+                                        maxLength={15}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="delivery-options" style={{ marginTop: '15px' }}>
-                                <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Opção de Entrega</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {/* Entrega */}
+                            <div className="cart-section">
+                                <span className="section-title"><CreditCard size={14} /> Como deseja receber?</span>
+                                <div className="delivery-toggle">
                                     <button
-                                        type="button"
+                                        className={`toggle-btn ${deliveryMode === 'pickup' ? 'active' : ''}`}
                                         onClick={() => setDeliveryMode('pickup')}
-                                        style={{
-                                            border: 'none',
-                                            background: deliveryMode === 'pickup' ? 'var(--primary-color)' : '#333',
-                                            color: deliveryMode === 'pickup' ? '#000' : '#fff',
-                                            padding: '12px',
-                                            borderRadius: '8px',
-                                            fontWeight: 'bold',
-                                            fontSize: '1rem',
-                                            cursor: 'pointer',
-                                            transition: 'background-color 0.2s',
-                                            width: '100%'
-                                        }}
                                     >
-                                        Retirar na Loja
+                                        Retirar
                                     </button>
                                     <button
-                                        type="button"
+                                        className={`toggle-btn ${deliveryMode === 'delivery' ? 'active' : ''}`}
                                         onClick={() => setDeliveryMode('delivery')}
-                                        style={{
-                                            border: 'none',
-                                            background: deliveryMode === 'delivery' ? 'var(--primary-color)' : '#333',
-                                            color: deliveryMode === 'delivery' ? '#000' : '#fff',
-                                            padding: '12px',
-                                            borderRadius: '8px',
-                                            fontWeight: 'bold',
-                                            fontSize: '1rem',
-                                            cursor: 'pointer',
-                                            transition: 'background-color 0.2s',
-                                            width: '100%'
-                                        }}
                                     >
                                         Entrega
                                     </button>
                                 </div>
-                            </div>
 
-                            {deliveryMode === 'delivery' && (
-                                <div className="address-form" style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div className="form-group" style={{ position: 'relative' }}>
+                                {deliveryMode === 'delivery' && (
+                                    <div className="checkout-input-group" style={{ marginTop: '15px' }}>
                                         <input
                                             type="text"
-                                            placeholder="CEP (Somente números)"
-                                            value={address.cep}
-                                            onChange={handleCepChange}
+                                            ref={autocompleteRef}
+                                            placeholder="Comece a digitar seu endereço..."
                                             className="checkout-input"
-                                            maxLength={9}
+                                            style={{ border: '1px solid #4285F4' }}
                                         />
-                                        {isFetchingCep && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '10px', top: '12px', color: 'var(--primary-color)' }} />}
-                                    </div>
-                                    <div className="form-group">
-                                        <input
-                                            type="text"
-                                            placeholder="Rua / Logradouro"
-                                            value={address.street}
-                                            onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                                            className="checkout-input"
-                                        />
-                                    </div>
-                                    <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
-                                        <div className="form-group" style={{ flex: 1 }}>
+                                        
+                                        {address.lat && (
+                                            <div style={{ marginTop: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                <img 
+                                                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${address.lat},${address.lng}&zoom=15&size=400x150&markers=color:red%7C${address.lat},${address.lng}&key=${googleConfig?.google_api_key}`} 
+                                                    alt="Entrega" 
+                                                    style={{ width: '100%', height: 'auto', display: 'block' }} 
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                             <input
                                                 type="text"
-                                                placeholder="Número"
+                                                placeholder="Nº"
                                                 value={address.number}
                                                 onChange={(e) => setAddress({ ...address, number: e.target.value })}
                                                 className="checkout-input"
+                                                style={{ flex: 1 }}
                                             />
-                                        </div>
-                                        <div className="form-group" style={{ flex: 2 }}>
                                             <input
                                                 type="text"
                                                 placeholder="Bairro"
+                                                readOnly
                                                 value={address.neighborhood}
-                                                onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
                                                 className="checkout-input"
+                                                style={{ flex: 2, opacity: 0.7 }}
                                             />
                                         </div>
-                                    </div>
-                                    <div className="form-group">
                                         <input
                                             type="text"
-                                            placeholder="Complemento / Ref."
+                                            placeholder="Complemento (Opcional)"
                                             value={address.complement}
                                             onChange={(e) => setAddress({ ...address, complement: e.target.value })}
                                             className="checkout-input"
                                         />
+                                        
+                                        {deliveryDistance && (
+                                            <div style={{ background: 'rgba(66, 133, 244, 0.1)', padding: '12px', borderRadius: '12px', marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#4285F4', fontWeight: 'bold' }}>Distância estimada: {deliveryDistance.toFixed(1)} km</span>
+                                                <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 900 }}>{deliveryFee === 0 ? 'FRETE GRÁTIS' : `Frete: R$ ${deliveryFee.toFixed(2)}`}</span>
+                                            </div>
+                                        )}
                                     </div>
+                                )}
+                            </div>
+
+                            {/* Cashback / Fidelidade */}
+                            {googleConfig?.cashback_enabled && user && (
+                                <div className="cart-section cashback-section" style={{ background: 'rgba(212, 175, 55, 0.05)', borderRadius: '20px', padding: '15px', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                                    <span className="section-title" style={{ color: '#D4AF37' }}>💰 Fidelidade Wilson</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                                        <div>
+                                            <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>Seu saldo disponível</p>
+                                            <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#D4AF37' }}>
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(cashbackAvailable || 0))}
+                                            </p>
+                                        </div>
+                                        {parseFloat(cashbackAvailable) > 0 && (
+                                            <button 
+                                                className={`toggle-btn ${useCashback ? 'active' : ''}`}
+                                                onClick={() => setUseCashback(!useCashback)}
+                                                style={{ fontSize: '0.7rem', padding: '8px 12px' }}
+                                            >
+                                                {useCashback ? 'REMOVER' : 'USAR SALDO'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p style={{ margin: '10px 0 0', fontSize: '0.75rem', color: '#888' }}>
+                                        Você ganhará <strong>R$ {((cartTotal * (parseFloat(googleConfig.cashback_percentage || 0) || 2)) / 100).toFixed(2)}</strong> em cashback nesta compra!
+                                    </p>
                                 </div>
                             )}
-                        </div>
+                        </>
                     )}
                 </div>
 
                 <div className="cart-footer">
-                    <div className="cart-summary">
-                        <div className="cart-summary">
-                            <span className="summary-total" style={{ width: '100%', textAlign: 'center' }}>Total: {cartCount} {cartCount === 1 ? 'item' : 'itens'}</span>
+                    {useCashback && cashbackAvailable > 0 && (
+                        <div className="cart-summary-line" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', color: '#4ade80' }}>
+                            <span>Desconto (Cashback)</span>
+                            <span>- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cashbackAvailable)}</span>
                         </div>
+                    )}
+                    {deliveryFee > 0 && (
+                        <div className="cart-summary-line" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', opacity: 0.7 }}>
+                            <span>Subtotal</span>
+                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cartTotal)}</span>
+                        </div>
+                    )}
+                    {deliveryFee > 0 && (
+                        <div className="cart-summary-line" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#D4AF37' }}>
+                            <span>Taxa de Entrega</span>
+                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(deliveryFee)}</span>
+                        </div>
+                    )}
+                    <div className="cart-summary-total">
+                        <span className="total-label">Valor Total</span>
+                        <span className="total-value">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.max(0, cartTotal + deliveryFee - (useCashback ? cashbackAvailable : 0)))}
+                        </span>
                     </div>
                     <button
-                        className="checkout-btn"
+                        className="finish-checkout-btn"
                         disabled={cartItems.length === 0 || isProcessing}
                         onClick={handleCheckout}
                     >
                         {isProcessing ? (
-                            <>
-                                <Loader2 size={20} className="spinner" style={{ marginRight: '8px' }} />
-                                Processando...
-                            </>
+                            <Loader2 size={24} className="animate-spin" />
                         ) : (
-                            'Finalizar Pedido'
+                            <>
+                                <span>ENVIAR PEDIDO</span>
+                                <ChevronRight size={20} />
+                            </>
                         )}
                     </button>
                 </div>

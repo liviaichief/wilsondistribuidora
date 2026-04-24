@@ -245,14 +245,15 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                         <X size={24} />
                     </button>
                 </div>
-
-                {loading ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px' }}>
-                        <Loader2 className="animate-spin" size={40} color="var(--primary-color)" />
-                        <p style={{ marginTop: '15px', color: 'var(--text-muted)' }}>Buscando suas informações...</p>
-                    </div>
-                ) : (
-                    <form onSubmit={handleSave} className="product-form">
+                
+                <div className="modal-body">
+                    {loading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px' }}>
+                            <Loader2 className="animate-spin" size={40} color="var(--primary-color)" />
+                            <p style={{ marginTop: '15px', color: 'var(--text-muted)' }}>Buscando suas informações...</p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSave} className="product-form">
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                             <div className="form-group">
                                 <label>Nome</label>
@@ -471,6 +472,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                         </button>
                     </form>
                 )}
+                </div>
             </div>
         </div>
     );

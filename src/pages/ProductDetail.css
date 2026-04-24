@@ -14,7 +14,7 @@
 
 @media (min-width: 768px) {
     .product-detail-container {
-        padding: 2rem 1rem;
+        padding: 130px 1rem 2rem; /* Aumentado de 2rem para 130px (110px header + 20px gap) */
     }
 }
 
@@ -258,20 +258,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 0.5rem;
-    background-color: #D4AF37;
-    color: #121212;
+    gap: 0.8rem;
+    background-color: #800020; /* Vermelho Borgonha */
+    color: #ffffff;
     border: none;
-    padding: 1rem;
+    padding: 1.1rem;
     font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 6px;
+    font-weight: 900;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(128, 0, 32, 0.2);
 }
 
 .btn-add-large:hover {
-    background-color: #c4a133;
+    background-color: #a00028;
+    box-shadow: 0 6px 20px rgba(128, 0, 32, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-add-large:active {

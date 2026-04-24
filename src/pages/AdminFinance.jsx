@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { CheckCircle, XCircle, FileText, Calendar, CreditCard, QrCode, Loader2, X, Download, Copy, ExternalLink } from 'lucide-react';
-import { functions, databases, DATABASE_ID } from '../lib/appwrite';
+import { CheckCircle, XCircle, FileText, Calendar, CreditCard, QrCode, Loader2, X, Download, Copy, ExternalLink, ShieldCheck, DollarSign, Wallet, ArrowRight, CheckCircle2, AlertTriangle, TrendingUp, Landmark, Clock } from 'lucide-react';
+import { databases, DATABASE_ID } from '../lib/appwrite';
 import { Client as AppwriteClient, Functions as AppwriteFunctions, Databases as AppwriteDatabases, ID as AppwriteID, Query as AppwriteQuery } from 'appwrite';
 import html2pdf from 'html2pdf.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const orchestratorClient = new AppwriteClient()
     .setEndpoint('https://sfo.cloud.appwrite.io/v1')
@@ -26,7 +27,8 @@ const initialMockMonths = [
     { id: 11, month: 'Novembro', status: 'pendente', dueDate: '05/11/2026', method: '-', val: 'R$ 150,00' },
     { id: 12, month: 'Dezembro', status: 'pendente', dueDate: '05/12/2026', method: '-', val: 'R$ 150,00' },
 ];
-const AdminFinance = () => {
+
+const AdminFinance = () => {
     const location = useLocation();
     const [months, setMonths] = useState(initialMockMonths);
     const [pixModalOpen, setPixModalOpen] = useState(false);
@@ -38,7 +40,6 @@ const initialMockMonths = [
     const [realPixData, setRealPixData] = useState(null);
 
     useEffect(() => {
-        // Busca pagamentos já realizados no Orquestrador
         orchestratorDb.listDocuments('admin_billing_db', 'subscriptions', [AppwriteQuery.equal('system_id', 'boutique')])
             .then(res => {
                 if (res.documents.length > 0) {
@@ -84,7 +85,6 @@ const initialMockMonths = [
     useEffect(() => {
         let interval;
         if (realPixData?.id && pixModalOpen && !paymentSuccess) {
-            // Polling para verificar se o pagamento foi aprovado
             interval = setInterval(async () => {
                 try {
                     const res = await orchestratorFunctions.createExecution('check_pix_status_fn', JSON.stringify({ 
@@ -99,10 +99,8 @@ const initialMockMonths = [
                         setPaymentSuccess(true);
                         
                         const txId = statusData.id || statusData.payment_id || realPixData.id;
-                        const dateNow = new Date().toLocaleString('pt-BR');
                         const paidAmount = Number(selectedMonth.val.replace('R$', '').trim().replace(',', '.')) || 150;
                         
-                        // --- Gravação no Orquestrador ---
                         try {
                             const payloadSub = {
                                 system_id: 'boutique',
@@ -111,25 +109,22 @@ const initialMockMonths = [
                                 status: 'pago',
                                 payment_method: `PIX::${txId}`.substring(0, 48)
                             };
-                            console.log("Registrando no banco do orquestrador...", payloadSub);
                             await orchestratorDb.createDocument('admin_billing_db', 'subscriptions', AppwriteID.unique(), payloadSub);
                         } catch (err) {
                             console.warn("Erro ao registrar no Orquestrador Central:", err);
                         }
 
-                        // --- Lógica de Desbloqueio (Teste de Integração) ---
                         try {
                             await databases.updateDocument(DATABASE_ID, 'settings', 'system_blocked', { value: 'false' });
                         } catch (err) { console.warn("Erro ao desbloquear sistema localmente:", err); }
 
-                        // Atualiza o estado local das mensalidades
                         setMonths(prev => prev.map(m => {
                             if(m.id === selectedMonth.id) {
                                 return { 
                                     ...m, 
                                     status: 'pago', 
                                     method: 'PIX Institucional',
-                                    transactionId: statusData.id || statusData.payment_id || realPixData.id,
+                                    transactionId: txId,
                                     paymentDate: new Date().toLocaleString('pt-BR'),
                                     institution: 'Mercado Pago'
                                 };
@@ -137,7 +132,6 @@ const initialMockMonths = [
                             return m;
                         }));
 
-                        // Fecha o modal após 3 segundos de sucesso
                         setTimeout(() => {
                             setPixModalOpen(false);
                             setSelectedMonth(null);
@@ -147,18 +141,14 @@ const initialMockMonths = [
                 } catch (e) {
                     console.error("Erro ao verificar status do PIX:", e);
                 }
-            }, 4000); // Verifica a cada 4 segundos
+            }, 4000);
         }
         return () => clearInterval(interval);
     }, [realPixData, pixModalOpen, paymentSuccess, selectedMonth]);
 
-
-
     const handlePayment = async () => {
         setIsSimulatingPayment(true);
-        
         try {
-            // Normaliza o valor para envio: tira R$, troca vírgula por ponto.
             const amountCleanStr = selectedMonth.val.replace('R$', '').trim().replace(',', '.');
             const numericAmount = Number(amountCleanStr) || 150;
 
@@ -170,15 +160,10 @@ const initialMockMonths = [
                 payer_name: 'Boutique Admin'
             });
 
-            // Chama a Function do Appwrite no Orquestrador para gerar o PIX no Mercado Pago
             const res = await orchestratorFunctions.createExecution('generate_pix_fn', payload, false, '/', 'POST', { 'Content-Type': 'application/json' });
             
             let data;
-            try { 
-                data = JSON.parse(res.responseBody); 
-            } catch(e) { 
-                data = { success: false, message: 'Resposta inválida do servidor' }; 
-            }
+            try { data = JSON.parse(res.responseBody); } catch(e) { data = { success: false, message: 'Resposta inválida' }; }
 
             if (res.status === 'completed' && data.success) {
                 setRealPixData({
@@ -187,16 +172,12 @@ const initialMockMonths = [
                     qr_code: data.qr_code,
                     ticket_url: data.ticket_url
                 });
-                setIsSimulatingPayment(false);
-                return;
             } else {
-                console.warn("Function generate_pix_fn retornou erro ou não integrada:", data);
                 alert(`Erro MP: ${data.message || 'Falha desconhecida'}`);
-                setIsSimulatingPayment(false);
             }
         } catch (error) {
-            console.error("Falha técnica ao chamar generate_pix_fn:", error);
-            alert("Erro ao conectar com o serviço PIX (Mercado Pago). Verifique o console.");
+            console.error("Falha técnica:", error);
+        } finally {
             setIsSimulatingPayment(false);
         }
     };
@@ -206,17 +187,16 @@ const initialMockMonths = [
         if (!element) return;
 
         const opt = {
-            margin:       [10, 10, 10, 10],
-            filename:     `Recibo_Boutique_${selectedReceipt?.month}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            margin: [10, 10, 10, 10],
+            filename: `Recibo_BaseApp_${selectedReceipt?.month}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         const clone = element.cloneNode(true);
         clone.style.backgroundColor = '#ffffff';
         clone.style.padding = '40px';
-        clone.style.margin = '0px';
         clone.style.borderRadius = '0px';
 
         const wrapper = document.createElement('div');
@@ -229,286 +209,318 @@ const initialMockMonths = [
     };
 
     return (
-        <div style={{ padding: '20px', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '2rem', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                Financeiro & Faturamento
-            </h2>
+        <div style={{ padding: '40px', maxWidth: '1600px', margin: '0 auto' }}>
 
-            <div style={{ backgroundColor: '#141414', border: '1px solid #222', borderRadius: '20px', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', flexGrow: 1 }}>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
-                    <div>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff' }}>Histórico de Mensalidades (PWA)</h3>
-                        <p style={{ color: '#888', fontSize: '0.9rem', marginTop: '5px' }}>Ano Base: 2026</p>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    padding: '40px', 
+                    borderRadius: '30px', 
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
+                }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37' }}>
+                            <TrendingUp size={24} />
+                        </div>
+                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Histórico de Mensalidades</h3>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: '12px', fontSize: '0.9rem', color: '#888', fontWeight: 600 }}>
+                        Ano Base: <span style={{ color: '#fff' }}>2026</span>
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                    {months.map((m) => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '25px' }}>
+                    {months.map((m, index) => {
                         const isHighlighted = highlightedId === m.id;
+                        const isPaid = m.status === 'pago';
+                        
                         return (
-                        <div key={m.id} style={{ 
-                            backgroundColor: '#0a0a0a', 
-                            border: isHighlighted ? '2px solid #ef4444' : '1px solid #333', 
-                            borderRadius: '15px', 
-                            padding: '20px', 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            boxShadow: isHighlighted ? '0 0 20px rgba(239, 68, 68, 0.39)' : 'none',
-                            transform: isHighlighted ? 'scale(1.02)' : 'scale(1)',
-                            transition: 'all 0.3s ease'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #222' }}>
-                                <h4 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>{m.month}</h4>
-                                {m.status === 'pago' ? (
-                                    <div style={{ width: '35px', height: '35px', borderRadius: '10px', backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <CheckCircle size={20} />
-                                    </div>
-                                ) : (
-                                    <div style={{ width: '35px', height: '35px', borderRadius: '10px', backgroundColor: '#222', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <XCircle size={20} />
-                                    </div>
+                            <motion.div 
+                                key={m.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={{ y: -5 }}
+                                style={{ 
+                                    backgroundColor: isPaid ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.2)', 
+                                    border: isHighlighted ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.05)', 
+                                    borderRadius: '24px', 
+                                    padding: '25px', 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    boxShadow: isHighlighted ? '0 0 30px rgba(239, 68, 68, 0.2)' : 'none',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {isHighlighted && (
+                                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: '#ef4444' }} />
                                 )}
-                            </div>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', flexGrow: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', fontSize: '0.85rem', flexShrink: 0 }}>
-                                        <Calendar size={14} /> Vencimento
+                                
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                    <h4 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', margin: 0 }}>{m.month}</h4>
+                                    <div style={{ 
+                                        padding: '8px', 
+                                        borderRadius: '12px', 
+                                        backgroundColor: isPaid ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', 
+                                        color: isPaid ? '#22c55e' : '#666' 
+                                    }}>
+                                        {isPaid ? <CheckCircle2 size={24} /> : <Clock size={24} />}
                                     </div>
-                                    <span style={{ color: '#ccc', fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'right', wordBreak: 'break-word', minWidth: 0 }}>{m.dueDate}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#888', fontSize: '0.85rem', flexShrink: 0 }}>
-                                        <CreditCard size={14} /> Pagamento
+                                
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666', fontSize: '0.85rem', fontWeight: 700 }}>
+                                            <Calendar size={14} /> VENCIMENTO
+                                        </div>
+                                        <span style={{ color: '#aaa', fontWeight: 700, fontSize: '0.9rem' }}>{m.dueDate}</span>
                                     </div>
-                                    {m.status === 'pago' ? (
-                                        <span style={{ color: '#22c55e', fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'right', wordBreak: 'break-word', minWidth: 0, lineHeight: 1.2 }}>{m.method}</span>
-                                    ) : (
-                                        <span style={{ color: '#666', fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'right', minWidth: 0 }}>N/A</span>
-                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666', fontSize: '0.85rem', fontWeight: 700 }}>
+                                            <Landmark size={14} /> MÉTODO
+                                        </div>
+                                        <span style={{ color: isPaid ? '#22c55e' : '#444', fontWeight: 700, fontSize: '0.9rem' }}>{isPaid ? m.method : '-'}</span>
+                                    </div>
+                                    <div style={{ marginTop: '5px', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#666', fontSize: '0.8rem', fontWeight: 800 }}>VALOR</span>
+                                        <span style={{ color: '#fff', fontWeight: 900, fontSize: '1.3rem' }}>{m.val}</span>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-                                    <span style={{ color: '#888', fontSize: '0.85rem' }}>Valor Mensal</span>
-                                    {m.status === 'pago' ? (
-                                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.2rem' }}>{m.val}</span>
-                                    ) : (
-                                        <input
-                                            type="text"
-                                            value={m.val}
-                                            onChange={(e) => {
-                                                const newVal = e.target.value;
-                                                setMonths(prev => prev.map(month => month.id === m.id ? { ...month, val: newVal } : month));
-                                            }}
-                                            style={{ backgroundColor: '#0a0a0a', color: '#fff', border: '1px dashed #555', borderRadius: '6px', padding: '4px 8px', width: '110px', fontSize: '1.1rem', fontWeight: 'bold', textAlign: 'right', outline: 'none' }}
-                                            title="Editar valor para testes"
-                                        />
-                                    )}
-                                </div>
-                            </div>
 
-                            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {m.status === 'pago' ? (
-                                    <button 
-                                        onClick={() => setSelectedReceipt(m)}
-                                        style={{ width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}
-                                    >
-                                        <FileText size={16} /> Ver Recibo
-                                    </button>
-                                ) : (
-                                    <>
-                                        <button disabled style={{ width: '100%', padding: '12px', borderRadius: '10px', backgroundColor: '#222', color: '#666', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'not-allowed', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                                            Aguardando
+                                <div style={{ marginTop: 'auto' }}>
+                                    {isPaid ? (
+                                        <button 
+                                            onClick={() => setSelectedReceipt(m)}
+                                            style={{ 
+                                                width: '100%', 
+                                                padding: '14px', 
+                                                borderRadius: '16px', 
+                                                backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                                                color: '#3b82f6', 
+                                                border: '1px solid rgba(59, 130, 246, 0.2)', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                gap: '10px', 
+                                                cursor: 'pointer', 
+                                                fontWeight: 800, 
+                                                fontSize: '0.9rem',
+                                                transition: 'all 0.3s'
+                                            }}
+                                        >
+                                            <FileText size={18} /> VER RECIBO
                                         </button>
+                                    ) : (
                                         <button 
                                             onClick={() => openPix(m)}
                                             style={{ 
                                                 width: '100%', 
-                                                padding: '12px', 
-                                                borderRadius: '10px', 
-                                                backgroundColor: isHighlighted ? '#22c55e' : 'rgba(34,197,94,0.1)', 
+                                                padding: '14px', 
+                                                borderRadius: '16px', 
+                                                backgroundColor: isHighlighted ? '#ef4444' : 'rgba(34, 197, 94, 0.1)', 
                                                 color: isHighlighted ? '#fff' : '#22c55e', 
-                                                border: isHighlighted ? 'none' : '1px solid rgba(34,197,94,0.2)', 
+                                                border: isHighlighted ? 'none' : '1px solid rgba(34, 197, 94, 0.2)', 
                                                 display: 'flex', 
                                                 alignItems: 'center', 
                                                 justifyContent: 'center', 
-                                                gap: '8px', 
+                                                gap: '10px', 
                                                 cursor: 'pointer', 
-                                                fontWeight: 'bold', 
-                                                fontSize: '0.85rem',
-                                                animation: isHighlighted ? 'pulse 1.5s infinite' : 'none',
-                                                boxShadow: isHighlighted ? '0 4px 15px rgba(34, 197, 94, 0.4)' : 'none'
+                                                fontWeight: 900, 
+                                                fontSize: '0.9rem',
+                                                boxShadow: isHighlighted ? '0 10px 20px rgba(239, 68, 68, 0.2)' : 'none',
+                                                transition: 'all 0.3s'
                                             }}
                                         >
-                                            <QrCode size={16} /> Ver Chave PIX
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )})}
-                </div>
-            </div>
-
-            {/* Modal de Pagamento PIX */}
-            {pixModalOpen && selectedMonth && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', padding: '20px' }}>
-                    <div style={{ backgroundColor: '#141414', border: '1px solid #333', borderRadius: '25px', padding: '40px', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }}>
-                        <button 
-                            onClick={() => { if(!isSimulatingPayment) setPixModalOpen(false) }} 
-                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
-                        >
-                            <XCircle size={24} />
-                        </button>
-                        
-                        <div style={{ marginBottom: '20px', color: '#22c55e', display: 'flex', justifyContent: 'center' }}>
-                            <QrCode size={48} />
-                        </div>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Pagar Fatura - {selectedMonth.month}</h2>
-                        <p style={{ color: '#888', fontSize: '0.95rem', marginBottom: '25px' }}>
-                            Escaneie o QR Code abaixo pelo aplicativo do seu banco para quitar a parcela de {selectedMonth.val}.
-                        </p>
-
-                        {!paymentSuccess ? (
-                            <>
-                                {realPixData && realPixData.qr_code_base64 && (
-                                    <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '20px', display: 'inline-block', marginBottom: '30px' }}>
-                                        <img src={`data:image/jpeg;base64,${realPixData.qr_code_base64}`} alt="QR Code PIX Mercado Pago" style={{ width: '200px', height: '200px', borderRadius: '10px' }} />
-                                    </div>
-                                )}
-                                
-                                {realPixData && realPixData.qr_code && (
-                                    <div style={{ marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        <p style={{ color: '#aaa', fontSize: '0.8rem', fontWeight: 'bold' }}>PIX Copia e Cola:</p>
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <input 
-                                                readOnly 
-                                                value={realPixData.qr_code} 
-                                                style={{ flex: 1, backgroundColor: '#0a0a0a', border: '1px solid #333', color: '#fff', padding: '10px', borderRadius: '8px', fontSize: '0.8rem' }}
-                                            />
-                                            <button 
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(realPixData.qr_code);
-                                                    alert("PIX copiado!");
-                                                }}
-                                                style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                title="Copiar PIX"
-                                            >
-                                                <Copy size={16} />
-                                            </button>
-                                        </div>
-                                        {realPixData.ticket_url && (
-                                            <a 
-                                                href={realPixData.ticket_url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                style={{ alignSelf: 'center', marginTop: '10px', color: '#3b82f6', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none' }}
-                                            >
-                                                <ExternalLink size={16} /> Ver no Mercado Pago
-                                            </a>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                    {realPixData ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#888', fontSize: '0.9rem', padding: '10px', border: '1px solid #333', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                                            <Loader2 size={16} className="animate-spin text-blue-500" />
-                                            Verificando recebimento automaticamente...
-                                        </div>
-                                    ) : (
-                                        <button 
-                                            onClick={handlePayment}
-                                            disabled={isSimulatingPayment}
-                                            style={{ width: '100%', padding: '15px', borderRadius: '12px', backgroundColor: '#22c55e', color: '#fff', fontWeight: 'bold', border: 'none', cursor: isSimulatingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1rem', transition: 'all 0.3s' }}
-                                        >
-                                            {isSimulatingPayment ? <Loader2 size={18} className="animate-spin" /> : <QrCode size={18} />}
-                                            {isSimulatingPayment ? 'Processando transação...' : 'Gerar Pagamento PIX'}
+                                            <QrCode size={18} /> PAGAR AGORA
                                         </button>
                                     )}
                                 </div>
-                            </>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
-                                <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                                    <CheckCircle size={48} />
-                                </div>
-                                <h2 style={{ fontSize: '1.4rem', color: '#22c55e', fontWeight: 'bold', marginBottom: '10px' }}>Pagamento Confirmado!</h2>
-                                <p style={{ color: '#888', fontSize: '0.9rem' }}>O recibo já está anexado à fatura.</p>
-                            </div>
-                        )}
-                    </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
-            )}
+            </motion.div>
 
-            {/* Receipt Modal */}
-            {selectedReceipt && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', padding: '20px' }}>
-                    <div style={{ backgroundColor: '#141414', border: '1px solid #333', borderRadius: '25px', width: '100%', maxWidth: '400px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 25px', borderBottom: '1px solid #222' }}>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-                                <FileText size={20} style={{ color: '#3b82f6' }} />
-                                Recibo - {selectedReceipt.month}
-                            </h3>
+            {/* PIX Modal */}
+            <AnimatePresence>
+                {pixModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '30px', padding: '40px', maxWidth: '450px', width: '100%', textAlign: 'center', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', position: 'relative' }}
+                        >
                             <button 
-                                onClick={() => setSelectedReceipt(null)}
-                                style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+                                onClick={() => { if(!isSimulatingPayment) setPixModalOpen(false) }} 
+                                style={{ position: 'absolute', top: '25px', right: '25px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >
                                 <X size={24} />
                             </button>
-                        </div>
-                        
-                        <div id="receipt-content" style={{ padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#fff', margin: '20px', borderRadius: '15px' }}>
-                            <div style={{ width: '100%', textAlign: 'center', borderBottom: '1px solid #e5e7eb', paddingBottom: '15px', marginBottom: '15px' }}>
-                                <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1f2937', margin: '0 0 5px 0' }}>Base App</h4>
-                                <p style={{ fontSize: '0.9rem', color: '#6b7280', margin: 0 }}>Recibo de Pagamento Oficial</p>
+                            
+                            <div style={{ marginBottom: '25px', color: '#22c55e', display: 'flex', justifyContent: 'center' }}>
+                                <div style={{ padding: '20px', borderRadius: '25px', background: 'rgba(34, 197, 94, 0.1)' }}>
+                                    <QrCode size={48} />
+                                </div>
+                            </div>
+                            <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '10px' }}>Checkout PIX</h2>
+                            <p style={{ color: '#888', fontSize: '1rem', marginBottom: '30px', lineHeight: 1.5 }}>
+                                Escaneie ou copie o código para realizar o pagamento de <strong style={{ color: '#fff' }}>{selectedMonth.val}</strong> referente ao mês de {selectedMonth.month}.
+                            </p>
+
+                            {!paymentSuccess ? (
+                                <>
+                                    {realPixData && realPixData.qr_code_base64 && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '24px', display: 'inline-block', marginBottom: '30px', boxShadow: '0 10px 30px rgba(255,255,255,0.1)' }}
+                                        >
+                                            <img src={`data:image/jpeg;base64,${realPixData.qr_code_base64}`} alt="QR Code" style={{ width: '220px', height: '220px' }} />
+                                        </motion.div>
+                                    )}
+                                    
+                                    {realPixData && realPixData.qr_code && (
+                                        <div style={{ marginBottom: '30px', textAlign: 'left' }}>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input 
+                                                    readOnly 
+                                                    value={realPixData.qr_code} 
+                                                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', padding: '15px', borderRadius: '14px', fontSize: '0.85rem', outline: 'none' }}
+                                                />
+                                                <button 
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(realPixData.qr_code);
+                                                        alert("Copiado!");
+                                                    }}
+                                                    style={{ backgroundColor: '#3b82f6', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '14px', cursor: 'pointer' }}
+                                                >
+                                                    <Copy size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        {realPixData ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', color: '#22c55e', fontSize: '0.95rem', padding: '15px', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '16px', backgroundColor: 'rgba(34, 197, 94, 0.05)', fontWeight: 700 }}>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                AGUARDANDO PAGAMENTO...
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                onClick={handlePayment}
+                                                disabled={isSimulatingPayment}
+                                                style={{ width: '100%', padding: '18px', borderRadius: '16px', backgroundColor: '#22c55e', color: '#000', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '1.1rem' }}
+                                            >
+                                                {isSimulatingPayment ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
+                                                {isSimulatingPayment ? 'PROCESSANDO...' : 'GERAR QR CODE'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <motion.div 
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    style={{ padding: '40px 0' }}
+                                >
+                                    <div style={{ width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
+                                        <CheckCircle2 size={60} />
+                                    </div>
+                                    <h2 style={{ fontSize: '1.8rem', color: '#22c55e', fontWeight: 900, marginBottom: '10px' }}>PAGO COM SUCESSO!</h2>
+                                    <p style={{ color: '#888', fontSize: '1.1rem' }}>Seu acesso foi renovado automaticamente.</p>
+                                </motion.div>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Receipt Modal */}
+            <AnimatePresence>
+                {selectedReceipt && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div 
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 50, opacity: 0 }}
+                            style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '30px', width: '100%', maxWidth: '450px', overflow: 'hidden', boxShadow: '0 50px 120px rgba(0,0,0,0.8)' }}
+                        >
+                            <div style={{ padding: '30px 40px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                                        <FileText size={24} />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Recibo Digital</h3>
+                                </div>
+                                <button onClick={() => setSelectedReceipt(null)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
                             </div>
                             
-                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', fontWeight: 'bold', color: '#374151' }}>
-                                {selectedReceipt.transactionId && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: '10px' }}>
-                                        <span style={{ color: '#6b7280' }}>Autenticação:</span>
-                                        <span style={{ fontSize: '0.8rem', color: '#4b5563', fontFamily: 'monospace' }}>{selectedReceipt.transactionId}</span>
+                            <div style={{ padding: '40px' }}>
+                                <div id="receipt-content" style={{ padding: '40px', backgroundColor: '#fff', borderRadius: '24px', color: '#000' }}>
+                                    <div style={{ textAlign: 'center', borderBottom: '2px solid #f0f0f0', paddingBottom: '25px', marginBottom: '30px' }}>
+                                        <h4 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#000', letterSpacing: '-1px' }}>Wilson Distribuidora</h4>
+                                        <p style={{ margin: '5px 0 0 0', color: '#888', fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>COMPROVANTE DE LICENCIAMENTO</p>
                                     </div>
-                                )}
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: '#6b7280' }}>Referência:</span>
-                                    <span>{selectedReceipt.month} / 2026</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: '#6b7280' }}>Data Compensação:</span>
-                                    <span>{selectedReceipt.paymentDate || selectedReceipt.dueDate}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: '#6b7280' }}>Operador Financeiro:</span>
-                                    <span style={{ color: selectedReceipt.institution ? '#0ea5e9' : '#374151' }}>
-                                        {selectedReceipt.institution || selectedReceipt.method}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '15px', marginTop: '5px', borderTop: '1px solid #e5e7eb', fontSize: '1.2rem', color: '#000', fontWeight: 900 }}>
-                                    <span>Valor Recebido:</span>
-                                    <span style={{ color: '#16a34a' }}>{selectedReceipt.val}</span>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f5f5f5', paddingBottom: '10px' }}>
+                                            <span style={{ color: '#999', fontSize: '0.85rem', fontWeight: 700 }}>REFERÊNCIA</span>
+                                            <span style={{ fontWeight: 800 }}>{selectedReceipt.month} / 2026</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f5f5f5', paddingBottom: '10px' }}>
+                                            <span style={{ color: '#999', fontSize: '0.85rem', fontWeight: 700 }}>DATA</span>
+                                            <span style={{ fontWeight: 800 }}>{selectedReceipt.paymentDate}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f5f5f5', paddingBottom: '10px' }}>
+                                            <span style={{ color: '#999', fontSize: '0.85rem', fontWeight: 700 }}>MÉTODO</span>
+                                            <span style={{ fontWeight: 800, color: '#22c55e' }}>{selectedReceipt.institution}</span>
+                                        </div>
+                                        <div style={{ marginTop: '20px', padding: '20px', background: '#f8f9fa', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ color: '#000', fontWeight: 900, fontSize: '1rem' }}>TOTAL PAGO</span>
+                                            <span style={{ color: '#000', fontWeight: 900, fontSize: '1.8rem' }}>{selectedReceipt.val}</span>
+                                        </div>
+                                        <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                            <span style={{ fontSize: '0.65rem', color: '#ccc', fontFamily: 'monospace', wordBreak: 'break-all' }}>AUTH: {selectedReceipt.transactionId}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div style={{ padding: '20px', backgroundColor: '#0a0a0a', borderTop: '1px solid #222', display: 'flex', gap: '15px' }}>
-                            <button 
-                                onClick={() => setSelectedReceipt(null)}
-                                style={{ flex: 1, padding: '15px', borderRadius: '12px', backgroundColor: '#222', color: '#aaa', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.8rem', border: 'none', cursor: 'pointer' }}
-                            >
-                                Fechar
-                            </button>
-                            <button 
-                                onClick={handleDownloadPDF}
-                                style={{ flex: 1, padding: '15px', borderRadius: '12px', backgroundColor: '#2563eb', color: '#fff', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.8rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                            >
-                                <Download size={16} /> Baixar PDF
-                            </button>
-                        </div>
+                            <div style={{ padding: '0 40px 40px', display: 'flex', gap: '15px' }}>
+                                <button 
+                                    onClick={handleDownloadPDF}
+                                    style={{ flex: 1, padding: '18px', borderRadius: '18px', backgroundColor: '#3b82f6', color: '#fff', fontWeight: 900, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(59, 130, 246, 0.2)' }}
+                                >
+                                    <Download size={20} /> PDF
+                                </button>
+                                <button 
+                                    onClick={() => setSelectedReceipt(null)}
+                                    style={{ flex: 1, padding: '18px', borderRadius: '18px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#888', fontWeight: 800, border: 'none', cursor: 'pointer' }}
+                                >
+                                    FECHAR
+                                </button>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
+            
+            <style>{`
+                @keyframes pulse {
+                    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); }
+                    50% { transform: scale(1.02); box-shadow: 0 4px 25px rgba(34, 197, 94, 0.6); }
+                    100% { transform: scale(1); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); }
+                }
+            `}</style>
         </div>
     );
 };

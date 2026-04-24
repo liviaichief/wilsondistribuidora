@@ -16,6 +16,7 @@ import AdminFinance from './pages/AdminFinance.jsx';
 import AdminBanners from './pages/AdminBanners.jsx';
 import AdminOrders from './pages/AdminOrders.jsx';
 import AdminCatalog from './pages/AdminCatalog.jsx';
+import { getSettings } from './services/dataService';
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
@@ -37,6 +38,22 @@ const GlobalProfileModalWrapper = () => {
       user={user}
     />
   );
+};
+
+const GoogleTagManagerLoader = () => {
+  React.useEffect(() => {
+    getSettings().then(settings => {
+      if (settings.google_gtm_id) {
+        const gtmId = settings.google_gtm_id;
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer',gtmId);
+      }
+    });
+  }, []);
+  return null;
 };
 
 function App() {
@@ -113,6 +130,9 @@ function App() {
 
               {/* Background Auto-Update Manager */}
               <UpdateManager />
+
+              {/* Google Tag Manager Dynamic Loader */}
+              <GoogleTagManagerLoader />
 
             </OrderProvider>
           </CartProvider>
