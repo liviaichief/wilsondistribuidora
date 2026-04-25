@@ -265,7 +265,7 @@ const AdminUsers = () => {
         const searchTerm = (search || '').toLowerCase();
         const matchesSearch = userName.includes(searchTerm) || userEmail.includes(searchTerm);
         const matchesRole = roleFilter === 'all' || 
-                           (roleFilter === 'admin' && u.role === 'admin') || 
+                           (roleFilter === 'admin' && (u.role === 'admin' || u.role === 'owner' || u.role === 'master')) || 
                            (roleFilter === 'client' && (u.role === 'client' || u.role === 'user' || !u.role));
         return matchesSearch && matchesRole;
     });
@@ -340,7 +340,7 @@ const AdminUsers = () => {
                                             <div style={{ fontSize: '0.8rem', color: '#888' }}>{formatDate(u.birthday, 'birthday')}</div>
                                         </td>
                                         <td style={{ padding: '12px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: u.role === 'admin' ? '#ef4444' : '#fff', background: u.role === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>{(u.role === 'client' ? 'CLIENTE' : u.role?.toUpperCase()) || 'CLIENTE'}</span>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: (u.role === 'admin' || u.role === 'owner' || u.role === 'master') ? '#ef4444' : '#fff', background: (u.role === 'admin' || u.role === 'owner' || u.role === 'master') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>{(u.role === 'client' ? 'CLIENTE' : u.role?.toUpperCase()) || 'CLIENTE'}</span>
                                         </td>
                                         <td style={{ padding: '12px 20px', borderRadius: '0 18px 18px 0', border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', textAlign: 'right', overflow: 'visible' }}>
                                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -528,7 +528,7 @@ const AdminUsers = () => {
                                             </button>
                                             <button 
                                                 onClick={() => isEditing ? setEditForm({...editForm, role: 'admin'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'admin' })}
-                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? '#ef4444' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? ['admin', 'owner', 'master'].includes(editForm.role) : ['admin', 'owner', 'master'].includes(selectedUser.role)) ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: (isEditing ? ['admin', 'owner', 'master'].includes(editForm.role) : ['admin', 'owner', 'master'].includes(selectedUser.role)) ? '#ef4444' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                                             >
                                                 ADMIN
                                             </button>

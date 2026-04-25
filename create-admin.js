@@ -46,15 +46,15 @@ async function run() {
                 await databases.createDocument('main_db', 'profiles', userId, {
                     email: email,
                     full_name: name,
-                    role: 'owner',
+                    role: 'master',
                     user_id: userId
                 });
                 console.log('Profile Owner vinculado!');
             } catch (pErr) {
                 if (pErr.code === 409) {
-                    console.log('O Profile já existe, atualizando para owner...');
+                    console.log('O Profile já existe, atualizando para master...');
                     await databases.updateDocument('main_db', 'profiles', userId, {
-                        role: 'owner'
+                        role: 'master'
                     });
                 } else {
                     throw pErr;

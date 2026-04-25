@@ -80,39 +80,39 @@ function App() {
 
                 {/* Admin Layout */}
                 <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                  <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }>
                   <Route index element={<Admin />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="users" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminUsers />
                     </ProtectedRoute>
                   } />
                   <Route path="banners" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminBanners />
                     </ProtectedRoute>
                   } />
                   <Route path="catalogo" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminCatalog />
                     </ProtectedRoute>
                   } />
                   <Route path="pedidos" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminOrders />
                     </ProtectedRoute>
                   } />
                   <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminSettings />
                     </ProtectedRoute>
                   } />
                   <Route path="financeiro" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner']}>
+                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
                       <AdminFinance />
                     </ProtectedRoute>
                   } />

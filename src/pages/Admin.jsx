@@ -8,6 +8,7 @@ import { useAlert } from '../context/AlertContext';
 import { maskCurrency, parseCurrency } from '../lib/utils';
 import imageCompression from 'browser-image-compression';
 import { motion, AnimatePresence } from 'framer-motion';
+import GenerateDescriptionButton from '../components/admin/GenerateDescriptionButton';
 import './Admin.css';
 
 const Admin = () => {
@@ -340,10 +341,18 @@ const Admin = () => {
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Informações Básicas</span>
-                                            <input placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff' }} />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Título do Produto</span>
+                                            <input placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', marginBottom: '10px' }} />
+
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Descrição</span>
+                                                <GenerateDescriptionButton 
+                                                    productTitle={currentProduct.title}
+                                                    category={categories.find(c => c.id === currentProduct.category)?.name}
+                                                    onGenerated={(desc) => setCurrentProduct({ ...currentProduct, description: desc })}
+                                                />
+                                            </div>
                                             <textarea placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
                                         </div>
 

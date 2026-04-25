@@ -47,7 +47,10 @@ export const AuthProvider = ({ children }) => {
             );
             setProfile(doc);
             
-            // Note: role state is now set separately based on labels for security
+            // [SECURITY/FLEXIBILITY] Se o perfil no banco tiver uma role privilegiada, usamos ela
+            if (doc.role === 'master' || doc.role === 'owner' || doc.role === 'admin') {
+                setRole(doc.role);
+            }
 
             // Track Last Activity (Login) for Dashboard KPIs
             const now = new Date();
@@ -109,7 +112,8 @@ export const AuthProvider = ({ children }) => {
                 setUser(mappedUser);
 
                 // [SECURITY] Set role based on official account labels
-                if (mappedUser.labels.includes('admin')) setRole('admin');
+                if (mappedUser.labels.includes('master')) setRole('master');
+                else if (mappedUser.labels.includes('admin')) setRole('admin');
                 else if (mappedUser.labels.includes('owner')) setRole('owner');
                 else setRole('client');
 
@@ -251,7 +255,8 @@ export const AuthProvider = ({ children }) => {
             const mappedUser = mapUser(acc);
             setUser(mappedUser);
             
-            if (mappedUser.labels.includes('admin')) setRole('admin');
+            if (mappedUser.labels.includes('master')) setRole('master');
+            else if (mappedUser.labels.includes('admin')) setRole('admin');
             else if (mappedUser.labels.includes('owner')) setRole('owner');
             else setRole('client');
 
@@ -429,14 +434,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     const authValue = React.useMemo(() => {
-        const isAdmin = role === 'admin' || role === 'owner';
+        const isAdmin = role === 'admin' || role === 'owner' || role === 'master' || profile?.role === 'master';
 
         return {
             user,
             profile,
             role,
             isAdmin,
-            isOwner: role === 'owner' || isAdmin,
+            isOwner: role === 'owner' || role === 'master' || isAdmin,
             loading,
             isAuthModalOpen,
             authModalView,
