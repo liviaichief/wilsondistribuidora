@@ -340,7 +340,16 @@ const AdminUsers = () => {
                                             <div style={{ fontSize: '0.8rem', color: '#888' }}>{formatDate(u.birthday, 'birthday')}</div>
                                         </td>
                                         <td style={{ padding: '12px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: (u.role === 'admin' || u.role === 'owner' || u.role === 'master') ? '#ef4444' : '#fff', background: (u.role === 'admin' || u.role === 'owner' || u.role === 'master') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px' }}>{(u.role === 'client' ? 'CLIENTE' : u.role?.toUpperCase()) || 'CLIENTE'}</span>
+                                            <span style={{ 
+                                                fontSize: '0.65rem', 
+                                                fontWeight: 900, 
+                                                color: u.role === 'master' ? '#a855f7' : (u.role === 'admin' || u.role === 'owner' ? '#ef4444' : '#fff'), 
+                                                background: u.role === 'master' ? 'rgba(168, 85, 247, 0.1)' : (u.role === 'admin' || u.role === 'owner' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)'), 
+                                                padding: '4px 10px', 
+                                                borderRadius: '8px' 
+                                            }}>
+                                                {(u.role === 'client' ? 'CLIENTE' : u.role?.toUpperCase()) || 'CLIENTE'}
+                                            </span>
                                         </td>
                                         <td style={{ padding: '12px 20px', borderRadius: '0 18px 18px 0', border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', textAlign: 'right', overflow: 'visible' }}>
                                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -522,15 +531,21 @@ const AdminUsers = () => {
                                         <div style={{ display: 'flex', gap: '10px' }}>
                                             <button 
                                                 onClick={() => isEditing ? setEditForm({...editForm, role: 'client'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'client' })}
-                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role !== 'admin' : selectedUser.role !== 'admin') ? 'rgba(255,255,255,0.1)' : 'transparent', color: (isEditing ? editForm.role !== 'admin' : selectedUser.role !== 'admin') ? '#fff' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'client' : selectedUser.role === 'client') ? 'rgba(255,255,255,0.1)' : 'transparent', color: (isEditing ? editForm.role === 'client' : selectedUser.role === 'client') ? '#fff' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                                             >
                                                 CLIENTE
                                             </button>
                                             <button 
                                                 onClick={() => isEditing ? setEditForm({...editForm, role: 'admin'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'admin' })}
-                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? ['admin', 'owner', 'master'].includes(editForm.role) : ['admin', 'owner', 'master'].includes(selectedUser.role)) ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: (isEditing ? ['admin', 'owner', 'master'].includes(editForm.role) : ['admin', 'owner', 'master'].includes(selectedUser.role)) ? '#ef4444' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? '#ef4444' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                                             >
                                                 ADMIN
+                                            </button>
+                                            <button 
+                                                onClick={() => isEditing ? setEditForm({...editForm, role: 'master'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'master' })}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'master' : selectedUser.role === 'master') ? 'rgba(168, 85, 247, 0.1)' : 'transparent', color: (isEditing ? editForm.role === 'master' : selectedUser.role === 'master') ? '#a855f7' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                            >
+                                                MASTER
                                             </button>
                                         </div>
                                     </div>
@@ -612,6 +627,7 @@ const AdminUsers = () => {
                                         <select value={newUserForm.role} onChange={e => setNewUserForm({...newUserForm, role: e.target.value})} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }}>
                                             <option value="client" style={{ background: '#111' }}>Cliente</option>
                                             <option value="admin" style={{ background: '#111' }}>Administrador</option>
+                                            <option value="master" style={{ background: '#111' }}>Master</option>
                                         </select>
                                     </div>
                                 </div>
