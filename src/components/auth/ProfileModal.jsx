@@ -5,13 +5,13 @@ import { ID, Query } from 'appwrite';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAlert } from '../../context/AlertContext';
-import { X, Save, Loader2, User, Mail, Smartphone, CheckCircle, Key, Send, Calendar } from 'lucide-react';
+import { X, Save, Loader2, User, Mail, Smartphone, CheckCircle, Key, Send, Calendar, Shield } from 'lucide-react';
 import '../../pages/Admin.css';
 
 export default function ProfileModal({ isOpen, onClose, user }) {
     const navigate = useNavigate();
     const location = useLocation();
-    const { updateProfile, resetPassword } = useAuth();
+    const { updateProfile, resetPassword, isAdmin, role } = useAuth();
     const { showAlert } = useAlert();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -448,6 +448,35 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                                 </button>
                             )}
                         </div>
+                        
+                        {isAdmin && (
+                            <div style={{
+                                padding: '20px',
+                                background: 'rgba(147, 85, 247, 0.05)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(147, 85, 247, 0.2)',
+                                marginBottom: '25px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                            onClick={() => { onClose(); navigate('/admin'); }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(147, 85, 247, 0.1)' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(147, 85, 247, 0.05)' }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ background: '#9333ea', padding: '8px', borderRadius: '10px' }}>
+                                            <Shield size={20} color="#fff" />
+                                        </div>
+                                        <div>
+                                            <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#fff' }}>Área Restrita (Painel)</h4>
+                                            <p style={{ margin: 0, fontSize: '0.75rem', color: '#a855f7' }}>Você está logado como: {role?.toUpperCase()}</p>
+                                        </div>
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#9333ea' }}>ACESSAR →</div>
+                                </div>
+                            </div>
+                        )}
 
                         <div style={{ height: '30px', textAlign: 'center' }}>
                             {success && (
