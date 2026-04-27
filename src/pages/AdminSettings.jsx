@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Loader2, Settings2, Activity, MessageSquare, MapPin, TrendingUp, Gift, Bot, DollarSign, Tag } from 'lucide-react';
+import { Save, Loader2, Settings2, Activity, MessageSquare, MapPin, TrendingUp, Gift, Bot, DollarSign, Tag, Sparkles } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { useAuth } from '../context/AuthContext';
@@ -12,21 +12,48 @@ import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
 
 /* ─── Helpers ─── */
-const Card = ({ children, icon, color = '#D4AF37', title, style = {} }) => (
+const Card = ({ children, icon, color = '#D4AF37', title, style = {}, onSave, saving, disabled }) => (
     <div style={{
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: '28px',
         padding: '35px',
         backdropFilter: 'blur(10px)',
+        position: 'relative',
         ...style
     }}>
         {title && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-                <div style={{ background: `${color}18`, padding: '10px', borderRadius: '12px', color, display: 'flex' }}>
-                    {icon}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ background: `${color}18`, padding: '10px', borderRadius: '12px', color, display: 'flex' }}>
+                        {icon}
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h3>
                 </div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h3>
+                {onSave && (
+                    <button
+                        onClick={onSave}
+                        disabled={saving || disabled}
+                        style={{
+                            background: disabled ? 'rgba(255,255,255,0.05)' : color,
+                            color: disabled ? '#444' : (color === '#D4AF37' ? '#000' : '#fff'),
+                            border: 'none',
+                            borderRadius: '12px',
+                            padding: '8px 16px',
+                            fontWeight: 900,
+                            cursor: disabled ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s',
+                            fontSize: '0.75rem',
+                            opacity: disabled ? 0.5 : 1
+                        }}
+                    >
+                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                        {saving ? 'SALVANDO...' : 'SALVAR'}
+                    </button>
+                )}
             </div>
         )}
         {children}
@@ -53,30 +80,6 @@ const inputStyle = {
     transition: 'border-color 0.2s'
 };
 
-const SaveBtn = ({ saving, color = '#D4AF37', label = 'SALVAR ALTERAÇÕES' }) => (
-    <button
-        type="submit"
-        disabled={saving}
-        style={{
-            background: color,
-            color: color === '#D4AF37' ? '#000' : '#fff',
-            border: 'none',
-            borderRadius: '14px',
-            padding: '15px',
-            fontWeight: 900,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s',
-            fontSize: '0.85rem'
-        }}
-    >
-        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-        {saving ? 'SALVANDO...' : label}
-    </button>
-);
 
 /* ─── Main Component ─── */
 const AdminSettings = () => {
@@ -103,10 +106,13 @@ const AdminSettings = () => {
         wa_bot_delay_hours: '2',
         wa_feedback_message: 'Olá {cliente}! Como foi sua experiência com nossos cortes hoje? 🥩🔥',
         wa_reminder_day: '4',
-        show_profit_dashboard: true
+        show_profit_dashboard: true,
+        ai_banner_enabled: true,
+        ai_description_enabled: true
     });
+    const [originalSettings, setOriginalSettings] = useState({});
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [savingSection, setSavingSection] = useState(null);
     const { showAlert } = useAlert();
 
     useEffect(() => { loadSettings(); }, []);
@@ -115,47 +121,49 @@ const AdminSettings = () => {
         setLoading(true);
         try {
             const data = await getSettings();
-            setSettings(prev => ({ ...prev, ...data, whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*' }));
-        } catch (error) { showAlert("Erro ao carregar configurações", "error"); } finally { setLoading(false); }
+            const mergedSettings = { 
+                ...settings, 
+                ...data, 
+                whatsapp_message: data.whatsapp_message || '*NOVO PEDIDO {pedido} - BASE APP*' 
+            };
+            setSettings(mergedSettings);
+            setOriginalSettings(mergedSettings);
+        } catch (error) { 
+            showAlert("Erro ao carregar configurações", "error"); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        setSaving(true);
+    const isDirty = (keys) => {
+        return keys.some(key => {
+            const current = settings[key];
+            const original = originalSettings[key];
+            return String(current) !== String(original);
+        });
+    };
+
+    const handleSaveSection = async (sectionName, keys) => {
+        setSavingSection(sectionName);
         try {
-            await Promise.all([
-                updateSettings('whatsapp_number', settings.whatsapp_number),
-                updateSettings('whatsapp_message', settings.whatsapp_message),
-                updateSettings('birthday_message', settings.birthday_message),
-                updateSettings('whatsapp_use_api', settings.whatsapp_use_api),
-                updateSettings('instagram_link', settings.instagram_link),
-                updateSettings('google_api_key', settings.google_api_key),
-                updateSettings('google_place_id', settings.google_place_id),
-                updateSettings('shipping_free_radius', settings.shipping_free_radius),
-                updateSettings('shipping_fixed_rate', settings.shipping_fixed_rate),
-                updateSettings('shipping_fixed_radius_max', settings.shipping_fixed_radius_max),
-                updateSettings('shipping_per_km_rate', settings.shipping_per_km_rate),
-                updateSettings('store_latitude', settings.store_latitude),
-                updateSettings('store_longitude', settings.store_longitude),
-                updateSettings('google_gtm_id', settings.google_gtm_id),
-                updateSettings('google_merchant_id', settings.google_merchant_id),
-                updateSettings('cashback_enabled', settings.cashback_enabled),
-                updateSettings('cashback_percentage', settings.cashback_percentage),
-                updateSettings('cashback_min_order', settings.cashback_min_order),
-                updateSettings('wa_bot_delay_hours', settings.wa_bot_delay_hours),
-                updateSettings('wa_feedback_message', settings.wa_feedback_message),
-                updateSettings('wa_reminder_day', settings.wa_reminder_day),
-                updateSettings('show_profit_dashboard', settings.show_profit_dashboard),
-            ]);
-            showAlert("Configurações salvas!", "success", null, 3000);
-        } catch (error) { showAlert("Erro ao salvar.", "error"); } finally { setSaving(false); }
+            await Promise.all(keys.map(key => updateSettings(key, settings[key])));
+            setOriginalSettings(prev => ({
+                ...prev,
+                ...Object.fromEntries(keys.map(k => [k, settings[k]]))
+            }));
+            showAlert(`Configurações de ${sectionName} salvas!`, "success", null, 3000);
+        } catch (error) { 
+            showAlert(`Erro ao salvar ${sectionName}.`, "error"); 
+        } finally { 
+            setSavingSection(null); 
+        }
     };
 
     if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Loader2 className="animate-spin" size={40} color="#D4AF37" /></div>;
 
     return (
         <div style={{ padding: '0 20px 60px' }}>
-            <form onSubmit={handleSave}>
+            <div>
 
                 {/* ══ ROW 1: Catálogo + Comunicação ══ */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
@@ -175,7 +183,14 @@ const AdminSettings = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Comunicação */}
-                    <Card icon={<MessageSquare size={22} />} color="#22c55e" title="Comunicação & Canal">
+                    <Card 
+                        icon={<MessageSquare size={22} />} 
+                        color="#22c55e" 
+                        title="Comunicação & Canal"
+                        onSave={() => handleSaveSection('Comunicação', ['whatsapp_number', 'instagram_link', 'whatsapp_message', 'birthday_message'])}
+                        saving={savingSection === 'Comunicação'}
+                        disabled={!isDirty(['whatsapp_number', 'instagram_link', 'whatsapp_message', 'birthday_message'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <Field label="WhatsApp para Pedidos">
                                 <input value={settings.whatsapp_number} onChange={e => setSettings({...settings, whatsapp_number: e.target.value})} style={inputStyle} placeholder="5511999999999" />
@@ -193,7 +208,14 @@ const AdminSettings = () => {
                     </Card>
 
                     {/* Google */}
-                    <Card icon={<Settings2 size={22} />} color="#4285F4" title="Ecossistema Google">
+                    <Card 
+                        icon={<Settings2 size={22} />} 
+                        color="#4285F4" 
+                        title="Ecossistema Google"
+                        onSave={() => handleSaveSection('Google', ['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id'])}
+                        saving={savingSection === 'Google'}
+                        disabled={!isDirty(['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <Field label="Google Cloud API Key">
                                 <input type="password" value={settings.google_api_key} onChange={e => setSettings({...settings, google_api_key: e.target.value})} style={inputStyle} placeholder="AIza..." />
@@ -215,7 +237,14 @@ const AdminSettings = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Logística */}
-                    <Card icon={<MapPin size={22} />} color="#f59e0b" title="Logística & Frete Inteligente">
+                    <Card 
+                        icon={<MapPin size={22} />} 
+                        color="#f59e0b" 
+                        title="Logística & Frete Inteligente"
+                        onSave={() => handleSaveSection('Logística', ['shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
+                        saving={savingSection === 'Logística'}
+                        disabled={!isDirty(['shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <Field label="Frete Grátis até (km)">
@@ -246,7 +275,14 @@ const AdminSettings = () => {
                     </Card>
 
                     {/* Fidelidade */}
-                    <Card icon={<Gift size={22} />} color="#ec4899" title="Fidelização & Cashback">
+                    <Card 
+                        icon={<Gift size={22} />} 
+                        color="#ec4899" 
+                        title="Fidelização & Cashback"
+                        onSave={() => handleSaveSection('Fidelidade', ['cashback_enabled', 'cashback_percentage', 'cashback_min_order'])}
+                        saving={savingSection === 'Fidelidade'}
+                        disabled={!isDirty(['cashback_enabled', 'cashback_percentage', 'cashback_min_order'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <Field label="Ativar Programa de Cashback">
                                 <select value={settings.cashback_enabled} onChange={e => setSettings({...settings, cashback_enabled: e.target.value === 'true'})} style={{ ...inputStyle, cursor: 'pointer' }}>
@@ -274,11 +310,71 @@ const AdminSettings = () => {
                     </Card>
                 </div>
 
+                {/* ══ ROW IA: Inteligência Artificial ══ */}
+                <Card 
+                    icon={<Sparkles size={22} />} 
+                    color="#D4AF37" 
+                    title="Inteligência Artificial" 
+                    style={{ marginBottom: '30px' }}
+                    onSave={() => handleSaveSection('IA', ['ai_banner_enabled', 'ai_description_enabled'])}
+                    saving={savingSection === 'IA'}
+                    disabled={!isDirty(['ai_banner_enabled', 'ai_description_enabled'])}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: '#666', lineHeight: 1.6 }}>Controle quais funcionalidades de IA ficam disponíveis no painel administrativo. Desativando uma função, o botão some da tela correspondente.</p>
+
+                        {/* Toggle Banner */}
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '18px 20px', background: settings.ai_banner_enabled ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${settings.ai_banner_enabled ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '16px', transition: 'all 0.3s' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{ background: settings.ai_banner_enabled ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: settings.ai_banner_enabled ? '#D4AF37' : '#555', transition: 'all 0.3s' }}>
+                                    <Sparkles size={18} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.9rem', marginBottom: '3px' }}>Gerador de Banner com IA</div>
+                                    <div style={{ fontSize: '0.73rem', color: '#555' }}>DALL-E 3 + GPT-4o Vision · Cria imagens profissionais para banners</div>
+                                </div>
+                            </div>
+                            <div style={{ position: 'relative', width: '52px', height: '28px', flexShrink: 0 }}>
+                                <input type="checkbox" checked={settings.ai_banner_enabled} onChange={e => setSettings({...settings, ai_banner_enabled: e.target.checked})} style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+                                <div style={{ position: 'absolute', inset: 0, background: settings.ai_banner_enabled ? '#D4AF37' : '#333', borderRadius: '28px', cursor: 'pointer', transition: 'all 0.3s', pointerEvents: 'none' }}>
+                                    <div style={{ position: 'absolute', top: '4px', left: settings.ai_banner_enabled ? '28px' : '4px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }} />
+                                </div>
+                            </div>
+                        </label>
+
+                        {/* Toggle Descrição */}
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '18px 20px', background: settings.ai_description_enabled ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${settings.ai_description_enabled ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '16px', transition: 'all 0.3s' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{ background: settings.ai_description_enabled ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: settings.ai_description_enabled ? '#D4AF37' : '#555', transition: 'all 0.3s' }}>
+                                    <Sparkles size={18} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.9rem', marginBottom: '3px' }}>Gerador de Descrição de Produto</div>
+                                    <div style={{ fontSize: '0.73rem', color: '#555' }}>GPT-4o-mini · Cria textos persuasivos para seus produtos</div>
+                                </div>
+                            </div>
+                            <div style={{ position: 'relative', width: '52px', height: '28px', flexShrink: 0 }}>
+                                <input type="checkbox" checked={settings.ai_description_enabled} onChange={e => setSettings({...settings, ai_description_enabled: e.target.checked})} style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+                                <div style={{ position: 'absolute', inset: 0, background: settings.ai_description_enabled ? '#D4AF37' : '#333', borderRadius: '28px', cursor: 'pointer', transition: 'all 0.3s', pointerEvents: 'none' }}>
+                                    <div style={{ position: 'absolute', top: '4px', left: settings.ai_description_enabled ? '28px' : '4px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }} />
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </Card>
+
                 {/* ══ ROW 4: Automação + Financeiro ══ */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Automação */}
-                    <Card icon={<Bot size={22} />} color="#8b5cf6" title="Automação & Pós-Venda (WhatsApp Bot)">
+                    <Card 
+                        icon={<Bot size={22} />} 
+                        color="#8b5cf6" 
+                        title="Automação & Pós-Venda (WhatsApp Bot)"
+                        onSave={() => handleSaveSection('Automação', ['wa_bot_delay_hours', 'wa_reminder_day', 'wa_feedback_message'])}
+                        saving={savingSection === 'Automação'}
+                        disabled={!isDirty(['wa_bot_delay_hours', 'wa_reminder_day', 'wa_feedback_message'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <Field label="Delay Pesquisa de Satisfação (Horas)">
@@ -303,7 +399,14 @@ const AdminSettings = () => {
                     </Card>
 
                     {/* Financeiro */}
-                    <Card icon={<DollarSign size={22} />} color="#22c55e" title="Gestão Financeira">
+                    <Card 
+                        icon={<DollarSign size={22} />} 
+                        color="#22c55e" 
+                        title="Gestão Financeira"
+                        onSave={() => handleSaveSection('Financeiro', ['show_profit_dashboard'])}
+                        saving={savingSection === 'Financeiro'}
+                        disabled={!isDirty(['show_profit_dashboard'])}
+                    >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <label style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', cursor: 'pointer', padding: '18px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.12)', borderRadius: '16px' }}>
                                 <input
@@ -321,33 +424,7 @@ const AdminSettings = () => {
                     </Card>
                 </div>
 
-                {/* ══ Botão de Salvar Global ══ */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        style={{
-                            background: 'linear-gradient(135deg, #D4AF37, #b8962e)',
-                            color: '#000',
-                            border: 'none',
-                            borderRadius: '18px',
-                            padding: '18px 50px',
-                            fontWeight: 900,
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            boxShadow: '0 10px 30px rgba(212, 175, 55, 0.25)',
-                            transition: 'all 0.3s',
-                            letterSpacing: '0.5px'
-                        }}
-                    >
-                        {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                        {saving ? 'SALVANDO TUDO...' : 'SALVAR TODAS AS CONFIGURAÇÕES'}
-                    </button>
-                </div>
-            </form>
+            </div>
 
             {/* ══ Saúde do Sistema (Admin Only) ══ */}
             {isAdmin && (

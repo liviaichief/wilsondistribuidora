@@ -93,7 +93,7 @@ const HeroCarousel = () => {
                 >
                     {(() => {
                         const rawSource = slides[currentIndex].image_url || slides[currentIndex].image;
-                        const mediaUrl = getImageUrl(rawSource, { width: 1200 });
+                        const mediaUrl = getImageUrl(rawSource, { width: 2000 });
                         
                         // Check for video by prefix or file content
                         const isVideo = (rawSource && typeof rawSource === 'string' && rawSource.startsWith('v_')) || 

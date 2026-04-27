@@ -45,13 +45,20 @@ export const getImageUrl = (imagePath, options = {}) => {
             return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
         }
 
-        // Construção da URL de Preview (Otimizada)
-        // Adicionamos &output=webp para forçar compressão moderna
-        let url = `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/preview?project=${project}&output=webp&quality=${quality}`;
+        // Construção da URL de View (Sem transformações, pois o plano atual bloqueia o /preview)
+        let url = `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${project}`;
         
-        if (width) url += `&width=${width}`;
-        if (height) url += `&height=${height}`;
-        if (gravity) url += `&gravity=${gravity}`;
+        // Adicionamos parâmetros extras se fornecidos (mesmo que o /view possa ignorá-los, mantemos para compatibilidade)
+        Object.entries(options).forEach(([key, value]) => {
+            url += `&${key}=${value}`;
+        });
+
+        // Append any other options as query parameters (e.g. timestamp for cache busting)
+        Object.entries(options).forEach(([key, value]) => {
+            if (!['width', 'height', 'gravity', 'quality'].includes(key)) {
+                url += `&${key}=${value}`;
+            }
+        });
 
         return url;
     } catch (error) {

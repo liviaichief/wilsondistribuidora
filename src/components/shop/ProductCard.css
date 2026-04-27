@@ -55,20 +55,7 @@
     transform: scale(1.1);
 }
 
-.media-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: 0.3s;
-}
-
-.premium-card:hover .media-overlay {
-    opacity: 1;
-}
+/* .media-overlay removido conforme solicitado */
 
 .carousel-nav-btn {
     position: absolute;
@@ -308,7 +295,7 @@
     background: #800020; /* Vermelho Borgonha conforme imagem */
     border: none;
     color: #ffffff;
-    padding: 10px 20px;
+    padding: 12px 45px;
     border-radius: 14px;
     font-size: 0.8rem;
     font-weight: 800;
@@ -413,8 +400,8 @@
     }
 
     .add-cart-btn {
-        padding: 10px 15px;
-        font-size: 0.7rem;
+        padding: 12px 20px;
+        font-size: 0.75rem;
         width: 100%;
         justify-content: center;
     }

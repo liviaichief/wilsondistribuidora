@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save, GripVertical, AlertCircle, ExternalLink, ImagePlus } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save, GripVertical, AlertCircle, ExternalLink, ImagePlus, Sparkles, Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
+import { generateBannerImage } from '../services/aiService';
+import { getSettings } from '../services/dataService';
 import './Admin.css';
 
 const AdminBanners = () => {
@@ -29,8 +31,15 @@ const AdminBanners = () => {
     const [imageFile, setImageFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [aiText, setAiText] = useState('');
     const [previewUrl, setPreviewUrl] = useState('');
     const [thumbPreviewUrl, setThumbPreviewUrl] = useState('');
+    const [aiReferenceImage, setAiReferenceImage] = useState(null);
+    const [aiReferencePreview, setAiReferencePreview] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const [aiBannerEnabled, setAiBannerEnabled] = useState(true);
 
     useEffect(() => {
         loadData();
@@ -39,9 +48,10 @@ const AdminBanners = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [bannersResponse, productsResponse] = await Promise.all([
+            const [bannersResponse, productsResponse, settingsData] = await Promise.all([
                 databases.listDocuments(DATABASE_ID, COLLECTIONS.BANNERS, [Query.orderAsc('display_order')]),
-                databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [Query.orderAsc('title'), Query.limit(100)])
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [Query.orderAsc('title'), Query.limit(100)]),
+                getSettings()
             ]);
 
             setBanners(bannersResponse.documents.map(doc => ({
@@ -50,6 +60,8 @@ const AdminBanners = () => {
                 product_id: doc.product ? (typeof doc.product === 'object' ? doc.product.$id : doc.product) : null
             })));
             setProducts(productsResponse.documents.map(doc => ({ id: doc.$id, title: doc.title })));
+            // ai_banner_enabled é true por padrão se não estiver definido
+            setAiBannerEnabled(settingsData.ai_banner_enabled !== false);
         } catch (error) {
             showAlert('Erro ao carregar dados: ' + error.message, 'error');
         } finally {
@@ -78,18 +90,97 @@ const AdminBanners = () => {
             setEditingBanner(null);
             setFormData({ title: '', image_url: '', product_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '' });
         }
+        setAiPrompt('');
+        setAiText('');
+        setAiReferenceImage(null);
+        setAiReferencePreview('');
         setIsModalOpen(true);
     };
 
     const uploadFileToAppwrite = async (file, isVideo = false) => {
         let fileToUpload = file;
         if (!isVideo && file.type.startsWith('image/')) {
-            const options = { maxSizeMB: 0.15, maxWidthOrHeight: 1280, useWebWorker: true };
+            const options = { maxSizeMB: 1.0, maxWidthOrHeight: 3840, useWebWorker: true, initialQuality: 0.95 };
             const compressedBlob = await imageCompression(file, options);
             fileToUpload = new File([compressedBlob], file.name, { type: file.type });
         }
         const result = await storage.createFile(BUCKET_ID, isVideo ? `v_${ID.unique()}` : ID.unique(), fileToUpload, [Permission.read(Role.any()), Permission.write(Role.users())]);
         return result.$id;
+    };
+
+    const handleReferenceImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setAiReferenceImage(file);
+            setAiReferencePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleVoiceInput = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showAlert('Seu navegador não suporta reconhecimento de voz.', 'error');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (event) => {
+            console.error('Erro no reconhecimento de voz:', event.error);
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setAiPrompt(prev => prev ? `${prev} ${transcript}` : transcript);
+        };
+
+        recognition.start();
+    };
+
+    const handleGenerateAI = async () => {
+        if (!aiPrompt) {
+            showAlert('Por favor, descreva o que deseja na imagem.', 'warning');
+            return;
+        }
+
+        setIsGeneratingAI(true);
+        try {
+            // Se houver imagem de referência, precisamos convertê-la para base64 ou descrevê-la
+            let referenceDescription = '';
+            if (aiReferenceImage) {
+                // Aqui poderíamos chamar o GPT-4o-vision no aiService
+                // Por enquanto, vamos passar o arquivo para o serviço tratar
+            }
+
+            const imageUrl = await generateBannerImage(`${aiPrompt}. Texto para inspiração: ${aiText}`, aiReferenceImage);
+            
+            // OpenAI returns a temporary URL. We must download and upload to Appwrite.
+            // Using our serverless proxy to avoid CORS issues
+            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Falha ao baixar imagem via proxy');
+            
+            const blob = await response.blob();
+            const file = new File([blob], `ai_banner_${Date.now()}.png`, { type: 'image/png' });
+            
+            setPreviewUrl(imageUrl); // Preview immediate
+            setIsUploading(true);
+            
+            const fileId = await uploadFileToAppwrite(file, false);
+            setFormData(prev => ({ ...prev, image_url: fileId }));
+            showAlert('Imagem gerada e salva com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro na IA:', error);
+            showAlert('Erro ao gerar imagem: ' + error.message, 'error');
+        } finally {
+            setIsGeneratingAI(false);
+            setIsUploading(false);
+        }
     };
 
     const handleImageChange = async (e) => {
@@ -129,6 +220,18 @@ const AdminBanners = () => {
             setIsModalOpen(false);
             loadData();
         } catch (error) { showAlert('Erro: ' + error.message, 'error'); } finally { setIsSaving(false); }
+    };
+
+    const isDirty = () => {
+        if (!editingBanner) return true; // Novo banner sempre pode salvar
+        if (formData.title !== (editingBanner.title || '')) return true;
+        if (formData.image_url !== (editingBanner.image_url || '')) return true;
+        if (formData.product_id !== (editingBanner.product_id || '')) return true;
+        if (formData.active !== (editingBanner.active ?? true)) return true;
+        if (parseInt(formData.display_order) !== parseInt(editingBanner.display_order || 0)) return true;
+        if (parseInt(formData.duration) !== parseInt(editingBanner.duration || 5)) return true;
+        if (formData.thumbnail_url !== (editingBanner.thumbnail_url || '')) return true;
+        return false;
     };
 
     const handleDelete = (banner) => {
@@ -184,7 +287,7 @@ const AdminBanners = () => {
                             >
                                 <div style={{ aspectRatio: '16/9', background: '#000', position: 'relative' }}>
                                     {(() => {
-                                        const mediaUrl = getImageUrl(banner.image_url);
+                                        const mediaUrl = getImageUrl(banner.image_url, { t: new Date().getTime() });
                                         const isVideo = banner.image_url?.startsWith('v_');
                                         if (isVideo) return <video src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />;
                                         return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} onError={(e) => {
@@ -228,9 +331,75 @@ const AdminBanners = () => {
 
                             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Título Interno</label>
-                                    <input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }} />
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Título Interno (Opcional)</label>
+                                    <input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }} placeholder="Ex: Promoção de Picanha" />
                                 </div>
+
+                                {/* Gerador de Banner com IA — só aparece se habilitado nas configs */}
+                                {aiBannerEnabled && (
+                                <div style={{ padding: '25px', background: 'rgba(212, 175, 55, 0.03)', borderRadius: '24px', border: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#D4AF37' }}>
+                                            <Sparkles size={18} />
+                                            <span style={{ fontWeight: 900, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Gerador de Banner com IA</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            {/* Imagem de Referência */}
+                                            <div style={{ width: '80px', height: '80px', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px dashed rgba(212, 175, 55, 0.3)', position: 'relative', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                                {aiReferencePreview ? (
+                                                    <img src={aiReferencePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ref" />
+                                                ) : (
+                                                    <div style={{ textAlign: 'center', color: '#D4AF37', fontSize: '0.6rem' }}>
+                                                        <ImagePlus size={20} style={{ marginBottom: '4px' }} />
+                                                        <span>MODELO</span>
+                                                    </div>
+                                                )}
+                                                <input type="file" accept="image/*" onChange={handleReferenceImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                                                {aiReferencePreview && <button onClick={(e) => { e.stopPropagation(); setAiReferenceImage(null); setAiReferencePreview(''); }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>x</button>}
+                                            </div>
+
+                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+                                                <textarea 
+                                                    value={aiPrompt} 
+                                                    onChange={e => setAiPrompt(e.target.value)}
+                                                    placeholder="O que deve aparecer na imagem? (ex: Churrasco suculento na brasa)"
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', paddingRight: '45px', color: '#fff', fontSize: '0.85rem', resize: 'none', height: '80px' }}
+                                                />
+                                                <button 
+                                                    type="button"
+                                                    onClick={handleVoiceInput}
+                                                    style={{ position: 'absolute', top: '10px', right: '10px', background: isListening ? '#ef4444' : 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', color: isListening ? '#fff' : '#888' }}
+                                                    title="Gravar por voz"
+                                                >
+                                                    {isListening ? <Mic size={16} className="animate-pulse" /> : <Mic size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input 
+                                                value={aiText} 
+                                                onChange={e => setAiText(e.target.value)}
+                                                placeholder="Texto opcional para o banner"
+                                                style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '14px', color: '#fff', fontSize: '0.9rem' }}
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={handleGenerateAI}
+                                                disabled={isGeneratingAI || isUploading}
+                                                style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '0 25px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 5px 15px rgba(212, 175, 55, 0.2)' }}
+                                            >
+                                                {isGeneratingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                                                {isGeneratingAI ? 'CRIANDO...' : 'GERAR'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#666', fontWeight: 600 }}>Dica: Se anexar um **modelo**, a IA tentará seguir o estilo visual dele.</p>
+                                </div>
+                                )}
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Conteúdo Visual (16:9)</label>
@@ -284,7 +453,22 @@ const AdminBanners = () => {
                                     </label>
                                 </div>
 
-                                <button type="submit" disabled={isSaving || isUploading} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '18px', padding: '20px', fontWeight: 900, fontSize: '1.1rem', cursor: 'pointer', marginTop: '10px' }}>
+                                <button 
+                                    type="submit" 
+                                    disabled={isSaving || isUploading || !isDirty()} 
+                                    style={{ 
+                                        background: isDirty() ? '#fff' : 'rgba(255,255,255,0.1)', 
+                                        color: isDirty() ? '#000' : '#666', 
+                                        border: 'none', 
+                                        borderRadius: '18px', 
+                                        padding: '20px', 
+                                        fontWeight: 900, 
+                                        fontSize: '1.1rem', 
+                                        cursor: isDirty() ? 'pointer' : 'not-allowed', 
+                                        marginTop: '10px',
+                                        transition: 'all 0.3s'
+                                    }}
+                                >
                                     {isSaving ? 'SALVANDO...' : 'SALVAR BANNER'}
                                 </button>
                             </form>

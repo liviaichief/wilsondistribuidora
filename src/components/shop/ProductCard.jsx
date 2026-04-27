@@ -124,11 +124,6 @@ const ProductCard = ({ product }) => {
                     </>
                 )}
 
-                <div className="media-overlay">
-                    <button className="quick-view-btn">
-                        <Eye size={20} />
-                    </button>
-                </div>
                 <div className={`card-price-float ${product.is_promotion ? 'promo-active' : ''}`}>
                     {product.is_promotion && product.promo_price ? (
                         <div className="price-stack">

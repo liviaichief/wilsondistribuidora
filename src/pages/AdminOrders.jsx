@@ -88,12 +88,19 @@ const AdminOrders = () => {
                                         <div>
                                             <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ITENS DO PEDIDO</h4>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                {JSON.parse(order.items || '[]').map((item, idx) => (
-                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                                        <span>{item.quantity}x {item.title}</span>
-                                                        <span style={{ fontWeight: 800 }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
-                                                    </div>
-                                                ))}
+                                                {(() => {
+                                                    try {
+                                                        const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                                                        return items.map((item, idx) => (
+                                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                                                <span>{item.quantity}x {item.title}</span>
+                                                                <span style={{ fontWeight: 800 }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                                            </div>
+                                                        ));
+                                                    } catch (e) {
+                                                        return <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>Erro ao ler itens do pedido.</div>;
+                                                    }
+                                                })()}
                                             </div>
                                         </div>
                                         <div>
@@ -112,8 +119,10 @@ const AdminOrders = () => {
                                                         <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px' }}>Endereço de Entrega</div>
                                                         {(() => {
                                                             try {
-                                                                const addr = JSON.parse(order.delivery_address);
-                                                                if (typeof addr !== 'object') throw new Error();
+                                                                if (!order.delivery_address) return <div style={{ fontWeight: 700, color: '#fff' }}>Retirada na Loja</div>;
+                                                                const addr = typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address;
+                                                                if (!addr || typeof addr !== 'object') throw new Error();
+                                                                
                                                                 return (
                                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                                                         <div style={{ gridColumn: 'span 2' }}>

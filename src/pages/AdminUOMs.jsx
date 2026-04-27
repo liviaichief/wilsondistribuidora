@@ -66,52 +66,52 @@ const AdminUOMs = () => {
     if (loading) return null;
 
     return (
-        <div style={{ marginTop: '20px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', width: '50%' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <AnimatePresence mode="popLayout">
-                        {uoms.map((u) => (
-                            <motion.div key={u.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: isEditing === u.id ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)', borderRadius: '18px', border: '1px solid', borderColor: isEditing === u.id ? '#D4AF37' : 'rgba(255,255,255,0.05)' }}>
-                                {isEditing === u.id ? (
-                                    <div style={{ display: 'flex', gap: '15px', flex: 1, alignItems: 'center' }}>
-                                        <input autoFocus value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #D4AF37', color: '#fff', borderRadius: '12px' }} />
-                                        <button onClick={() => handleUpdate(u.id)} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '12px 20px', fontWeight: 700 }}>Salvar</button>
-                                        <button onClick={() => setIsEditing(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px' }}><X size={20} /></button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <AnimatePresence mode="popLayout">
+                {uoms.map((u) => (
+                    <motion.div key={u.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isEditing === u.id ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid', borderColor: isEditing === u.id ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.05)', transition: 'all 0.2s' }}
+                    >
+                        {isEditing === u.id ? (
+                            <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+                                <input autoFocus value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ flex: 1, padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #D4AF37', color: '#fff', borderRadius: '10px', fontSize: '0.9rem' }} />
+                                <button onClick={() => handleUpdate(u.id)} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '10px', padding: '8px 14px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Salvar</button>
+                                <button onClick={() => setIsEditing(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px', cursor: 'pointer' }}><X size={16} /></button>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: '32px', height: '32px', background: 'rgba(212,175,55,0.08)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ruler size={14} color="#D4AF37" />
                                     </div>
-                                ) : (
-                                    <>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                            <GripVertical size={20} style={{ opacity: 0.1 }} />
-                                            <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>{u.name}</div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => { setIsEditing(u.id); setEditData(u); }} style={{ padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff' }}><Edit2 size={18} /></button>
-                                            <button onClick={() => handleDelete(u.id)} style={{ padding: '10px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444' }}><Trash2 size={18} /></button>
-                                        </div>
-                                    </>
-                                )}
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem' }}>{u.name}</div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button onClick={() => { setIsEditing(u.id); setEditData(u); }} style={{ padding: '7px', borderRadius: '9px', background: 'rgba(255,255,255,0.04)', border: 'none', color: '#888', cursor: 'pointer' }}><Edit2 size={15} /></button>
+                                    <button onClick={() => handleDelete(u.id)} style={{ padding: '7px', borderRadius: '9px', background: 'rgba(239, 68, 68, 0.08)', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={15} /></button>
+                                </div>
+                            </>
+                        )}
+                    </motion.div>
+                ))}
+            </AnimatePresence>
 
-                    <div style={{ marginTop: '30px', padding: '30px', background: 'rgba(255,255,255,0.01)', borderRadius: '24px', border: '2px dashed rgba(255,255,255,0.05)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <input 
-                                value={newUom.name} 
-                                onChange={e => setNewUom({...newUom, name: e.target.value})} 
-                                placeholder="Nova unidade (Ex: KG)" 
-                                style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '14px' }} 
-                            />
-                            <button 
-                                onClick={handleCreate} 
-                                disabled={isSaving} 
-                                style={{ width: '100%', background: '#D4AF37', color: '#000', border: 'none', borderRadius: '14px', padding: '14px', fontWeight: 900, cursor: 'pointer' }}
-                            >
-                                ADICIONAR UNIDADE
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* Adicionar nova */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <input
+                    value={newUom.name}
+                    onChange={e => setNewUom({...newUom, name: e.target.value})}
+                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                    placeholder="Nova unidade (Ex: KG)"
+                    style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '11px 14px', color: '#fff', fontSize: '0.88rem' }}
+                />
+                <button
+                    onClick={handleCreate}
+                    disabled={isSaving}
+                    style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '0 18px', fontWeight: 900, cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                >
+                    <Plus size={16} />{isSaving ? '...' : 'ADICIONAR'}
+                </button>
             </div>
         </div>
     );

@@ -121,67 +121,62 @@ const AdminCategories = () => {
     };
 
     return (
-        <div style={{ marginTop: '20px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', width: '50%' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {loading ? (
-                            <div style={{ padding: '50px', textAlign: 'center' }}><Loader2 className="animate-spin" color="#D4AF37" /></div>
-                        ) : (
-                            <AnimatePresence mode="popLayout">
-                                {categories.map((cat, index) => (
-                                    <motion.div 
-                                        key={cat.id} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                        draggable={isEditing === null} onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index)}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: isEditing === cat.id ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid', borderColor: isEditing === cat.id ? '#D4AF37' : 'rgba(255,255,255,0.05)', cursor: isEditing === null ? 'grab' : 'default' }}
-                                    >
-                                        {isEditing === cat.id ? (
-                                            <div style={{ display: 'flex', gap: '15px', flex: 1, alignItems: 'center' }}>
-                                                <input autoFocus value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ flex: 1, padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #D4AF37', color: '#fff', borderRadius: '12px' }} />
-                                                <button onClick={() => handleUpdate(cat.id)} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '12px 20px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
-                                                <button onClick={() => setIsEditing(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', cursor: 'pointer' }}><X size={20} /></button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                                    <GripVertical size={20} style={{ opacity: 0.2 }} />
-                                                    <div style={{ color: cat.active !== false ? '#fff' : '#444', fontWeight: 800, fontSize: '1.1rem' }}>{cat.name}</div>
-                                                </div>
-                                                <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <button onClick={() => toggleVisibility(cat)} style={{ padding: '10px', borderRadius: '10px', background: cat.active !== false ? 'rgba(212, 175, 55, 0.1)' : 'rgba(255,255,255,0.05)', border: 'none', color: cat.active !== false ? '#D4AF37' : '#666', cursor: 'pointer' }}>
-                                                        {cat.active !== false ? <Eye size={18} /> : <EyeOff size={18} />}
-                                                    </button>
-                                                    <button onClick={() => { setIsEditing(cat.id); setEditData(cat); }} style={{ padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}><Edit2 size={18} /></button>
-                                                    <button onClick={() => handleDelete(cat.id)} style={{ padding: '10px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        )}
-                    </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {loading ? (
+                <div style={{ padding: '30px', textAlign: 'center' }}><Loader2 className="animate-spin" color="#D4AF37" /></div>
+            ) : (
+                <AnimatePresence mode="popLayout">
+                    {categories.map((cat, index) => (
+                        <motion.div
+                            key={cat.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                            draggable={isEditing === null} onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isEditing === cat.id ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid', borderColor: isEditing === cat.id ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.05)', cursor: isEditing === null ? 'grab' : 'default', transition: 'all 0.2s' }}
+                        >
+                            {isEditing === cat.id ? (
+                                <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
+                                    <input autoFocus value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ flex: 1, padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid #D4AF37', color: '#fff', borderRadius: '10px', fontSize: '0.9rem' }} />
+                                    <button onClick={() => handleUpdate(cat.id)} style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '10px', padding: '8px 14px', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Salvar</button>
+                                    <button onClick={() => setIsEditing(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px', cursor: 'pointer' }}><X size={16} /></button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <GripVertical size={16} style={{ opacity: 0.2, cursor: 'grab' }} />
+                                        <div style={{ color: cat.active !== false ? '#fff' : '#555', fontWeight: 700, fontSize: '0.95rem' }}>{cat.name}</div>
+                                        {cat.active === false && <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700, background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '6px' }}>OCULTA</span>}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button onClick={() => toggleVisibility(cat)} style={{ padding: '7px', borderRadius: '9px', background: cat.active !== false ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.04)', border: 'none', color: cat.active !== false ? '#D4AF37' : '#555', cursor: 'pointer' }}>
+                                            {cat.active !== false ? <Eye size={15} /> : <EyeOff size={15} />}
+                                        </button>
+                                        <button onClick={() => { setIsEditing(cat.id); setEditData(cat); }} style={{ padding: '7px', borderRadius: '9px', background: 'rgba(255,255,255,0.04)', border: 'none', color: '#888', cursor: 'pointer' }}><Edit2 size={15} /></button>
+                                        <button onClick={() => handleDelete(cat.id)} style={{ padding: '7px', borderRadius: '9px', background: 'rgba(239, 68, 68, 0.08)', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={15} /></button>
+                                    </div>
+                                </>
+                            )}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            )}
 
-                    <div style={{ marginTop: '30px', padding: '30px', background: 'rgba(255,255,255,0.01)', borderRadius: '24px', border: '2px dashed rgba(255,255,255,0.05)' }}>
-                        <h3 style={{ margin: '0 0 20px', fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>Nova Categoria</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <input 
-                                value={newCategory.name} 
-                                onChange={e => setNewCategory({...newCategory, name: e.target.value})} 
-                                placeholder="Nome da categoria" 
-                                style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }} 
-                            />
-                            <button 
-                                onClick={handleCreate} 
-                                disabled={isSaving} 
-                                style={{ width: '100%', background: '#D4AF37', color: '#000', border: 'none', borderRadius: '14px', padding: '14px', fontWeight: 900, cursor: 'pointer', transition: 'all 0.3s' }}
-                            >
-                                {isSaving ? 'ADICIONANDO...' : 'ADICIONAR CATEGORIA'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* Adicionar nova */}
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <input
+                    value={newCategory.name}
+                    onChange={e => setNewCategory({...newCategory, name: e.target.value})}
+                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                    placeholder="Nova categoria..."
+                    style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '11px 14px', color: '#fff', fontSize: '0.88rem' }}
+                />
+                <button
+                    onClick={handleCreate}
+                    disabled={isSaving}
+                    style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '0 18px', fontWeight: 900, cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                >
+                    <Plus size={16} />{isSaving ? '...' : 'ADICIONAR'}
+                </button>
             </div>
+            {hintMessage && <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#f59e0b' }}>{hintMessage}</p>}
         </div>
     );
 };

@@ -62,7 +62,14 @@ const AdminDashboard = () => {
                     
                     try {
                         let items = order.items;
-                        if (typeof items === 'string') items = JSON.parse(items);
+                        if (typeof items === 'string') {
+                            try {
+                                items = JSON.parse(items);
+                            } catch (e) {
+                                console.warn(`Erro ao processar itens do pedido ${order.$id}`, e);
+                                items = [];
+                            }
+                        }
                         if (Array.isArray(items)) {
                             let orderCost = 0;
                             items.forEach(item => {
@@ -76,7 +83,9 @@ const AdminDashboard = () => {
                             });
                             recentProfit += (orderTotal - orderCost);
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("Erro no cálculo de estatísticas de pedido:", e);
+                    }
                 }
                 return acc;
             }, 0);

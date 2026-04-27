@@ -291,19 +291,40 @@ export const createOrder = async (orderData) => {
 
         // 3. Direct DB Write (Fallback or Default if no function)
         // This ensures the order IS registered as requested by the user.
-        const nextOrderNumber = await getNextOrderNumber();
-        const res = await databases.createDocument(
-            DATABASE_ID,
-            COLLECTIONS.ORDERS,
-            nextOrderNumber,
-            payload,
-            orderData.user_id ? [
-                Permission.read(Role.user(orderData.user_id)),
-                Permission.write(Role.user(orderData.user_id))
-            ] : [
-                Permission.read(Role.any()) // Fallback para convidados, mas idealmente restrito
-            ]
-        );
+        let retryCount = 0;
+        let res = null;
+        let lastErr = null;
+
+        while (retryCount < 3) {
+            try {
+                const nextOrderNumber = await getNextOrderNumber();
+                res = await databases.createDocument(
+                    DATABASE_ID,
+                    COLLECTIONS.ORDERS,
+                    nextOrderNumber,
+                    payload,
+                    orderData.user_id ? [
+                        Permission.read(Role.user(orderData.user_id)),
+                        Permission.write(Role.user(orderData.user_id))
+                    ] : [
+                        Permission.read(Role.any())
+                    ]
+                );
+                break; // Sucesso!
+            } catch (err) {
+                lastErr = err;
+                if (err.code === 409) {
+                    console.warn(`Order Number collision (${retryCount + 1}), retrying...`);
+                    retryCount++;
+                    // Pequeno delay para permitir que o outro processo termine
+                    await new Promise(r => setTimeout(r, 200 * retryCount));
+                } else {
+                    throw err; // Outro tipo de erro, não adianta tentar de novo
+                }
+            }
+        }
+
+        if (!res) throw lastErr;
 
         // --- STOCK DECREMENT LOGIC ---
         try {
@@ -449,7 +470,11 @@ export const backfillSKUs = async () => {
 // Task-5: Settings helper
 export const getSettings = async () => {
     try {
-        const response = await databases.listDocuments(DATABASE_ID, 'settings');
+        const response = await databases.listDocuments(
+            DATABASE_ID, 
+            'settings',
+            [Query.limit(100)]
+        );
         const settings = {};
         response.documents.forEach(doc => {
             let val = doc.value;

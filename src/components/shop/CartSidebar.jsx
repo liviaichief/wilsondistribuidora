@@ -33,7 +33,7 @@ const CartSidebar = () => {
         clearCart
     } = useCart();
 
-    const { user, profile, guestMode, openAuthModal, updateProfile, refreshProfile } = useAuth();
+    const { user, profile, guestMode, openAuthModal, updateProfile, refreshProfile, sharedCustomerData, setSharedCustomerData } = useAuth();
     const navigate = useNavigate();
 
     const [customerName, setCustomerName] = useState('');
@@ -230,11 +230,24 @@ const CartSidebar = () => {
                     complement: profile.address_complement || ''
                 });
             }
+        } else {
+            // Se não estiver logado, usa os dados compartilhados (digitados anteriormente ou em outro lugar)
+            if (sharedCustomerData.full_name && !customerName) setCustomerName(sharedCustomerData.full_name);
+            if (sharedCustomerData.whatsapp && !customerPhone) setCustomerPhone(formatPhone(sharedCustomerData.whatsapp));
         }
-    }, [user, profile]);
+    }, [user, profile, sharedCustomerData]);
 
     const handlePhoneChange = (e) => {
-        setCustomerPhone(formatPhone(e.target.value));
+        const val = e.target.value;
+        const formatted = formatPhone(val);
+        setCustomerPhone(formatted);
+        setSharedCustomerData(prev => ({ ...prev, whatsapp: formatted.replace(/\D/g, '') }));
+    };
+
+    const handleNameChange = (e) => {
+        const val = e.target.value;
+        setCustomerName(val);
+        setSharedCustomerData(prev => ({ ...prev, full_name: val }));
     };
 
     // Auto-sync function to save data in background
@@ -243,9 +256,6 @@ const CartSidebar = () => {
         
         const updates = {};
         if (field === 'name') {
-            const parts = value.split(' ');
-            updates.first_name = parts[0] || '';
-            updates.last_name = parts.slice(1).join(' ') || '';
             updates.full_name = value;
         } else if (field === 'phone') {
             updates.whatsapp = value;
@@ -538,7 +548,7 @@ const CartSidebar = () => {
                                         type="text"
                                         placeholder="Nome completo"
                                         value={customerName}
-                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        onChange={handleNameChange}
                                         onBlur={(e) => handleAutoSync('name', e.target.value)}
                                         className="checkout-input"
                                     />
@@ -598,6 +608,7 @@ const CartSidebar = () => {
                                                 placeholder="Nº"
                                                 value={address.number}
                                                 onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                                                onBlur={(e) => handleAutoSync('addr_number', e.target.value)}
                                                 className="checkout-input"
                                                 style={{ flex: 1 }}
                                             />
@@ -615,6 +626,7 @@ const CartSidebar = () => {
                                             placeholder="Complemento (Opcional)"
                                             value={address.complement}
                                             onChange={(e) => setAddress({ ...address, complement: e.target.value })}
+                                            onBlur={(e) => handleAutoSync('addr_complement', e.target.value)}
                                             className="checkout-input"
                                         />
                                         

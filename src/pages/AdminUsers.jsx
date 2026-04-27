@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getProfiles, updateProfile, getOrders, deleteProfile, createProfile, ID } from '../services/dataService';
-import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus } from 'lucide-react';
+import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus, RefreshCw } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -72,15 +72,8 @@ const AdminUsers = () => {
     const handleSaveEdit = async () => {
         setIsSaving(true);
         try {
-            // Reconstrói first_name e last_name para consistência
-            const nameParts = (editForm.full_name || '').trim().split(' ');
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
-
             const finalForm = {
-                ...editForm,
-                first_name: firstName,
-                last_name: lastName
+                ...editForm
             };
 
             // Dirty checking: envia apenas o que mudou
@@ -170,16 +163,22 @@ const AdminUsers = () => {
             const profileData = {
                 full_name: newUserForm.full_name,
                 email: newUserForm.email,
-                whatsapp: newUserForm.whatsapp,
-                role: newUserForm.role,
-                address_cep: newUserForm.address_cep,
-                address_street: newUserForm.address_street,
-                address_number: newUserForm.address_number,
-                address_neighborhood: newUserForm.address_neighborhood,
-                address_city: newUserForm.address_city,
-                address_state: newUserForm.address_state,
-                address_complement: newUserForm.address_complement
+                role: newUserForm.role
             };
+
+            // Mapeando whatsapp para a coluna phone (se for assim que está no seu banco) ou whatsapp
+            if (newUserForm.whatsapp) {
+                profileData.phone = newUserForm.whatsapp; 
+                profileData.whatsapp = newUserForm.whatsapp;
+            }
+
+            // Apenas envia campos de endereço se eles tiverem sido preenchidos, para evitar erro de coluna inexistente
+            const addressFields = ['address_cep', 'address_street', 'address_number', 'address_neighborhood', 'address_city', 'address_state', 'address_complement'];
+            addressFields.forEach(field => {
+                if (newUserForm[field] && newUserForm[field].trim() !== '') {
+                    profileData[field] = newUserForm[field];
+                }
+            });
             
             await createProfile(profileId, profileData);
 
@@ -279,6 +278,15 @@ const AdminUsers = () => {
                     <Search size={20} color="#555" />
                     <input placeholder="Buscar usuários por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '15px 12px', width: '100%', outline: 'none' }} />
                 </div>
+                <button 
+                    onClick={loadData}
+                    disabled={loading}
+                    className="hover-scale"
+                    title="Atualizar Lista"
+                    style={{ padding: '15px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                </button>
                 <button 
                     onClick={() => setCreateModal(true)}
                     style={{ padding: '15px 30px', borderRadius: '16px', background: '#D4AF37', border: 'none', color: '#000', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}

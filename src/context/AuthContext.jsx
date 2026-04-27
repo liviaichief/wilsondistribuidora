@@ -27,6 +27,12 @@ export const AuthProvider = ({ children }) => {
 
     const [role, setRole] = useState(null);
     const [profile, setProfile] = useState(null);
+    const [sharedCustomerData, setSharedCustomerData] = useState({
+        full_name: '',
+        whatsapp: '',
+        birthday: '',
+        address: null
+    });
 
     // Helper: Map Appwrite User to our App context user shape
     const mapUser = (acc) => ({
@@ -460,6 +466,8 @@ export const AuthProvider = ({ children }) => {
             confirmPasswordReset,
             signInWithGoogle,
             updateProfile,
+            sharedCustomerData,
+            setSharedCustomerData,
             refreshProfile: async () => {
                 if (user && user.$id) {
                     await fetchProfile(user.$id);

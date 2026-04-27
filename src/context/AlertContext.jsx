@@ -12,7 +12,7 @@ export const AlertProvider = ({ children }) => {
 
     // alertConfig: { type: 'success'|'error'|'info'|'confirm', title, message, onConfirm, onCancel, confirmText, cancelText, duration }
 
-    const showAlert = (message, type = 'info', title = null, duration = null) => {
+    const showAlert = (message, type = 'info', title = null, duration = 3000) => {
         // Clear existing timer if any
         if (timer) {
             clearTimeout(timer);
@@ -104,35 +104,20 @@ export const AlertProvider = ({ children }) => {
                             {alertConfig.message}
                         </p>
 
-                        {!alertConfig.duration && (
+                        {alertConfig.type === 'confirm' && (
                             <div className="flex justify-center gap-4">
-                                {alertConfig.type === 'confirm' ? (
-                                    <>
-                                        <button
-                                            onClick={alertConfig.onCancel}
-                                            className="px-6 py-2 rounded bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors font-medium"
-                                        >
-                                            {alertConfig.cancelText}
-                                        </button>
-                                        <button
-                                            onClick={alertConfig.onConfirm}
-                                            className="px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-lg hover:shadow-emerald-500/20"
-                                        >
-                                            {alertConfig.confirmText}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={closeAlert}
-                                        style={alertConfig.type === 'success' ? { transform: 'scale(1.4)', margin: '10px' } : {}}
-                                        className={`px-8 py-2 rounded text-white font-medium transition-colors shadow-lg ${alertConfig.type === 'error' ? 'bg-red-600 hover:bg-red-700 hover:shadow-red-500/20' :
-                                            alertConfig.type === 'warning' ? 'bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/20' :
-                                                'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/20'
-                                            }`}
-                                    >
-                                        OK
-                                    </button>
-                                )}
+                                <button
+                                    onClick={alertConfig.onCancel}
+                                    className="px-6 py-2 rounded bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors font-medium"
+                                >
+                                    {alertConfig.cancelText}
+                                </button>
+                                <button
+                                    onClick={alertConfig.onConfirm}
+                                    className="px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-lg hover:shadow-emerald-500/20"
+                                >
+                                    {alertConfig.confirmText}
+                                </button>
                             </div>
                         )}
                     </div>

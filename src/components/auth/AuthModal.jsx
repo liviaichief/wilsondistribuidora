@@ -14,7 +14,8 @@ const AuthModal = () => {
         signUp,
         signInWithGoogle,
         continueAsGuest,
-        resetPassword
+        resetPassword,
+        sharedCustomerData
     } = useAuth();
 
     const { showAlert } = useAlert();
@@ -31,7 +32,19 @@ const AuthModal = () => {
     // Reset form when view changes
     useEffect(() => {
         setError('');
-    }, [authModalView, isAuthModalOpen]);
+        // Auto-fill from shared data if available and we are registering
+        if (isAuthModalOpen && authModalView === 'register') {
+            if (sharedCustomerData.full_name && !fullName) setFullName(sharedCustomerData.full_name);
+            if (sharedCustomerData.whatsapp && !whatsapp) {
+                // Formata o whatsapp vindo do contexto
+                let value = sharedCustomerData.whatsapp.replace(/\D/g, '');
+                let formatted = value;
+                if (value.length > 2) formatted = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                if (value.length > 7) formatted = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+                setWhatsapp(formatted);
+            }
+        }
+    }, [authModalView, isAuthModalOpen, sharedCustomerData]);
 
     if (!isAuthModalOpen) return null;
 
