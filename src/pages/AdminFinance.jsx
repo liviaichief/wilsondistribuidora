@@ -14,18 +14,18 @@ const orchestratorFunctions = new AppwriteFunctions(orchestratorClient);
 const orchestratorDb = new AppwriteDatabases(orchestratorClient);
 
 const initialMockMonths = [
-    { id: 1, month: 'Janeiro', status: 'pago', dueDate: '05/01/2026', method: 'PIX', val: 'R$ 150,00' },
-    { id: 2, month: 'Fevereiro', status: 'pago', dueDate: '05/02/2026', method: 'PIX', val: 'R$ 150,00' },
-    { id: 3, month: 'Março', status: 'pendente', dueDate: '05/03/2026', method: '-', val: 'R$ 150,00' },
-    { id: 4, month: 'Abril', status: 'pendente', dueDate: '05/04/2026', method: '-', val: 'R$ 150,00' },
-    { id: 5, month: 'Maio', status: 'pendente', dueDate: '05/05/2026', method: '-', val: 'R$ 150,00' },
-    { id: 6, month: 'Junho', status: 'pendente', dueDate: '05/06/2026', method: '-', val: 'R$ 150,00' },
-    { id: 7, month: 'Julho', status: 'pendente', dueDate: '05/07/2026', method: '-', val: 'R$ 150,00' },
-    { id: 8, month: 'Agosto', status: 'pendente', dueDate: '05/08/2026', method: '-', val: 'R$ 150,00' },
-    { id: 9, month: 'Setembro', status: 'pendente', dueDate: '05/09/2026', method: '-', val: 'R$ 150,00' },
-    { id: 10, month: 'Outubro', status: 'pendente', dueDate: '05/10/2026', method: '-', val: 'R$ 150,00' },
-    { id: 11, month: 'Novembro', status: 'pendente', dueDate: '05/11/2026', method: '-', val: 'R$ 150,00' },
-    { id: 12, month: 'Dezembro', status: 'pendente', dueDate: '05/12/2026', method: '-', val: 'R$ 150,00' },
+    { id: 1, month: 'Janeiro', status: 'pago', dueDate: '05/01/2026', method: 'PIX', val: 'R$ 200,00' },
+    { id: 2, month: 'Fevereiro', status: 'pago', dueDate: '05/02/2026', method: 'PIX', val: 'R$ 200,00' },
+    { id: 3, month: 'Março', status: 'pendente', dueDate: '05/03/2026', method: '-', val: 'R$ 200,00' },
+    { id: 4, month: 'Abril', status: 'pendente', dueDate: '05/04/2026', method: '-', val: 'R$ 200,00' },
+    { id: 5, month: 'Maio', status: 'pendente', dueDate: '05/05/2026', method: '-', val: 'R$ 200,00' },
+    { id: 6, month: 'Junho', status: 'pendente', dueDate: '05/06/2026', method: '-', val: 'R$ 200,00' },
+    { id: 7, month: 'Julho', status: 'pendente', dueDate: '05/07/2026', method: '-', val: 'R$ 200,00' },
+    { id: 8, month: 'Agosto', status: 'pendente', dueDate: '05/08/2026', method: '-', val: 'R$ 200,00' },
+    { id: 9, month: 'Setembro', status: 'pendente', dueDate: '05/09/2026', method: '-', val: 'R$ 200,00' },
+    { id: 10, month: 'Outubro', status: 'pendente', dueDate: '05/10/2026', method: '-', val: 'R$ 200,00' },
+    { id: 11, month: 'Novembro', status: 'pendente', dueDate: '05/11/2026', method: '-', val: 'R$ 200,00' },
+    { id: 12, month: 'Dezembro', status: 'pendente', dueDate: '05/12/2026', method: '-', val: 'R$ 200,00' },
 ];
 
 const AdminFinance = () => {
@@ -99,7 +99,7 @@ const AdminFinance = () => {
                         setPaymentSuccess(true);
                         
                         const txId = statusData.id || statusData.payment_id || realPixData.id;
-                        const paidAmount = Number(selectedMonth.val.replace('R$', '').trim().replace(',', '.')) || 150;
+                        const paidAmount = Number(selectedMonth.val.replace('R$', '').trim().replace(',', '.')) || 200;
                         
                         try {
                             const payloadSub = {
@@ -150,7 +150,7 @@ const AdminFinance = () => {
         setIsSimulatingPayment(true);
         try {
             const amountCleanStr = selectedMonth.val.replace('R$', '').trim().replace(',', '.');
-            const numericAmount = Number(amountCleanStr) || 150;
+            const numericAmount = Number(amountCleanStr) || 200;
 
             const payload = JSON.stringify({
                 system_id: 'boutique',
