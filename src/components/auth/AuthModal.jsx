@@ -109,7 +109,7 @@ const AuthModal = () => {
                 if (birthDate.length >= 10) {
                     const [day, month, year] = birthDate.split('/');
                     if (day && month && year && year.length === 4) {
-                        isoDate = `${year}-${month}-${day}`;
+                        isoDate = `${year}-${month}-${day}T12:00:00.000Z`;
                     }
                 }
 

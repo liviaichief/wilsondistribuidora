@@ -105,7 +105,8 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                 // Convert ISO YYYY-MM-DD to DD/MM/YYYY
                 let displayBirthday = '';
                 if (profile.birthday) {
-                    const [year, month, day] = profile.birthday.split('-');
+                    const datePart = profile.birthday.split('T')[0];
+                    const [year, month, day] = datePart.split('-');
                     displayBirthday = `${day}/${month}/${year}`;
                 }
 
@@ -164,7 +165,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
             let isoBirthday = null;
             if (formData.birthday && formData.birthday.length === 10) {
                 const [day, month, year] = formData.birthday.split('/');
-                isoBirthday = `${year}-${month}-${day}`;
+                isoBirthday = `${year}-${month}-${day}T12:00:00.000Z`;
             }
 
             const data = {

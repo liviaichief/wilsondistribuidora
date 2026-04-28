@@ -87,7 +87,7 @@ const AdminUsers = () => {
                     // Higienização para campos específicos
                     if (key === 'birthday') {
                         if (newValue && newValue !== '') {
-                            dataToSave[key] = newValue;
+                            dataToSave[key] = newValue.length === 10 ? `${newValue}T12:00:00.000Z` : newValue;
                         } else {
                             // Se era algo e agora é nada, tentamos remover? 
                             // Appwrite as vezes não permite limpar campo Date enviando null.
