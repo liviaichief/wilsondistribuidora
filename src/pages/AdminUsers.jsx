@@ -161,16 +161,14 @@ const AdminUsers = () => {
         try {
             const profileId = ID.unique(); 
             const profileData = {
-                full_name: newUserForm.full_name,
-                email: newUserForm.email,
-                role: newUserForm.role
+                full_name: newUserForm.full_name || 'Perfil Adicionado',
+                first_name: (newUserForm.full_name || 'Perfil').split(' ')[0],
+                last_name: (newUserForm.full_name || '').split(' ').slice(1).join(' '),
+                email: newUserForm.email || '',
+                role: newUserForm.role || 'client',
+                user_id: profileId,
+                whatsapp: newUserForm.whatsapp || ''
             };
-
-            // Mapeando whatsapp para a coluna phone (se for assim que está no seu banco) ou whatsapp
-            if (newUserForm.whatsapp) {
-                profileData.phone = newUserForm.whatsapp; 
-                profileData.whatsapp = newUserForm.whatsapp;
-            }
 
             // Apenas envia campos de endereço se eles tiverem sido preenchidos, para evitar erro de coluna inexistente
             const addressFields = ['address_cep', 'address_street', 'address_number', 'address_neighborhood', 'address_city', 'address_state', 'address_complement'];

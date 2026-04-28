@@ -48,10 +48,6 @@ const OrderSidebar = () => {
                                     <span style={{ fontSize: '0.9rem' }}>Total:</span>
                                     <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>R$ {parseFloat(order.total).toFixed(2)}</span>
                                 </div>
-
-                                <div style={{ marginTop: '5px', fontSize: '0.8rem', color: '#4CAF50', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    <CheckCircle size={12} /> Enviado via WhatsApp
-                                </div>
                             </div>
                         ))
                     )}

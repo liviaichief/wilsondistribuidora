@@ -266,7 +266,7 @@ const CartSidebar = () => {
 
         if (Object.keys(updates).length > 0) {
             try {
-                await updateProfile(updates);
+                await updateProfile(profile.$id || user.$id, updates);
             } catch (e) {
                 console.warn("Background sync failed:", e);
             }

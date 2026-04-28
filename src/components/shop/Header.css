@@ -23,8 +23,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 76px; /* Reduzido proporcionalmente (20%) */
-    height: 76px;
+    width: 99px; /* Aumentado em 30% a pedido do cliente */
+    height: 99px;
     border-radius: 50%;
     background: #000; /* Fundo preto para o recorte ficar limpo */
     padding: 0;

@@ -84,7 +84,7 @@ const AdminOrders = () => {
                         <AnimatePresence>
                             {expandedOrder === order.$id && (
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)', padding: '30px' }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '30px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
                                         <div>
                                             <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ITENS DO PEDIDO</h4>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -161,35 +161,7 @@ const AdminOrders = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                            <div>
-                                                <h4 style={{ margin: '0 0 10px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ALTERAR STATUS</h4>
-                                                <select 
-                                                    value={order.status || 'pending'} 
-                                                    onChange={(e) => handleStatusUpdate(order.$id, e.target.value)}
-                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', outline: 'none' }}
-                                                >
-                                                    <option value="pending" style={{ background: '#111' }}>Recebido</option>
-                                                    <option value="processing" style={{ background: '#111' }}>Em Processamento</option>
-                                                    <option value="completed" style={{ background: '#111' }}>Concluído</option>
-                                                    <option value="cancelled" style={{ background: '#111' }}>Cancelado</option>
-                                                </select>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button 
-                                                    onClick={() => handleStatusUpdate(order.$id, 'completed')} 
-                                                    style={{ flex: 1, background: '#22c55e', color: '#fff', border: 'none', borderRadius: '10px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                                                >
-                                                    <CheckCircle2 size={14} /> CONCLUIR
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleStatusUpdate(order.$id, 'cancelled')} 
-                                                    style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '8px 12px', fontWeight: 800, cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
-                                                >
-                                                    <XCircle size={14} /> CANCELAR
-                                                </button>
-                                            </div>
-                                        </div>
+
                                     </div>
                                 </motion.div>
                             )}

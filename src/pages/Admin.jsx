@@ -108,7 +108,9 @@ const Admin = () => {
             currentProduct.manage_stock !== originalProduct.manage_stock ||
             currentProduct.stock_quantity !== originalProduct.stock_quantity ||
             currentProduct.allow_backorder !== originalProduct.allow_backorder ||
-            currentProduct.disable_on_zero_stock !== originalProduct.disable_on_zero_stock
+            currentProduct.disable_on_zero_stock !== originalProduct.disable_on_zero_stock ||
+            currentProduct.cost_price !== originalProduct.cost_price ||
+            currentProduct.video_url !== originalProduct.video_url
         );
     };
 

@@ -182,7 +182,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                 address_complement: formData.address_complement
             };
 
-            const result = await updateProfile(data, profileId);
+            const result = await updateProfile(profileId, data);
 
             if (result.error) {
                 throw result.error;

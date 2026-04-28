@@ -138,11 +138,12 @@ export const AuthProvider = ({ children }) => {
                                 session.$id,
                                 {
                                     email: session.email,
-                                    full_name: session.name || '',
-                                    first_name: (session.name || '').split(' ')[0] || '',
+                                    full_name: session.name || 'Perfil Cliente',
+                                    first_name: (session.name || '').split(' ')[0] || 'Perfil',
                                     last_name: (session.name || '').split(' ').slice(1).join(' ') || '',
                                     user_id: session.$id,
-                                    role: defaultRole
+                                    role: defaultRole,
+                                    whatsapp: ''
                                 },
                                 [
                                     Permission.read(Role.any()),

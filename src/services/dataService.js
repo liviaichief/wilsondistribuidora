@@ -178,6 +178,10 @@ export const saveProduct = async (product) => {
             disable_on_zero_stock: !!product.disable_on_zero_stock
         };
 
+        if (product.image_2 !== undefined) payload.image_2 = product.image_2;
+        if (product.cost_price !== undefined) payload.cost_price = parseFloat(product.cost_price) || 0;
+        if (product.video_url !== undefined) payload.video_url = product.video_url;
+
         if (docId) {
             // UPDATE
             payload.sku = product.sku; // Mantém o SKU existente ou atualiza se fornecido
@@ -708,7 +712,10 @@ export const getProfiles = async () => {
         const response = await databases.listDocuments(
             DATABASE_ID,
             COLLECTIONS.PROFILES,
-            [Query.limit(100)]
+            [
+                Query.orderDesc('$createdAt'),
+                Query.limit(100)
+            ]
         );
         return response;
     } catch (error) {
@@ -754,6 +761,7 @@ export const createProfile = async (profileId, data) => {
             profileId,
             data,
             [
+                Permission.read(Role.any()),
                 Permission.read(Role.user(profileId)),
                 Permission.write(Role.user(profileId))
             ]
