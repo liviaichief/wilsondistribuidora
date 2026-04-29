@@ -291,6 +291,13 @@ const CartSidebar = () => {
         }
     }, [isCartOpen, guestMode, cartItems]);
 
+    const assortedItems = cartItems.filter(item => item.has_assorted_min);
+    const assortedTotalQty = assortedItems.reduce((acc, item) => acc + item.quantity, 0);
+    const requiredMinQty = assortedItems.length > 0 
+        ? Math.max(...assortedItems.map(item => item.assorted_min_qty || 0)) 
+        : 0;
+    const isMinQtyMet = requiredMinQty === 0 || assortedTotalQty >= requiredMinQty;
+
     if (!isCartOpen) return null;
 
     const handleCheckout = async () => {
@@ -721,9 +728,16 @@ const CartSidebar = () => {
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.max(0, cartTotal + deliveryFee - (useCashback ? cashbackAvailable : 0)))}
                         </span>
                     </div>
+
+                    {!isMinQtyMet && (
+                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '10px', marginTop: '10px', marginBottom: '10px', color: '#ef4444', fontSize: '0.8rem', textAlign: 'center', fontWeight: 600 }}>
+                            Você precisa de no mínimo {requiredMinQty} itens sortidos (atacado) no carrinho para finalizar. Faltam {requiredMinQty - assortedTotalQty}.
+                        </div>
+                    )}
+
                     <button
                         className="finish-checkout-btn"
-                        disabled={cartItems.length === 0 || isProcessing}
+                        disabled={cartItems.length === 0 || isProcessing || !isMinQtyMet}
                         onClick={handleCheckout}
                     >
                         {isProcessing ? (

@@ -445,17 +445,40 @@ const Admin = () => {
                                             )}
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo (Opcional - p/ Lucro Real)</span>
-                                            <div style={{ position: 'relative' }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="0,00"
-                                                    value={maskCurrency(currentProduct.cost_price || 0)}
-                                                    onChange={e => setCurrentProduct({ ...currentProduct, cost_price: parseCurrency(e.target.value) })}
-                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px 10px 10px 35px', color: '#888', fontWeight: 700, fontSize: '0.9rem', outline: 'none' }}
-                                                />
-                                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', fontWeight: 900 }}>R$</span>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo (Opcional - p/ Lucro Real)</span>
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="0,00"
+                                                        value={maskCurrency(currentProduct.cost_price || 0)}
+                                                        onChange={e => setCurrentProduct({ ...currentProduct, cost_price: parseCurrency(e.target.value) })}
+                                                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px 10px 10px 35px', color: '#888', fontWeight: 700, fontSize: '0.9rem', outline: 'none' }}
+                                                    />
+                                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666', fontWeight: 900 }}>R$</span>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Pedido Mín. Sortido</span>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={currentProduct.has_assorted_min || false} onChange={e => setCurrentProduct({ ...currentProduct, has_assorted_min: e.target.checked })} style={{ accentColor: '#D4AF37', width: '14px', height: '14px' }} />
+                                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>Ativar</span>
+                                                    </label>
+                                                </div>
+                                                <div style={{ position: 'relative', opacity: currentProduct.has_assorted_min ? 1 : 0.5 }}>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        disabled={!currentProduct.has_assorted_min}
+                                                        placeholder="Ex: 3"
+                                                        value={currentProduct.assorted_min_qty || ''}
+                                                        onChange={e => setCurrentProduct({ ...currentProduct, assorted_min_qty: parseInt(e.target.value) || 0 })}
+                                                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', color: '#fff', fontWeight: 700, fontSize: '0.9rem', outline: 'none' }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 

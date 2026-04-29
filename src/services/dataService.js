@@ -179,7 +179,9 @@ export const saveProduct = async (product) => {
             has_box_option: !!product.has_box_option,
             box_price: product.box_price ? (parseFloat(product.box_price) || 0) : null,
             has_bundle_option: !!product.has_bundle_option,
-            unit_price: product.unit_price ? (parseFloat(product.unit_price) || 0) : null
+            unit_price: product.unit_price ? (parseFloat(product.unit_price) || 0) : null,
+            has_assorted_min: !!product.has_assorted_min,
+            assorted_min_qty: product.assorted_min_qty ? (parseInt(product.assorted_min_qty) || 0) : null
         };
 
         if (product.image_2 !== undefined) payload.image_2 = product.image_2;
