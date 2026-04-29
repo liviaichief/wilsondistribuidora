@@ -406,7 +406,7 @@ const Admin = () => {
                                                     </label>
                                                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                                         <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '18px', height: '18px' }} />
-                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
+                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Caixa</span>
                                                     </label>
                                                 </div>
                                             </div>
