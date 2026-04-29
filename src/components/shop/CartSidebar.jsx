@@ -266,7 +266,7 @@ const CartSidebar = () => {
 
         if (Object.keys(updates).length > 0) {
             try {
-                await updateProfile(profile.$id || user.$id, updates);
+                await updateProfile(updates, profile?.$id || user?.$id);
             } catch (e) {
                 console.warn("Background sync failed:", e);
             }
@@ -584,23 +584,25 @@ const CartSidebar = () => {
 
                                 {deliveryMode === 'delivery' && (
                                     <div className="checkout-input-group" style={{ marginTop: '15px' }}>
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <input
+                                                type="text"
+                                                ref={autocompleteRef}
+                                                placeholder="🔍 Busca rápida pelo Google (Rua, CEP, etc)..."
+                                                className="checkout-input"
+                                                style={{ border: '1px dashed rgba(66, 133, 244, 0.5)', background: 'rgba(66, 133, 244, 0.05)', fontSize: '0.85rem' }}
+                                            />
+                                        </div>
+
                                         <input
                                             type="text"
-                                            ref={autocompleteRef}
-                                            placeholder="Comece a digitar seu endereço..."
+                                            placeholder="Rua / Avenida"
+                                            value={address.street}
+                                            onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                                            onBlur={(e) => handleAutoSync('addr_street', e.target.value)}
                                             className="checkout-input"
-                                            style={{ border: '1px solid #4285F4' }}
+                                            style={{ marginTop: '10px' }}
                                         />
-                                        
-                                        {address.lat && (
-                                            <div style={{ marginTop: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <img 
-                                                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${address.lat},${address.lng}&zoom=15&size=400x150&markers=color:red%7C${address.lat},${address.lng}&key=${googleConfig?.google_api_key}`} 
-                                                    alt="Entrega" 
-                                                    style={{ width: '100%', height: 'auto', display: 'block' }} 
-                                                />
-                                            </div>
-                                        )}
 
                                         <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                             <input
@@ -615,19 +617,43 @@ const CartSidebar = () => {
                                             <input
                                                 type="text"
                                                 placeholder="Bairro"
-                                                readOnly
                                                 value={address.neighborhood}
+                                                onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
+                                                onBlur={(e) => handleAutoSync('addr_neighborhood', e.target.value)}
                                                 className="checkout-input"
-                                                style={{ flex: 2, opacity: 0.7 }}
+                                                style={{ flex: 2 }}
                                             />
                                         </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Cidade"
+                                                value={address.city}
+                                                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                                                onBlur={(e) => handleAutoSync('addr_city', e.target.value)}
+                                                className="checkout-input"
+                                                style={{ flex: 2 }}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="CEP"
+                                                value={address.cep}
+                                                onChange={(e) => setAddress({ ...address, cep: e.target.value })}
+                                                onBlur={(e) => handleAutoSync('addr_cep', e.target.value)}
+                                                className="checkout-input"
+                                                style={{ flex: 1 }}
+                                            />
+                                        </div>
+
                                         <input
                                             type="text"
-                                            placeholder="Complemento (Opcional)"
+                                            placeholder="Complemento / Ponto de Referência (Opcional)"
                                             value={address.complement}
                                             onChange={(e) => setAddress({ ...address, complement: e.target.value })}
                                             onBlur={(e) => handleAutoSync('addr_complement', e.target.value)}
                                             className="checkout-input"
+                                            style={{ marginTop: '10px' }}
                                         />
                                         
                                         {deliveryDistance && (
