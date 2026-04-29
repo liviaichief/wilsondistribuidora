@@ -33,7 +33,13 @@ const AdminUsers = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => { 
+        loadData(); 
+        
+        const handleFocus = () => loadData();
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, []);
 
     const loadData = async () => {
         setLoading(true);
@@ -159,7 +165,8 @@ const AdminUsers = () => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const profileId = ID.unique(); 
+            // Gera um ID alfanumérico válido para evitar o erro do "unique()" no Appwrite
+            const profileId = "usr" + Date.now().toString(36) + Math.random().toString(36).substring(2, 8); 
             const profileData = {
                 full_name: newUserForm.full_name || 'Perfil Adicionado',
                 first_name: (newUserForm.full_name || 'Perfil').split(' ')[0],

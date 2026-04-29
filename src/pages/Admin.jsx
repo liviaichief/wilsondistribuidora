@@ -29,7 +29,7 @@ const Admin = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
-        title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, video_url: ''
+        title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, video_url: '', has_box_option: false, box_price: ''
     });
 
     useEffect(() => {
@@ -82,7 +82,7 @@ const Admin = () => {
 
     const openNewModal = () => {
         const empty = {
-            title: '', description: '', price: '', category: categories.length > 0 ? categories[0].id : '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, video_url: ''
+            title: '', description: '', price: '', category: categories.length > 0 ? categories[0].id : '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, video_url: '', has_box_option: false, box_price: ''
         };
         setCurrentProduct(empty);
         setOriginalProduct(empty);
@@ -110,7 +110,9 @@ const Admin = () => {
             currentProduct.allow_backorder !== originalProduct.allow_backorder ||
             currentProduct.disable_on_zero_stock !== originalProduct.disable_on_zero_stock ||
             currentProduct.cost_price !== originalProduct.cost_price ||
-            currentProduct.video_url !== originalProduct.video_url
+            currentProduct.video_url !== originalProduct.video_url ||
+            currentProduct.has_box_option !== originalProduct.has_box_option ||
+            currentProduct.box_price !== originalProduct.box_price
         );
     };
 
@@ -382,21 +384,43 @@ const Admin = () => {
                                                 <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
                                                 </select>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', cursor: 'pointer' }}>
+                                                    <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
+                                                    <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
+                                                </label>
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
-                                            <div style={{ position: 'relative' }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="0,00"
-                                                    value={maskCurrency(currentProduct.price)}
-                                                    onChange={e => setCurrentProduct({ ...currentProduct, price: parseCurrency(e.target.value) })}
-                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px 15px 15px 45px', color: '#fff', fontWeight: 900, fontSize: '1.1rem', outline: 'none' }}
-                                                />
-                                                <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
+                                        <div style={{ display: 'grid', gridTemplateColumns: currentProduct.has_box_option ? '1fr 1fr' : '1fr', gap: '15px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="0,00"
+                                                        value={maskCurrency(currentProduct.price)}
+                                                        onChange={e => setCurrentProduct({ ...currentProduct, price: parseCurrency(e.target.value) })}
+                                                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px 15px 15px 45px', color: '#fff', fontWeight: 900, fontSize: '1.1rem', outline: 'none' }}
+                                                    />
+                                                    <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
+                                                </div>
                                             </div>
+                                            
+                                            {currentProduct.has_box_option && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Caixa</span>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="0,00"
+                                                            value={maskCurrency(currentProduct.box_price || 0)}
+                                                            onChange={e => setCurrentProduct({ ...currentProduct, box_price: parseCurrency(e.target.value) })}
+                                                            style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px 15px 15px 45px', color: '#fff', fontWeight: 900, fontSize: '1.1rem', outline: 'none' }}
+                                                        />
+                                                        <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

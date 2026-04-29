@@ -10,7 +10,10 @@ import './ProductCard.css';
 const ProductCard = ({ product }) => {
     const { cartItems, addToCart, updateQuantity, removeFromCart } = useCart();
     const navigate = useNavigate();
-    const cartItem = cartItems.find(item => item.id === product.id);
+    const [isBoxSelected, setIsBoxSelected] = React.useState(false);
+
+    const currentId = isBoxSelected && product.has_box_option ? `${product.id}_box` : product.id;
+    const cartItem = cartItems.find(item => item.id === currentId);
     const quantity = cartItem ? cartItem.quantity : 0;
 
     const [isImageLoading, setIsImageLoading] = React.useState(true);
@@ -21,7 +24,23 @@ const ProductCard = ({ product }) => {
 
     const handleAdd = (e) => {
         e.stopPropagation();
-        addToCart(product, 1);
+        
+        let productToAdd = { ...product };
+        if (isBoxSelected && product.has_box_option) {
+            productToAdd = {
+                ...product,
+                id: `${product.id}_box`,
+                original_id: product.id,
+                price: product.box_price,
+                uom: 'Caixa',
+                is_box: true,
+                title: `${product.title} (Caixa)`,
+                is_promotion: false, // Caixa não entra na promoção de unidade por padrão
+                promo_price: null
+            };
+        }
+        
+        addToCart(productToAdd, 1);
     };
 
     const handleIncrement = (e) => {
@@ -32,8 +51,8 @@ const ProductCard = ({ product }) => {
 
     const handleDecrement = (e) => {
         e.stopPropagation();
-        if (quantity > 1) updateQuantity(product.id, quantity - 1);
-        else removeFromCart(product.id);
+        if (quantity > 1) updateQuantity(currentId, quantity - 1);
+        else removeFromCart(currentId);
     };
 
     const nextImage = (e) => {
@@ -124,8 +143,8 @@ const ProductCard = ({ product }) => {
                     </>
                 )}
 
-                <div className={`card-price-float ${product.is_promotion ? 'promo-active' : ''}`}>
-                    {product.is_promotion && product.promo_price ? (
+                <div className={`card-price-float ${(product.is_promotion && !isBoxSelected) ? 'promo-active' : ''}`}>
+                    {product.is_promotion && product.promo_price && !isBoxSelected ? (
                         <div className="price-stack">
                             <span className="old-price">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
@@ -136,7 +155,9 @@ const ProductCard = ({ product }) => {
                         </div>
                     ) : (
                         <span className="main-price">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                parseFloat(isBoxSelected && product.has_box_option ? (product.box_price || 0) : product.price)
+                            )}
                         </span>
                     )}
                 </div>
@@ -149,7 +170,25 @@ const ProductCard = ({ product }) => {
                     <span className="card-category">{(product.category_name || 'Geral').toUpperCase()}</span>
                 </div>
                 <p className="card-description">{product.description}</p>
-                <div className="card-uom-badge">{product.uom || 'KG'}</div>
+                
+                {product.has_box_option ? (
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', zIndex: 2, position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <button 
+                            onClick={() => setIsBoxSelected(false)}
+                            style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid', borderColor: !isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: !isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: !isBoxSelected ? '#D4AF37' : '#888', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                            {product.uom || 'UN'}
+                        </button>
+                        <button 
+                            onClick={() => setIsBoxSelected(true)}
+                            style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid', borderColor: isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: isBoxSelected ? '#D4AF37' : '#888', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                            CAIXA
+                        </button>
+                    </div>
+                ) : (
+                    <div className="card-uom-badge">{product.uom || 'KG'}</div>
+                )}
                 
                 <div className="card-footer">
                     <div className="action-area" onClick={e => e.stopPropagation()}>

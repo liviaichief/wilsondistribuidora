@@ -18,6 +18,7 @@ const ProductDetail = () => {
     const [error, setError] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
+    const [isBoxSelected, setIsBoxSelected] = useState(false);
 
     const images = [];
     if (product?.image) images.push(product.image);
@@ -108,22 +109,37 @@ const ProductDetail = () => {
     }
 
     // Find current quantity in global cart state
-    const cartItem = cartItems.find(item => item.id === product.id);
+    const currentId = isBoxSelected && product.has_box_option ? `${product.id}_box` : product.id;
+    const cartItem = cartItems.find(item => item.id === currentId);
     const quantity = cartItem ? cartItem.quantity : 0;
 
     const handleAdd = () => {
-        addToCart(product, 1);
+        let productToAdd = { ...product };
+        if (isBoxSelected && product.has_box_option) {
+            productToAdd = {
+                ...product,
+                id: `${product.id}_box`,
+                original_id: product.id,
+                price: product.box_price,
+                uom: 'Caixa',
+                is_box: true,
+                title: `${product.title} (Caixa)`,
+                is_promotion: false,
+                promo_price: null
+            };
+        }
+        addToCart(productToAdd, 1);
     };
 
     const handleIncrement = () => {
-        updateQuantity(product.id, quantity + 1);
+        updateQuantity(currentId, quantity + 1);
     };
 
     const handleDecrement = () => {
         if (quantity > 1) {
-            updateQuantity(product.id, quantity - 1);
+            updateQuantity(currentId, quantity - 1);
         } else {
-            removeFromCart(product.id);
+            removeFromCart(currentId);
         }
     };
 
@@ -203,7 +219,7 @@ const ProductDetail = () => {
                         <h1 className="product-title-detail">{product.title}</h1>
 
                         <div className="product-price-section">
-                            {product.is_promotion && product.promo_price ? (
+                            {product.is_promotion && product.promo_price && !isBoxSelected ? (
                                 <div className="price-container">
                                     <span className="original-price-detail">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
@@ -216,8 +232,8 @@ const ProductDetail = () => {
                             ) : (
                                 <div className="price-container">
                                     <span className="regular-price-detail">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                                        <span className="uom"> / {product.uom || 'KG'}</span>
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isBoxSelected && product.has_box_option ? (product.box_price || 0) : product.price)}
+                                        <span className="uom"> / {isBoxSelected && product.has_box_option ? 'Caixa' : (product.uom || 'KG')}</span>
                                     </span>
                                 </div>
                             )}
@@ -228,6 +244,23 @@ const ProductDetail = () => {
                             <p className="product-description-detail">
                                 {product.description || 'Nenhuma descrição detalhada disponível para este produto.'}
                             </p>
+                            
+                            {product.has_box_option && (
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                                    <button 
+                                        onClick={() => setIsBoxSelected(false)}
+                                        style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid', borderColor: !isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: !isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: !isBoxSelected ? '#D4AF37' : '#888', fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}
+                                    >
+                                        {product.uom || 'UN'}
+                                    </button>
+                                    <button 
+                                        onClick={() => setIsBoxSelected(true)}
+                                        style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid', borderColor: isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: isBoxSelected ? '#D4AF37' : '#888', fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}
+                                    >
+                                        CAIXA
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="product-detail-actions">
