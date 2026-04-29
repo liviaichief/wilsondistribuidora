@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../services/dataService';
 import { useCart } from '../context/CartContext';
-import { Plus, Minus, ShoppingCart, ArrowLeft, Loader2, X } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, ArrowLeft, Loader2, X, Sparkles } from 'lucide-react';
 import { getImageUrl } from '../lib/imageUtils';
 import { trackEvent } from '../services/analytics';
 import { getProducts } from '../services/dataService';
