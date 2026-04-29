@@ -93,7 +93,7 @@ const AdminOrders = () => {
                                                         const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
                                                         return items.map((item, idx) => (
                                                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                                                <span>{item.quantity}x {item.title}</span>
+                                                                <span>{item.quantity}x {item.title}{item.external_code ? <span style={{ color: '#D4AF37', fontSize: '0.7rem', marginLeft: '8px', fontWeight: 700 }}>[Ref: {item.external_code}]</span> : null}</span>
                                                                 <span style={{ fontWeight: 800 }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
                                                             </div>
                                                         ));

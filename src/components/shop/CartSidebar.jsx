@@ -430,7 +430,7 @@ const CartSidebar = () => {
 
         // 3. Construct WhatsApp Message
         const itemsList = cartItems.map(item =>
-            `• ${item.quantity}x ${formatTitleCase(item.title)} - R$ ${(item.price * item.quantity).toFixed(2)}`
+            `• ${item.quantity}x ${formatTitleCase(item.title)}${item.external_code ? ` [Ref: ${item.external_code}]` : ''} - R$ ${(item.price * item.quantity).toFixed(2)}`
         ).join('\n');
 
         let addressText = '';

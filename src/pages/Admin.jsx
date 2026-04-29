@@ -378,6 +378,16 @@ const Admin = () => {
                                                 <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
                                                 </select>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                                                    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Código Externo (ERP/Ref)</span>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Ex: REF-123" 
+                                                        value={currentProduct.external_code || ''} 
+                                                        onChange={e => setCurrentProduct({ ...currentProduct, external_code: e.target.value })} 
+                                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '8px 12px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                                                    />
+                                                </div>
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Unidade</span>
