@@ -378,30 +378,35 @@ const Admin = () => {
                                                 <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
                                                 </select>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                                                    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Código Externo (ERP/Ref)</span>
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Ex: REF-123" 
-                                                        value={currentProduct.external_code || ''} 
-                                                        onChange={e => setCurrentProduct({ ...currentProduct, external_code: e.target.value })} 
-                                                        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '8px 12px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
-                                                    />
-                                                </div>
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Unidade</span>
                                                 <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
                                                 </select>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '4px' }}>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                                        <input type="checkbox" checked={currentProduct.has_bundle_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_bundle_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
-                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Fardo</span>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Código Externo (ERP/Ref)</span>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Ex: REF-123" 
+                                                    value={currentProduct.external_code || ''} 
+                                                    onChange={e => setCurrentProduct({ ...currentProduct, external_code: e.target.value })} 
+                                                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'flex-end', paddingBottom: '12px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={currentProduct.has_bundle_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_bundle_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '18px', height: '18px' }} />
+                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Fardo</span>
                                                     </label>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                                        <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
-                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '18px', height: '18px' }} />
+                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -457,7 +462,7 @@ const Admin = () => {
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo (Opcional - p/ Lucro Real)</span>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
                                                         type="text"
