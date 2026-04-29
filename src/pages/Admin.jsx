@@ -361,16 +361,7 @@ const Admin = () => {
                                             <textarea placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>URL do Vídeo (Youtube/Shorts/TikTok)</span>
-                                            <input 
-                                                type="text" 
-                                                placeholder="https://..." 
-                                                value={currentProduct.video_url || ''} 
-                                                onChange={e => setCurrentProduct({ ...currentProduct, video_url: e.target.value })} 
-                                                style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none' }} 
-                                            />
-                                        </div>
+
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
