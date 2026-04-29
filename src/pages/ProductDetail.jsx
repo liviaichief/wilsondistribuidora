@@ -245,6 +245,13 @@ const ProductDetail = () => {
                                 {product.description || 'Nenhuma descrição detalhada disponível para este produto.'}
                             </p>
                             
+                            {product.has_bundle_option && product.unit_price > 0 && (
+                                <div style={{ fontSize: '0.85rem', color: '#999', margin: '15px 0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '10px 15px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <Sparkles size={16} color="#D4AF37" />
+                                    Unidade no Fardo: <span style={{ color: '#fff', fontSize: '1rem' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.unit_price))}</span>
+                                </div>
+                            )}
+                            
                             {product.has_box_option && (
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                                     <button 

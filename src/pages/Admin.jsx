@@ -384,15 +384,21 @@ const Admin = () => {
                                                 <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
                                                 </select>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', cursor: 'pointer' }}>
-                                                    <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
-                                                    <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
-                                                </label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '4px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={currentProduct.has_bundle_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_bundle_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
+                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Fardo</span>
+                                                    </label>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '16px', height: '16px' }} />
+                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Opção de caixa</span>
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: currentProduct.has_box_option ? '1fr 1fr' : '1fr', gap: '15px' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                                            <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
@@ -405,9 +411,25 @@ const Admin = () => {
                                                     <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
                                                 </div>
                                             </div>
+
+                                            {currentProduct.has_bundle_option && (
+                                                <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Unidade</span>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="0,00"
+                                                            value={maskCurrency(currentProduct.unit_price || 0)}
+                                                            onChange={e => setCurrentProduct({ ...currentProduct, unit_price: parseCurrency(e.target.value) })}
+                                                            style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px 15px 15px 45px', color: '#fff', fontWeight: 900, fontSize: '1.1rem', outline: 'none' }}
+                                                        />
+                                                        <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontWeight: 900 }}>R$</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                             
                                             {currentProduct.has_box_option && (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Caixa</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input

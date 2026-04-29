@@ -177,7 +177,9 @@ export const saveProduct = async (product) => {
             allow_backorder: !!product.allow_backorder,
             disable_on_zero_stock: !!product.disable_on_zero_stock,
             has_box_option: !!product.has_box_option,
-            box_price: product.box_price ? (parseFloat(product.box_price) || 0) : null
+            box_price: product.box_price ? (parseFloat(product.box_price) || 0) : null,
+            has_bundle_option: !!product.has_bundle_option,
+            unit_price: product.unit_price ? (parseFloat(product.unit_price) || 0) : null
         };
 
         if (product.image_2 !== undefined) payload.image_2 = product.image_2;

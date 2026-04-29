@@ -171,6 +171,13 @@ const ProductCard = ({ product }) => {
                 </div>
                 <p className="card-description">{product.description}</p>
                 
+                {product.has_bundle_option && product.unit_price > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: '#999', marginBottom: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Sparkles size={12} color="#D4AF37" />
+                        Unidade no Fardo: <span style={{ color: '#fff' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.unit_price))}</span>
+                    </div>
+                )}
+                
                 {product.has_box_option ? (
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', zIndex: 2, position: 'relative' }} onClick={e => e.stopPropagation()}>
                         <button 
