@@ -63,10 +63,23 @@ export default function Header({ activeCategory, onCategoryChange }) {
                                 href={instagramLink} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                className="text-gray-500 hover:text-primary-600 transition-colors p-1"
+                                className="p-1 transition-transform hover:scale-110"
                                 title="Instagram"
                             >
-                                <Instagram className="h-5 w-5" />
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <defs>
+                                        <linearGradient id="insta-grad-layout" x1="0%" y1="100%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#f09433" />
+                                            <stop offset="25%" stopColor="#e6683c" />
+                                            <stop offset="50%" stopColor="#dc2743" />
+                                            <stop offset="75%" stopColor="#cc2366" />
+                                            <stop offset="100%" stopColor="#bc1888" />
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#insta-grad-layout)"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#insta-grad-layout)"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#insta-grad-layout)"></line>
+                                </svg>
                             </a>
                         )}
                         <div className="flex items-center space-x-2">

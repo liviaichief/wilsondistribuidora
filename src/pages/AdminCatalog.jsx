@@ -178,7 +178,8 @@ const AdminCatalog = () => {
                                     {p.image && <img src={getImageUrl(p.image)} alt="" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                 </div>
                                 <div style={{ padding: '20px', borderTop: '6px solid #D4AF37' }}>
-                                    <div style={{ color: '#000', fontSize: '1.1rem', fontWeight: '800', marginBottom: '10px' }}>{p.title}</div>
+                                    <div style={{ color: '#000', fontSize: '1.1rem', fontWeight: '800', marginBottom: '4px' }}>{p.title}</div>
+                                    {p.external_code && <div style={{ color: '#999', fontSize: '0.7rem', fontWeight: '700', marginBottom: '8px' }}>Ref: {p.external_code}</div>}
                                     <div style={{ color: '#D4AF37', fontWeight: '900', fontSize: '1.8rem' }}>R$ {parseFloat(p.price || 0).toFixed(2)}<span style={{ fontSize: '1rem', color: '#999' }}>/{p.uom || 'UN'}</span></div>
                                 </div>
                             </div>

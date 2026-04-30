@@ -1189,3 +1189,13 @@ input:checked+.slider:before {
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+
+.custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+.custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.2); border-radius: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.4); }
+
+.hover-link:hover {
+    background: rgba(255,255,255,0.03) !important;
+    color: #fff !important;
+}

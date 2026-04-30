@@ -39,7 +39,15 @@ const Home = () => {
                 else setIsSystemBlocked(false);
 
                 const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
-                const activeOnly = data.documents.filter(d => {
+                const enrichedProducts = data.documents.map(d => {
+                    const catObj = categoriesList.find(c => c.id?.toString() === d.category?.toString());
+                    return {
+                        ...d,
+                        category_name: catObj ? catObj.name : 'Geral'
+                    };
+                });
+
+                const activeOnly = enrichedProducts.filter(d => {
                     const isVisible = d.active !== false && activeCatIds.includes(d.category);
                     const isStockDisabled = d.manage_stock && d.stock_quantity <= 0 && d.disable_on_zero_stock;
                     return isVisible && !isStockDisabled;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { databases, storage, DATABASE_ID, COLLECTIONS, BUCKET_ID } from '../lib/appwrite';
 import { useAlert } from '../context/AlertContext';
-import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save, GripVertical, AlertCircle, ExternalLink, ImagePlus, Sparkles, Mic, MicOff } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Image as ImageIcon, CheckCircle, XCircle, Clock, Upload, Loader2, Save, GripVertical, AlertCircle, ExternalLink, ImagePlus, Sparkles, Mic, MicOff, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
 import { generateBannerImage } from '../services/aiService';
-import { getSettings } from '../services/dataService';
+import { getSettings, getCategories } from '../services/dataService';
 import './Admin.css';
 
 const AdminBanners = () => {
@@ -41,6 +41,11 @@ const AdminBanners = () => {
     const [isListening, setIsListening] = useState(false);
     const [aiBannerEnabled, setAiBannerEnabled] = useState(true);
 
+    const [categories, setCategories] = useState([]);
+    const [linkTab, setLinkTab] = useState('product'); // 'product' ou 'category'
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showLinkPanel, setShowLinkPanel] = useState(false);
+
     useEffect(() => {
         loadData();
     }, []);
@@ -48,19 +53,21 @@ const AdminBanners = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [bannersResponse, productsResponse, settingsData] = await Promise.all([
+            const [bannersResponse, productsResponse, categoriesData, settingsData] = await Promise.all([
                 databases.listDocuments(DATABASE_ID, COLLECTIONS.BANNERS, [Query.orderAsc('display_order')]),
-                databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [Query.orderAsc('title'), Query.limit(100)]),
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [Query.orderAsc('title'), Query.limit(500)]),
+                getCategories(),
                 getSettings()
             ]);
 
             setBanners(bannersResponse.documents.map(doc => ({
                 ...doc,
                 id: doc.$id,
-                product_id: doc.product ? (typeof doc.product === 'object' ? doc.product.$id : doc.product) : null
+                product_id: doc.product ? (typeof doc.product === 'object' ? doc.product.$id : doc.product) : null,
+                category_id: doc.category ? (typeof doc.category === 'object' ? doc.category.$id : doc.category) : null
             })));
             setProducts(productsResponse.documents.map(doc => ({ id: doc.$id, title: doc.title })));
-            // ai_banner_enabled é true por padrão se não estiver definido
+            setCategories(categoriesData.map(c => ({ id: c.id, name: c.name })));
             setAiBannerEnabled(settingsData.ai_banner_enabled !== false);
         } catch (error) {
             showAlert('Erro ao carregar dados: ' + error.message, 'error');
@@ -79,6 +86,7 @@ const AdminBanners = () => {
                 title: banner.title || '',
                 image_url: banner.image_url || '',
                 product_id: banner.product_id || '',
+                category_id: banner.category_id || '',
                 active: banner.active ?? true,
                 display_order: banner.display_order || 0,
                 duration: banner.duration || 5,
@@ -88,13 +96,26 @@ const AdminBanners = () => {
             if (banner.thumbnail_url) setThumbPreviewUrl(getImageUrl(banner.thumbnail_url));
         } else {
             setEditingBanner(null);
-            setFormData({ title: '', image_url: '', product_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '' });
+            setFormData({ title: '', image_url: '', product_id: '', category_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '' });
         }
         setAiPrompt('');
         setAiText('');
         setAiReferenceImage(null);
         setAiReferencePreview('');
+        setShowLinkPanel(false);
         setIsModalOpen(true);
+    };
+
+    const getSelectedDestinationName = () => {
+        if (formData.product_id) {
+            const p = products.find(p => p.id === formData.product_id);
+            return p ? `PRODUTO: ${p.title}` : 'Produto não encontrado';
+        }
+        if (formData.category_id) {
+            const c = categories.find(c => c.id === formData.category_id);
+            return c ? `CATEGORIA: ${c.name}` : 'Categoria não encontrada';
+        }
+        return '';
     };
 
     const uploadFileToAppwrite = async (file, isVideo = false) => {
@@ -206,6 +227,7 @@ const AdminBanners = () => {
                 image_url: formData.image_url,
                 thumbnail_url: formData.thumbnail_url,
                 product: formData.product_id || null,
+                category: formData.category_id || null,
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
                 duration: parseInt(formData.duration)
@@ -426,12 +448,84 @@ const AdminBanners = () => {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Vincular a Produto</label>
-                                    <select value={formData.product_id} onChange={e => setFormData({ ...formData, product_id: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff' }}>
-                                        <option value="">Sem vínculo (apenas destaque)</option>
-                                        {products.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                                    </select>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div 
+                                        onClick={() => setShowLinkPanel(!showLinkPanel)}
+                                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', padding: '12px 18px', borderRadius: '15px', border: '1px solid', borderColor: showLinkPanel ? '#D4AF37' : 'rgba(255,255,255,0.05)', transition: '0.3s' }}
+                                    >
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <label style={{ fontSize: '0.65rem', fontWeight: 900, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer' }}>Vincular Destino</label>
+                                            <div style={{ fontSize: '0.85rem', color: getSelectedDestinationName() ? '#fff' : '#444', fontWeight: 800 }}>
+                                                {getSelectedDestinationName() || 'NENHUM DESTINO SELECIONADO'}
+                                            </div>
+                                        </div>
+                                        <div style={{ transform: showLinkPanel ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }}>
+                                            <Edit size={16} color={showLinkPanel ? '#D4AF37' : '#444'} />
+                                        </div>
+                                    </div>
+                                    
+                                    <AnimatePresence>
+                                        {showLinkPanel && (
+                                            <motion.div 
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                style={{ overflow: 'hidden' }}
+                                            >
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '5px', display: 'flex', gap: '5px', marginBottom: '10px' }}>
+                                                    <button type="button" onClick={() => setLinkTab('product')} style={{ flex: 1, padding: '10px', borderRadius: '12px', border: 'none', background: linkTab === 'product' ? 'rgba(255,255,255,0.05)' : 'transparent', color: linkTab === 'product' ? '#fff' : '#444', fontWeight: 900, cursor: 'pointer', fontSize: '0.7rem' }}>PRODUTOS</button>
+                                                    <button type="button" onClick={() => setLinkTab('category')} style={{ flex: 1, padding: '10px', borderRadius: '12px', border: 'none', background: linkTab === 'category' ? 'rgba(255,255,255,0.05)' : 'transparent', color: linkTab === 'category' ? '#fff' : '#444', fontWeight: 900, cursor: 'pointer', fontSize: '0.7rem' }}>CATEGORIAS</button>
+                                                </div>
+
+                                                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '15px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                    {linkTab === 'product' ? (
+                                                        <>
+                                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '0 15px' }}>
+                                                                <Search size={16} color="#444" />
+                                                                <input 
+                                                                    placeholder="Buscar produto..." 
+                                                                    value={searchTerm} 
+                                                                    onChange={e => setSearchTerm(e.target.value)}
+                                                                    style={{ background: 'none', border: 'none', color: '#fff', padding: '12px', width: '100%', outline: 'none', fontSize: '0.85rem' }} 
+                                                                />
+                                                            </div>
+                                                            <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '5px' }} className="custom-scroll">
+                                                                <div 
+                                                                    onClick={() => { setFormData({ ...formData, product_id: '', category_id: '' }); setSearchTerm(''); setShowLinkPanel(false); }}
+                                                                    style={{ padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', background: !formData.product_id && !formData.category_id ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: !formData.product_id && !formData.category_id ? '#D4AF37' : '#555', fontSize: '0.8rem', fontWeight: 800 }}
+                                                                >
+                                                                    REMOVER VÍNCULO
+                                                                </div>
+                                                                {products.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
+                                                                    <div 
+                                                                        key={p.id} 
+                                                                        onClick={() => { setFormData({ ...formData, product_id: p.id, category_id: '' }); setSearchTerm(''); setShowLinkPanel(false); }}
+                                                                        style={{ padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', background: formData.product_id === p.id ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: formData.product_id === p.id ? '#D4AF37' : '#888', fontSize: '0.8rem', fontWeight: 800, transition: '0.2s' }}
+                                                                        className="hover-link"
+                                                                    >
+                                                                        {p.title}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '5px' }} className="custom-scroll">
+                                                            {categories.map(c => (
+                                                                <div 
+                                                                    key={c.id} 
+                                                                    onClick={() => { setFormData({ ...formData, category_id: c.id, product_id: '' }); setShowLinkPanel(false); }}
+                                                                    style={{ padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', background: formData.category_id === c.id ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: formData.category_id === c.id ? '#D4AF37' : '#888', fontSize: '0.8rem', fontWeight: 800, transition: '0.2s' }}
+                                                                    className="hover-link"
+                                                                >
+                                                                    {c.name}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>

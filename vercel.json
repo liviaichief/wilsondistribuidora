@@ -1,10 +1,17 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
+  "cleanUrls": false,
+  "trailingSlash": false,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ],
   "env": {
     "VITE_APPWRITE_ENDPOINT": "https://sfo.cloud.appwrite.io/v1",
@@ -14,7 +21,6 @@
     "VITE_COLLECTION_BANNERS": "banners",
     "VITE_COLLECTION_ORDERS": "orders",
     "VITE_COLLECTION_PROFILES": "profiles",
-    "VITE_APPWRITE_BUCKET_ID": "images_bucket",
-    "VITE_WHATSAPP_NUMBER": "5511999999999"
+    "VITE_APPWRITE_BUCKET_ID": "images_bucket"
   }
 }

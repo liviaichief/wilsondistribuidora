@@ -27,9 +27,14 @@ const Admin = () => {
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [titleFilter, setTitleFilter] = useState('');
 
+    const [linkTab, setLinkTab] = useState('category'); // 'product' ou 'category'
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showLinkPanel, setShowLinkPanel] = useState(false);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
-        title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, video_url: '', has_box_option: false, box_price: ''
+        title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, has_box_option: false, box_price: '',
+        has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: ''
     });
 
     useEffect(() => {
@@ -47,6 +52,8 @@ const Admin = () => {
             if (data && data.documents) setProducts(data.documents);
         } catch (err) { showAlert('Erro ao carregar produtos.', 'error'); } finally { setLoading(false); }
     };
+
+
 
     const handleEdit = (product) => {
         setCurrentProduct(product);
@@ -71,6 +78,19 @@ const Admin = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         if (isSaving) return;
+
+        // Validação Pedido Mínimo
+        if (currentProduct.has_assorted_min && (!currentProduct.assorted_min_qty || currentProduct.assorted_min_qty <= 0)) {
+            showAlert('Por favor, informe a quantidade do Pedido Mínimo.', 'warning');
+            return;
+        }
+
+        // Validação Categoria
+        if (!currentProduct.category) {
+            showAlert('Por favor, selecione uma categoria para o produto.', 'warning');
+            return;
+        }
+
         setIsSaving(true);
         try {
             await saveProduct(currentProduct);
@@ -82,13 +102,27 @@ const Admin = () => {
 
     const openNewModal = () => {
         const empty = {
-            title: '', description: '', price: '', category: categories.length > 0 ? categories[0].id : '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, video_url: '', has_box_option: false, box_price: ''
+            title: '', description: '', price: '', category: '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, has_box_option: false, box_price: '',
+            has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: ''
         };
         setCurrentProduct(empty);
         setOriginalProduct(empty);
         setPreviewUrl('');
         setPreviewUrl2('');
+        setShowLinkPanel(false);
         setIsModalOpen(true);
+    };
+
+    const getSelectedDestinationName = () => {
+        if (currentProduct.category) {
+            const c = categories.find(cat => cat.id === currentProduct.category);
+            return c ? c.name : 'Categoria não encontrada';
+        }
+        if (currentProduct.related_product) {
+            const p = products.find(prod => (prod.id || prod.$id) === currentProduct.related_product);
+            return p ? p.title : 'Produto não encontrado';
+        }
+        return '';
     };
 
     const checkChanges = () => {
@@ -110,9 +144,13 @@ const Admin = () => {
             currentProduct.allow_backorder !== originalProduct.allow_backorder ||
             currentProduct.disable_on_zero_stock !== originalProduct.disable_on_zero_stock ||
             currentProduct.cost_price !== originalProduct.cost_price ||
-            currentProduct.video_url !== originalProduct.video_url ||
             currentProduct.has_box_option !== originalProduct.has_box_option ||
-            currentProduct.box_price !== originalProduct.box_price
+            currentProduct.box_price !== originalProduct.box_price ||
+            currentProduct.has_bundle_option !== originalProduct.has_bundle_option ||
+            currentProduct.unit_price !== originalProduct.unit_price ||
+            currentProduct.has_assorted_min !== originalProduct.has_assorted_min ||
+            currentProduct.assorted_min_qty !== originalProduct.assorted_min_qty ||
+            currentProduct.external_code !== originalProduct.external_code
         );
     };
 
@@ -363,24 +401,51 @@ const Admin = () => {
 
 
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Categoria</span>
-                                                <select value={currentProduct.category} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
-                                                    {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
-                                                </select>
+                                        {/* CATEGORIA (LARGURA TOTAL) */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            <div 
+                                                onClick={() => setShowLinkPanel(!showLinkPanel)}
+                                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', padding: '12px 18px', borderRadius: '15px', border: '1px solid', borderColor: showLinkPanel ? '#D4AF37' : (!currentProduct.category ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255,255,255,0.05)'), transition: '0.3s' }}
+                                            >
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer' }}>Categoria</label>
+                                                    <div style={{ fontSize: '1.1rem', color: getSelectedDestinationName() ? '#fff' : '#444', fontWeight: 800, textAlign: 'right', paddingRight: '10%' }}>
+                                                        {getSelectedDestinationName() || 'NENHUMA SELECIONADA'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Unidade</span>
-                                                <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
-                                                    {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
-                                                </select>
-                                            </div>
+
+                                            <AnimatePresence>
+                                                {showLinkPanel && (
+                                                    <motion.div 
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: 'auto', opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        style={{ overflow: 'hidden' }}
+                                                    >
+                                                        <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '15px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '5px' }} className="custom-scroll">
+                                                                {categories.map(c => (
+                                                                    <div 
+                                                                        key={c.id} 
+                                                                        onClick={() => { setCurrentProduct({ ...currentProduct, category: c.id }); setShowLinkPanel(false); }}
+                                                                        style={{ padding: '12px 18px', borderRadius: '12px', cursor: 'pointer', background: currentProduct.category === c.id ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: currentProduct.category === c.id ? '#D4AF37' : '#888', fontSize: '1rem', fontWeight: 800, transition: '0.2s' }}
+                                                                        className="hover-link"
+                                                                    >
+                                                                        {c.name}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
 
+                                        {/* CODIGO EXTERNO E MEDIDA */}
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Código Externo (ERP/Ref)</span>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Codigo externo</span>
                                                 <input 
                                                     type="text" 
                                                     placeholder="Ex: REF-123" 
@@ -389,16 +454,35 @@ const Admin = () => {
                                                     style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
                                                 />
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'flex-end', paddingBottom: '12px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                        <input type="checkbox" checked={currentProduct.has_bundle_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_bundle_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '18px', height: '18px' }} />
-                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Fardo</span>
-                                                    </label>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                        <input type="checkbox" checked={currentProduct.has_box_option || false} onChange={e => setCurrentProduct({ ...currentProduct, has_box_option: e.target.checked })} style={{ accentColor: '#D4AF37', width: '18px', height: '18px' }} />
-                                                        <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>Caixa</span>
-                                                    </label>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Medida</span>
+                                                <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
+                                                    {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
+                                                </select>
+                                                
+                                                {/* SWITCHES FARDO E CAIXA */}
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '4px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentProduct({ ...currentProduct, has_bundle_option: !currentProduct.has_bundle_option })}
+                                                            style={{ width: '36px', height: '18px', background: currentProduct.has_bundle_option ? '#D4AF37' : '#333', borderRadius: '9px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                        >
+                                                            <div style={{ width: '12px', height: '12px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.has_bundle_option ? '21px' : '3px', transition: 'all 0.3s' }} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Fardo</span>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentProduct({ ...currentProduct, has_box_option: !currentProduct.has_box_option })}
+                                                            style={{ width: '36px', height: '18px', background: currentProduct.has_box_option ? '#D4AF37' : '#333', borderRadius: '9px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                        >
+                                                            <div style={{ width: '12px', height: '12px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.has_box_option ? '21px' : '3px', transition: 'all 0.3s' }} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Caixa</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -468,21 +552,38 @@ const Admin = () => {
 
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Pedido Mín. Sortido</span>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                                        <input type="checkbox" checked={currentProduct.has_assorted_min || false} onChange={e => setCurrentProduct({ ...currentProduct, has_assorted_min: e.target.checked })} style={{ accentColor: '#D4AF37', width: '14px', height: '14px' }} />
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Pedido Minimo</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentProduct({ ...currentProduct, has_assorted_min: !currentProduct.has_assorted_min })}
+                                                            style={{ width: '36px', height: '18px', background: currentProduct.has_assorted_min ? '#D4AF37' : '#333', borderRadius: '9px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                        >
+                                                            <div style={{ width: '12px', height: '12px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.has_assorted_min ? '21px' : '3px', transition: 'all 0.3s' }} />
+                                                        </button>
                                                         <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 600 }}>Ativar</span>
-                                                    </label>
+                                                    </div>
                                                 </div>
                                                 <div style={{ position: 'relative', opacity: currentProduct.has_assorted_min ? 1 : 0.5 }}>
                                                     <input
                                                         type="number"
                                                         min="1"
                                                         disabled={!currentProduct.has_assorted_min}
-                                                        placeholder="Ex: 3"
+                                                        placeholder="0"
                                                         value={currentProduct.assorted_min_qty || ''}
                                                         onChange={e => setCurrentProduct({ ...currentProduct, assorted_min_qty: parseInt(e.target.value) || 0 })}
-                                                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', color: '#fff', fontWeight: 700, fontSize: '0.9rem', outline: 'none' }}
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            background: 'rgba(0,0,0,0.3)', 
+                                                            border: '1px solid',
+                                                            borderColor: (currentProduct.has_assorted_min && (!currentProduct.assorted_min_qty || currentProduct.assorted_min_qty <= 0)) ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255,255,255,0.1)',
+                                                            borderRadius: '12px', 
+                                                            padding: '10px', 
+                                                            color: '#fff', 
+                                                            fontWeight: 700, 
+                                                            fontSize: '0.9rem', 
+                                                            outline: 'none' 
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -560,41 +661,41 @@ const Admin = () => {
                                                 </div>
 
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newVal = !currentProduct.allow_backorder;
-                                                            setCurrentProduct({
-                                                                ...currentProduct,
-                                                                allow_backorder: newVal,
-                                                                disable_on_zero_stock: newVal ? false : currentProduct.disable_on_zero_stock
-                                                            });
-                                                        }}
-                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', cursor: 'pointer', color: '#fff' }}
-                                                    >
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Vender sem estoque</span>
-                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #fff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentProduct.allow_backorder ? '#fff' : 'transparent' }}>
-                                                            {currentProduct.allow_backorder && <Check size={12} color="#000" />}
-                                                        </div>
-                                                    </button>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Vender sem estoque</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newVal = !currentProduct.allow_backorder;
+                                                                setCurrentProduct({
+                                                                    ...currentProduct,
+                                                                    allow_backorder: newVal,
+                                                                    disable_on_zero_stock: newVal ? false : currentProduct.disable_on_zero_stock
+                                                                });
+                                                            }}
+                                                            style={{ width: '36px', height: '18px', background: currentProduct.allow_backorder ? '#D4AF37' : '#333', borderRadius: '9px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                        >
+                                                            <div style={{ width: '12px', height: '12px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.allow_backorder ? '21px' : '3px', transition: 'all 0.3s' }} />
+                                                        </button>
+                                                    </div>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newVal = !currentProduct.disable_on_zero_stock;
-                                                            setCurrentProduct({
-                                                                ...currentProduct,
-                                                                disable_on_zero_stock: newVal,
-                                                                allow_backorder: newVal ? false : currentProduct.allow_backorder
-                                                            });
-                                                        }}
-                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', cursor: 'pointer', color: '#fff' }}
-                                                    >
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Desativar ao zerar</span>
-                                                        <div style={{ width: '16px', height: '16px', border: '2px solid #fff', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: currentProduct.disable_on_zero_stock ? '#fff' : 'transparent' }}>
-                                                            {currentProduct.disable_on_zero_stock && <Check size={12} color="#000" />}
-                                                        </div>
-                                                    </button>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Desativar ao zerar</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newVal = !currentProduct.disable_on_zero_stock;
+                                                                setCurrentProduct({
+                                                                    ...currentProduct,
+                                                                    disable_on_zero_stock: newVal,
+                                                                    allow_backorder: newVal ? false : currentProduct.allow_backorder
+                                                                });
+                                                            }}
+                                                            style={{ width: '36px', height: '18px', background: currentProduct.disable_on_zero_stock ? '#D4AF37' : '#333', borderRadius: '9px', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
+                                                        >
+                                                            <div style={{ width: '12px', height: '12px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: currentProduct.disable_on_zero_stock ? '21px' : '3px', transition: 'all 0.3s' }} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

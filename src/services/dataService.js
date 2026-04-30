@@ -697,6 +697,45 @@ export const getOrders = async () => {
     }
 };
 
+export const getUserOrderHistory = async (userId) => {
+    if (!userId) return [];
+    try {
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            COLLECTIONS.ORDERS,
+            [
+                Query.equal('user_id', userId),
+                Query.orderDesc('$createdAt'),
+                Query.limit(50)
+            ]
+        );
+        
+        // Contabilizar frequência de produtos
+        const productFrequency = {};
+        response.documents.forEach(order => {
+            try {
+                const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                items.forEach(item => {
+                    const id = item.id || item.$id;
+                    if (id) {
+                        productFrequency[id] = (productFrequency[id] || 0) + 1;
+                    }
+                });
+            } catch (e) {
+                console.warn("Erro ao processar itens do pedido:", order.$id);
+            }
+        });
+
+        // Retornar IDs ordenados por frequência
+        return Object.entries(productFrequency)
+            .sort(([, a], [, b]) => b - a)
+            .map(([id]) => id);
+    } catch (error) {
+        console.error("Error fetching user history:", error);
+        return [];
+    }
+};
+
 export const updateOrderStatus = async (orderId, status) => {
     try {
         await databases.updateDocument(

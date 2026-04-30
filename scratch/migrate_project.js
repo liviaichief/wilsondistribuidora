@@ -7,11 +7,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// CONFIGURAÇÕES DA CONTA ANTIGA (ORIGEM)
-const OLD_ENDPOINT = 'https://sfo.cloud.appwrite.io/v1';
-const OLD_PROJECT_ID = '69d59db800358cca9f27';
-const OLD_API_KEY = 'standard_dc313f0ead20b43da4c50584f76ea0316cba57d539fc7586bc7dd8cb8de5d9903afecaa10aa40ebb11b0a63f73706bc9e61c1132d3342b85a40651096b43b9d04fdd54a0bc55317ef9b516542d4c10e91505aaae2d909025c7c779e2dfd09a060cf2e2d69b27f88f85eeb188ea0ada1614ecf6e01f6fb0e8d6932f6f9b37d140';
-const OLD_DB_ID = 'main_db';
+// CONFIGURAÇÕES DA CONTA ANTIGA (ORIGEM) - ARQUIVADO
+// const OLD_ENDPOINT = 'https://sfo.cloud.appwrite.io/v1';
+// const OLD_PROJECT_ID = '69d59db800358cca9f27';
+// const OLD_API_KEY = 'standard_dc313f0ead20b43da4c50584f76ea0316cba57d539fc7586bc7dd8cb8de5d9903afecaa10aa40ebb11b0a63f73706bc9e61c1132d3342b85a40651096b43b9d04fdd54a0bc55317ef9b516542d4c10e91505aaae2d909025c7c779e2dfd09a060cf2e2d69b27f88f85eeb188ea0ada1614ecf6e01f6fb0e8d6932f6f9b37d140';
+// const OLD_DB_ID = 'main_db';
 
 // CONFIGURAÇÕES DA CONTA NOVA (DESTINO)
 const NEW_ENDPOINT = 'https://sfo.cloud.appwrite.io/v1';

@@ -1,5 +1,5 @@
 const { Client, Account, Databases, ID } = require('appwrite');
-const client = new Client().setEndpoint('https://sfo.cloud.appwrite.io/v1').setProject('69d59db800358cca9f27');
+// const client = new Client().setEndpoint('https://sfo.cloud.appwrite.io/v1').setProject('69d59db800358cca9f27');
 const account = new Account(client);
 const databases = new Databases(client);
 

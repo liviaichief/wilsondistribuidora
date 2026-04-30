@@ -6,9 +6,26 @@ import { useAuth } from '../../context/AuthContext';
 import './BottomNav.css';
 
 const BottomNav = () => {
-    const { cartCount } = useCart();
+    const { cartCount, toggleCart, cartItems, triggerUpsell } = useCart();
     const { user, openAuthModal, openProfileModal } = useAuth();
+    const [upsellAlreadyShown, setUpsellAlreadyShown] = React.useState(false);
     const location = useLocation();
+
+    // Reset upsell when cart changes
+    React.useEffect(() => {
+        setUpsellAlreadyShown(false);
+    }, [cartCount]);
+
+    const handleCartClick = () => {
+        if (cartCount > 0 && !upsellAlreadyShown) {
+            const showed = triggerUpsell(cartItems);
+            if (showed) {
+                setUpsellAlreadyShown(true);
+                return;
+            }
+        }
+        toggleCart();
+    };
 
     // Only show on mobile
     if (window.innerWidth > 768) return null;
@@ -33,7 +50,7 @@ const BottomNav = () => {
                 <span>Pedidos</span>
             </NavLink>
 
-            <div className="nav-item cart-item-central" onClick={() => document.querySelector('.cart-btn')?.click()}>
+            <div className="nav-item cart-item-central" onClick={handleCartClick}>
                 <div className="cart-icon-wrapper">
                     <ShoppingBag size={28} />
                     {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}

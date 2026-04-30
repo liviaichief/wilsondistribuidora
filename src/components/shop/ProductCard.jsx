@@ -46,7 +46,7 @@ const ProductCard = ({ product }) => {
     const handleIncrement = (e) => {
         e.stopPropagation();
         if (product.manage_stock && !product.allow_backorder && quantity >= product.stock_quantity) return;
-        updateQuantity(product.id, quantity + 1);
+        updateQuantity(currentId, quantity + 1);
     };
 
     const handleDecrement = (e) => {
@@ -143,24 +143,6 @@ const ProductCard = ({ product }) => {
                     </>
                 )}
 
-                <div className={`card-price-float ${(product.is_promotion && !isBoxSelected) ? 'promo-active' : ''}`}>
-                    {product.is_promotion && product.promo_price && !isBoxSelected ? (
-                        <div className="price-stack">
-                            <span className="old-price">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
-                            </span>
-                            <span className="main-price">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.promo_price))}
-                            </span>
-                        </div>
-                    ) : (
-                        <span className="main-price">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                parseFloat(isBoxSelected && product.has_box_option ? (product.box_price || 0) : product.price)
-                            )}
-                        </span>
-                    )}
-                </div>
             </div>
 
             {/* Info Section */}
@@ -178,24 +160,45 @@ const ProductCard = ({ product }) => {
                     </div>
                 )}
                 
-                {product.has_box_option ? (
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', zIndex: 2, position: 'relative' }} onClick={e => e.stopPropagation()}>
-                        <button 
-                            onClick={() => setIsBoxSelected(false)}
-                            style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid', borderColor: !isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: !isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: !isBoxSelected ? '#D4AF37' : '#888', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                        >
-                            {product.uom || 'UN'}
-                        </button>
-                        <button 
-                            onClick={() => setIsBoxSelected(true)}
-                            style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid', borderColor: isBoxSelected ? '#D4AF37' : 'rgba(255,255,255,0.1)', background: isBoxSelected ? 'rgba(212, 175, 55, 0.1)' : 'transparent', color: isBoxSelected ? '#D4AF37' : '#888', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                        >
-                            CAIXA
-                        </button>
+                <div className="price-uom-row">
+                    <div className={`inline-price ${(product.is_promotion && !isBoxSelected) ? 'promo-active' : ''}`}>
+                        {product.is_promotion && product.promo_price && !isBoxSelected ? (
+                            <div className="price-stack-horizontal">
+                                <span className="old-price">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.price))}
+                                </span>
+                                <span className="main-price">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(product.promo_price))}
+                                </span>
+                            </div>
+                        ) : (
+                            <span className="main-price">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    parseFloat(isBoxSelected && product.has_box_option ? (product.box_price || 0) : product.price)
+                                )}
+                            </span>
+                        )}
                     </div>
-                ) : (
-                    <div className="card-uom-badge">{product.uom || 'KG'}</div>
-                )}
+
+                    {product.has_box_option ? (
+                        <div className="box-toggle-mini" onClick={e => e.stopPropagation()}>
+                            <button 
+                                onClick={() => setIsBoxSelected(false)}
+                                className={!isBoxSelected ? 'active' : ''}
+                            >
+                                {product.uom || 'UN'}
+                            </button>
+                            <button 
+                                onClick={() => setIsBoxSelected(true)}
+                                className={isBoxSelected ? 'active' : ''}
+                            >
+                                CAIXA
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="card-uom-badge">{product.uom || 'KG'}</div>
+                    )}
+                </div>
                 
                 <div className="card-footer">
                     <div className="action-area" onClick={e => e.stopPropagation()}>

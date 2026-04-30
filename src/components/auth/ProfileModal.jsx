@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { account, databases } from '../../lib/appwrite';
+import { account, databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 import { ID, Query } from 'appwrite';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -82,15 +82,15 @@ export default function ProfileModal({ isOpen, onClose, user }) {
 
             try {
                 profile = await databases.getDocument(
-                    import.meta.env.VITE_DATABASE_ID,
-                    import.meta.env.VITE_COLLECTION_PROFILES || 'profiles',
+                    DATABASE_ID,
+                    COLLECTIONS.PROFILES,
                     user.$id
                 );
             } catch (e) {
                 try {
                     const response = await databases.listDocuments(
-                        import.meta.env.VITE_DATABASE_ID,
-                        import.meta.env.VITE_COLLECTION_PROFILES || 'profiles',
+                        DATABASE_ID,
+                        COLLECTIONS.PROFILES,
                         [Query.equal('user_id', user.$id)]
                     );
                     if (response.documents.length > 0) {
@@ -183,7 +183,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                 address_complement: formData.address_complement
             };
 
-            const result = await updateProfile(profileId, data);
+            const result = await updateProfile(data, profileId);
 
             if (result.error) {
                 throw result.error;

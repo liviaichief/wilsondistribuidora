@@ -3,6 +3,7 @@ import { getProfiles, updateProfile, getOrders, deleteProfile, createProfile, ID
 import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus, RefreshCw } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
@@ -40,6 +41,69 @@ const AdminUsers = () => {
         window.addEventListener('focus', handleFocus);
         return () => window.removeEventListener('focus', handleFocus);
     }, []);
+
+    const [showUserOrdersModal, setShowUserOrdersModal] = useState(false);
+    const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+    const [modalTab, setModalTab] = useState('pedidos'); // 'pedidos' ou 'dashboard'
+
+    const analyzeUserData = (userOrders) => {
+        const productStats = {};
+        const dayStats = Array(7).fill(0); 
+        const hourStats = Array(24).fill(0);
+        const monthStats = Array(12).fill(0);
+
+        userOrders.forEach(order => {
+            const date = new Date(order.$createdAt);
+            dayStats[date.getDay()]++;
+            hourStats[date.getHours()]++;
+            monthStats[date.getMonth()]++;
+
+            try {
+                const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                items.forEach(item => {
+                    const key = item.title || 'Produto sem nome';
+                    if (!productStats[key]) {
+                        productStats[key] = { name: key, qty: 0, value: 0, recurrence: 0 };
+                    }
+                    productStats[key].qty += Number(item.quantity || 0);
+                    productStats[key].value += Number(item.price || 0) * Number(item.quantity || 0);
+                    productStats[key].recurrence++;
+                });
+            } catch (e) {}
+        });
+
+        const topByValue = Object.values(productStats).sort((a, b) => b.value - a.value).slice(0, 5);
+        const topByQty = Object.values(productStats).sort((a, b) => b.qty - a.qty).slice(0, 5);
+        const recurrenceRanking = Object.values(productStats).sort((a, b) => b.recurrence - a.recurrence).slice(0, 5);
+
+        const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const daysData = dayStats.map((count, i) => ({ day: dayLabels[i], count }));
+        const hoursData = hourStats.map((count, i) => ({ hour: `${i}h`, count }));
+        const monthsNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const monthsData = monthStats.map((count, i) => ({ month: monthsNames[i], count }));
+
+        return { topByValue, topByQty, recurrenceRanking, daysData, hoursData, monthsData, productStats };
+    };
+
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div style={{ background: 'rgba(5,5,5,0.95)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px', backdropFilter: 'blur(15px)', boxShadow: '0 10px 20px rgba(0,0,0,0.5)' }}>
+                    <p style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 900, marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>{label}</p>
+                    {payload.map((item, index) => (
+                        <p key={index} style={{ color: item.color || item.fill || '#D4AF37', fontSize: '0.75rem', fontWeight: 800, margin: '3px 0', display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
+                            <span>{item.name}:</span>
+                            <span>{typeof item.value === 'number' && item.name.includes('Valor') 
+                                ? item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) 
+                                : item.value}</span>
+                        </p>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -98,6 +162,7 @@ const AdminUsers = () => {
                             // Se era algo e agora é nada, tentamos remover? 
                             // Appwrite as vezes não permite limpar campo Date enviando null.
                             // Mas se o usuário limpou, vamos tentar não enviar para evitar erro.
+                            // dataToSave[key] = null;
                         }
                     } else if (newValue !== undefined && newValue !== null) {
                         dataToSave[key] = newValue;
@@ -218,7 +283,7 @@ const AdminUsers = () => {
                         address_state: data.uf
                     };
                     if (setForm === setEditForm) {
-                        setEditForm(prev => ({ ...prev, ...updateData }));
+                        setForm(prev => ({ ...prev, ...updateData }));
                     } else {
                         setNewUserForm(prev => ({ ...prev, ...updateData }));
                     }
@@ -257,6 +322,10 @@ const AdminUsers = () => {
             }
             return date.toLocaleDateString('pt-BR');
         } catch (e) { return '---'; }
+    };
+
+    const getUserOrders = (userId) => {
+        return orders.filter(o => o.user_id === userId).sort((a, b) => new Date(b.$createdAt) - new Date(a.$createdAt));
     };
 
     const getUserOrderCount = (userId) => {
@@ -307,8 +376,8 @@ const AdminUsers = () => {
 
             <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
+                    <div className="custom-scroll" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+                        <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
                             <thead>
                                 <tr style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     <th style={{ textAlign: 'left', padding: '0 20px' }}>NOMES</th>
@@ -323,7 +392,7 @@ const AdminUsers = () => {
                             </thead>
                             <tbody>
                                 {filteredUsers.length === 0 ? (
-                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '100px 20px', color: '#555', fontWeight: 800 }}>Nenhum usuário encontrado nesta categoria.</td></tr>
+                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '100px 20px', color: '#555', fontWeight: 800 }}>Nenhum usuário encontrado nesta categoria..</td></tr>
                                 ) : filteredUsers.map((u) => (
                                     <tr key={u.$id} onClick={() => { setSelectedUser(u); setIsEditing(false); }} style={{ background: selectedUser?.$id === u.$id ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', transition: '0.2s' }}>
                                         <td style={{ padding: '12px 20px', borderRadius: '18px 0 0 18px', border: '1px solid rgba(255,255,255,0.05)', borderRight: 'none' }}>
@@ -442,9 +511,16 @@ const AdminUsers = () => {
 
                                 <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>Total Pedidos</div>
-                                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#D4AF37' }}>{getUserOrderCount(selectedUser.$id)}</div>
+                                        <div 
+                                            onClick={() => setShowUserOrdersModal(true)}
+                                            style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)', cursor: 'pointer', transition: 'all 0.2s' }}
+                                            className="hover-scale"
+                                        >
+                                            <div style={{ fontSize: '0.6rem', color: '#D4AF37', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>Total Pedidos</div>
+                                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                {getUserOrderCount(selectedUser.$id)}
+                                                <ShoppingBag size={18} />
+                                            </div>
                                         </div>
                                         <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                             <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>Usuário Desde</div>
@@ -694,6 +770,232 @@ const AdminUsers = () => {
             </AnimatePresence>
 
             <AnimatePresence>
+                {showUserOrdersModal && (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 30 }}
+                            className="glass-card" 
+                            style={{ maxWidth: '1000px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: '0', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}
+                        >
+                            <div style={{ padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(212,175,55,0.05)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0 }}>Portal do Cliente</h3>
+                                        <p style={{ margin: '5px 0 0', color: '#888', fontSize: '0.85rem' }}>Analisando: <strong style={{ color: '#D4AF37' }}>{selectedUser.full_name || selectedUser.name}</strong></p>
+                                    </div>
+                                    <button onClick={() => { setShowUserOrdersModal(false); setModalTab('pedidos'); }} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', padding: '10px', color: '#fff', cursor: 'pointer' }} className="hover-scale">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: '16px', width: 'fit-content' }}>
+                                    <button onClick={() => setModalTab('pedidos')} style={{ padding: '10px 25px', borderRadius: '12px', border: 'none', background: modalTab === 'pedidos' ? '#D4AF37' : 'transparent', color: modalTab === 'pedidos' ? '#000' : '#666', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', transition: '0.3s' }}>
+                                        HISTÓRICO DE PEDIDOS
+                                    </button>
+                                    <button onClick={() => setModalTab('dashboard')} style={{ padding: '10px 25px', borderRadius: '12px', border: 'none', background: modalTab === 'dashboard' ? '#D4AF37' : 'transparent', color: modalTab === 'dashboard' ? '#000' : '#666', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', transition: '0.3s' }}>
+                                        DASHBOARD ANALÍTICO
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+                                {modalTab === 'pedidos' ? (
+                                    getUserOrders(selectedUser.$id).length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '60px', color: '#444' }}>
+                                            <ShoppingBag size={50} style={{ marginBottom: '20px', opacity: 0.2 }} />
+                                            <p style={{ fontWeight: 800 }}>Este usuário ainda não realizou nenhum pedido.</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                            {getUserOrders(selectedUser.$id).map((order) => (
+                                                <div key={order.$id} className="glass-card" style={{ padding: '0', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                                                    <div 
+                                                        onClick={() => setExpandedOrderId(expandedOrderId === order.$id ? null : order.$id)}
+                                                        style={{ padding: '20px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                                                    >
+                                                        <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                                                            <div>
+                                                                <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>Nº PEDIDO</div>
+                                                                <div style={{ fontWeight: 900, color: '#fff' }}>#{order.$id.slice(-6).toUpperCase()}</div>
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>DATA</div>
+                                                                <div style={{ fontSize: '0.85rem', color: '#888' }}>{formatDate(order.$createdAt, 'full')}</div>
+                                                            </div>
+                                                            <div>
+                                                                <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900 }}>TOTAL</div>
+                                                                <div style={{ fontWeight: 900, color: '#fff' }}>
+                                                                    R$ {(() => {
+                                                                        const amount = Number(order.total_amount || 0);
+                                                                        if (amount > 0) return amount.toFixed(2);
+                                                                        try {
+                                                                            const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                                                                            return items.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2);
+                                                                        } catch (e) { return '0.00'; }
+                                                                    })()}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ color: '#D4AF37' }}>
+                                                            {expandedOrderId === order.$id ? <Eye size={20} style={{ opacity: 0.5 }} /> : <Eye size={20} />}
+                                                        </div>
+                                                    </div>
+
+                                                    <AnimatePresence>
+                                                        {expandedOrderId === order.$id && (
+                                                            <motion.div 
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', padding: '25px' }}
+                                                            >
+                                                                <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ITENS DO PEDIDO</h4>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                                    <div style={{ display: 'grid', gridTemplateColumns: '50px 140px 1fr 100px', gap: '15px', padding: '0 5px 10px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                        <div style={{ fontSize: '0.65rem', color: '#aaa', fontWeight: 900 }}>QTD</div>
+                                                                        <div style={{ fontSize: '0.65rem', color: '#aaa', fontWeight: 900 }}>CÓD. EXTERNO</div>
+                                                                        <div style={{ fontSize: '0.65rem', color: '#aaa', fontWeight: 900 }}>NOME ITEM</div>
+                                                                        <div style={{ fontSize: '0.65rem', color: '#aaa', fontWeight: 900, textAlign: 'right' }}>PREÇO</div>
+                                                                    </div>
+                                                                    {(() => {
+                                                                        try {
+                                                                            const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                                                                            return items.map((item, idx) => (
+                                                                                <div key={idx} style={{ display: 'grid', gridTemplateColumns: '50px 140px 1fr 100px', gap: '15px', alignItems: 'center', padding: '0 5px' }}>
+                                                                                    <div style={{ fontWeight: 900, color: '#D4AF37', fontSize: '0.9rem' }}>{item.quantity}x</div>
+                                                                                    <div style={{ color: '#fff', fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: 700 }}>{item.external_code || '---'}</div>
+                                                                                    <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 500 }}>{item.title}</div>
+                                                                                    <div style={{ fontWeight: 800, textAlign: 'right', color: '#fff', fontSize: '0.9rem' }}>R$ {(item.price * item.quantity).toFixed(2)}</div>
+                                                                                </div>
+                                                                            ));
+                                                                        } catch (e) {
+                                                                            return <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>Erro ao carregar itens</div>;
+                                                                        }
+                                                                    })()}
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                                        {(() => {
+                                            const stats = analyzeUserData(getUserOrders(selectedUser.$id));
+                                            if (getUserOrders(selectedUser.$id).length === 0) return <p style={{ textAlign: 'center', color: '#444', fontWeight: 800 }}>Dados insuficientes para gerar dashboard.</p>;
+
+                                            return (
+                                                <>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+                                                        <div className="glass-card" style={{ padding: '25px', background: 'rgba(255,255,255,0.02)' }}>
+                                                            <h4 style={{ fontSize: '0.8rem', fontWeight: 900, color: '#D4AF37', marginBottom: '20px', textTransform: 'uppercase' }}>Produtos Mais Comprados (Faturamento)</h4>
+                                                            <div style={{ height: '250px' }}>
+                                                                <ResponsiveContainer width="100%" height="100%">
+                                                                    <BarChart data={stats.topByValue} layout="vertical">
+                                                                        <XAxis type="number" hide />
+                                                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fill: '#666' }} />
+                                                                        <Tooltip content={<CustomTooltip />} />
+                                                                        <Bar dataKey="value" name="Valor Total" fill="#D4AF37" radius={[0, 4, 4, 0]} />
+                                                                        <Bar dataKey="qty" name="Qtd Vendida" fill="#ffffff20" radius={[0, 4, 4, 0]} />
+                                                                    </BarChart>
+                                                                </ResponsiveContainer>
+                                                            </div>
+                                                        </div>
+                                                        <div className="glass-card" style={{ padding: '25px', background: 'rgba(255,255,255,0.02)' }}>
+                                                            <h4 style={{ fontSize: '0.8rem', fontWeight: 900, color: '#00AEEF', marginBottom: '20px', textTransform: 'uppercase' }}>Ranking de Recorrência</h4>
+                                                            <div style={{ height: '250px' }}>
+                                                                <ResponsiveContainer width="100%" height="100%">
+                                                                    <BarChart data={stats.recurrenceRanking}>
+                                                                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#666' }} height={50} />
+                                                                        <YAxis tick={{ fontSize: 10, fill: '#666' }} />
+                                                                        <Tooltip content={<CustomTooltip />} />
+                                                                        <Bar dataKey="recurrence" name="Frequência (Vezes)" fill="#00AEEF" radius={[4, 4, 0, 0]} />
+                                                                    </BarChart>
+                                                                </ResponsiveContainer>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="glass-card" style={{ padding: '25px', background: 'rgba(255,255,255,0.02)' }}>
+                                                        <h4 style={{ fontSize: '0.8rem', fontWeight: 900, color: '#8B5CF6', marginBottom: '20px', textTransform: 'uppercase' }}>Padrão de Compra: Horários e Dias</h4>
+                                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                                            <div>
+                                                                <p style={{ fontSize: '0.7rem', color: '#555', fontWeight: 900, marginBottom: '15px' }}>FREQUÊNCIA POR DIA DA SEMANA</p>
+                                                                <div style={{ height: '200px' }}>
+                                                                    <ResponsiveContainer width="100%" height="100%">
+                                                                        <AreaChart data={stats.daysData}>
+                                                                            <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#666' }} />
+                                                                            <Tooltip content={<CustomTooltip />} />
+                                                                            <Area type="monotone" dataKey="count" name="Pedidos" stroke="#8B5CF6" fill="rgba(139, 92, 246, 0.1)" strokeWidth={3} />
+                                                                        </AreaChart>
+                                                                    </ResponsiveContainer>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ fontSize: '0.7rem', color: '#555', fontWeight: 900, marginBottom: '15px' }}>FREQUÊNCIA POR HORA DO DIA</p>
+                                                                <div style={{ height: '200px' }}>
+                                                                    <ResponsiveContainer width="100%" height="100%">
+                                                                        <AreaChart data={stats.hoursData}>
+                                                                            <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#666' }} />
+                                                                            <Tooltip content={<CustomTooltip />} />
+                                                                            <Area type="monotone" dataKey="count" name="Pedidos" stroke="#fff" fill="rgba(255,255,255,0.05)" strokeWidth={3} />
+                                                                        </AreaChart>
+                                                                    </ResponsiveContainer>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                                                        <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.1)' }}>
+                                                            <div style={{ fontSize: '0.6rem', color: '#8B5CF6', fontWeight: 900 }}>TOP DIA</div>
+                                                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff' }}>{stats.daysData.sort((a,b) => b.count - a.count)[0].day}</div>
+                                                        </div>
+                                                        <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(0, 174, 239, 0.05)', border: '1px solid rgba(0, 174, 239, 0.1)' }}>
+                                                            <div style={{ fontSize: '0.6rem', color: '#00AEEF', fontWeight: 900 }}>HORÁRIO PICO</div>
+                                                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff' }}>{stats.hoursData.sort((a,b) => b.count - a.count)[0].hour}</div>
+                                                        </div>
+                                                        <div className="glass-card" style={{ padding: '20px', textAlign: 'center', background: 'rgba(212, 175, 55, 0.05)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                                                            <div style={{ fontSize: '0.6rem', color: '#D4AF37', fontWeight: 900 }}>TOTAL PRODUTOS</div>
+                                                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff' }}>{Object.keys(stats.productStats).length}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="glass-card" style={{ padding: '25px', background: 'rgba(255,255,255,0.02)' }}>
+                                                        <h4 style={{ fontSize: '0.8rem', fontWeight: 900, color: '#10B981', marginBottom: '20px', textTransform: 'uppercase' }}>Volume de Compras por Mês</h4>
+                                                        <div style={{ height: '200px' }}>
+                                                            <ResponsiveContainer width="100%" height="100%">
+                                                                <AreaChart data={stats.monthsData}>
+                                                                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#666' }} />
+                                                                    <YAxis tick={{ fontSize: 10, fill: '#666' }} />
+                                                                    <Tooltip content={<CustomTooltip />} />
+                                                                    <Area type="step" dataKey="count" name="Pedidos" stroke="#10B981" fill="rgba(16, 185, 129, 0.05)" strokeWidth={2} />
+                                                                </AreaChart>
+                                                            </ResponsiveContainer>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div style={{ padding: '20px 30px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>
+                                <button onClick={() => { setShowUserOrdersModal(false); setModalTab('pedidos'); }} style={{ padding: '12px 30px', borderRadius: '12px', background: '#D4AF37', border: 'none', color: '#000', fontWeight: 900, cursor: 'pointer' }}>
+                                    FECHAR
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
                 {deleteModal.show && (
                     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
                         <motion.div 
@@ -701,7 +1003,7 @@ const AdminUsers = () => {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className="glass-card" 
-                            style={{ maxWidth: '270px', width: '100%', padding: '25px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+                            style={{ maxWidth: '300px', width: '100%', padding: '30px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
                         >
                             <div style={{ width: '60px', height: '60px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#ef4444' }}>
                                 <AlertTriangle size={30} />
@@ -715,24 +1017,22 @@ const AdminUsers = () => {
                             <div style={{ display: 'flex', gap: '15px' }}>
                                 <button 
                                     onClick={() => setDeleteModal({ show: false, userId: null, userName: '' })}
-                                    style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer', transition: '0.3s' }}
+                                    style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer' }}
                                 >
                                     CANCELAR
                                 </button>
                                 <button 
                                     onClick={confirmDelete}
                                     disabled={isDeleting}
-                                    style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                    style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                                 >
-                                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'EXCLUIR AGORA'}
+                                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'EXCLUIR'}
                                 </button>
                             </div>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
-
-
         </div>
     );
 };

@@ -11,9 +11,10 @@ import './Header.css';
 const Header = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { toggleCart, cartCount } = useCart();
+    const { toggleCart, cartCount, cartItems, triggerUpsell } = useCart();
     const { user, openAuthModal, openProfileModal, isAdmin, isOwner } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+    const [upsellAlreadyShown, setUpsellAlreadyShown] = React.useState(false);
     const [showVersion, setShowVersion] = React.useState(false);
     const [instagramLink, setInstagramLink] = React.useState('');
     const userMenuRef = React.useRef(null);
@@ -57,6 +58,22 @@ const Header = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const handleFinalizeClick = () => {
+        if (!upsellAlreadyShown) {
+            const showed = triggerUpsell(cartItems);
+            if (showed) {
+                setUpsellAlreadyShown(true);
+                return;
+            }
+        }
+        toggleCart();
+    };
+
+    // Reset upsell when cart changes
+    React.useEffect(() => {
+        setUpsellAlreadyShown(false);
+    }, [cartCount]);
+
     return (
         <>
             <header className="main-header glass-header">
@@ -87,8 +104,21 @@ const Header = () => {
                         </motion.div>
 
                         {instagramLink && (
-                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="action-btn">
-                                <Instagram size={22} />
+                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="action-btn insta-btn">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.2))' }}>
+                                    <defs>
+                                        <linearGradient id="insta-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#f09433" />
+                                            <stop offset="25%" stopColor="#e6683c" />
+                                            <stop offset="50%" stopColor="#dc2743" />
+                                            <stop offset="75%" stopColor="#cc2366" />
+                                            <stop offset="100%" stopColor="#bc1888" />
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#insta-grad)"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#insta-grad)"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="url(#insta-grad)"></line>
+                                </svg>
                             </a>
                         )}
 
@@ -172,7 +202,7 @@ const Header = () => {
                                     exit={{ opacity: 0, x: -20, scale: 0.8 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="header-finish-btn"
-                                    onClick={toggleCart}
+                                    onClick={handleFinalizeClick}
                                 >
                                     <span>FINALIZAR PEDIDO</span>
                                     <ChevronRight size={18} />

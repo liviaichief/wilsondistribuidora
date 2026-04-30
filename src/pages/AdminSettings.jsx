@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 
 import AdminCategories from './AdminCategories';
 import AdminUOMs from './AdminUOMs';
+import AdminUpsellManager from '../components/admin/AdminUpsellManager';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
 
@@ -113,6 +114,7 @@ const AdminSettings = () => {
     const [originalSettings, setOriginalSettings] = useState({});
     const [loading, setLoading] = useState(true);
     const [savingSection, setSavingSection] = useState(null);
+    const [activeTab, setActiveTab] = useState('geral');
     const { showAlert } = useAlert();
 
     useEffect(() => { loadSettings(); }, []);
@@ -163,7 +165,43 @@ const AdminSettings = () => {
 
     return (
         <div style={{ padding: '0 20px 60px' }}>
-            <div>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '20px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <button 
+                    onClick={() => setActiveTab('geral')}
+                    style={{ 
+                        padding: '12px 30px', 
+                        borderRadius: '14px', 
+                        border: 'none', 
+                        background: activeTab === 'geral' ? '#D4AF37' : 'transparent', 
+                        color: activeTab === 'geral' ? '#000' : '#888', 
+                        fontWeight: 900, 
+                        fontSize: '0.85rem', 
+                        cursor: 'pointer',
+                        transition: '0.3s'
+                    }}
+                >
+                    GERAL
+                </button>
+                <button 
+                    onClick={() => setActiveTab('upsell')}
+                    style={{ 
+                        padding: '12px 30px', 
+                        borderRadius: '14px', 
+                        border: 'none', 
+                        background: activeTab === 'upsell' ? '#D4AF37' : 'transparent', 
+                        color: activeTab === 'upsell' ? '#000' : '#888', 
+                        fontWeight: 900, 
+                        fontSize: '0.85rem', 
+                        cursor: 'pointer',
+                        transition: '0.3s'
+                    }}
+                >
+                    UPSELL INTELIGENTE
+                </button>
+            </div>
+
+            {activeTab === 'geral' ? (
+                <div>
 
                 {/* ══ ROW 1: Catálogo + Comunicação ══ */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
@@ -424,8 +462,6 @@ const AdminSettings = () => {
                     </Card>
                 </div>
 
-            </div>
-
             {/* ══ Saúde do Sistema (Admin Only) ══ */}
             {isAdmin && (
                 <div style={{ marginTop: '50px' }}>
@@ -435,6 +471,10 @@ const AdminSettings = () => {
                     </div>
                     <AdminHealthDashboard />
                 </div>
+            )}
+            </div>
+            ) : (
+                <AdminUpsellManager />
             )}
         </div>
     );

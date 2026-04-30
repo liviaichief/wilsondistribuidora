@@ -65,8 +65,8 @@ const AdminOrders = () => {
                                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '14px' }}><Package size={24} color="#D4AF37" /></div>
                                 <div>
                                     <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>{order.customer_name || 'Cliente Final'}</div>
-                                    <div style={{ fontSize: '0.85rem', color: '#D4AF37', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {order.$id.startsWith('WD') ? `#${order.$id}` : `ID: ${order.$id.substring(0, 8).toUpperCase()}`} • <span style={{ color: '#555', fontSize: '0.75rem' }}>{new Date(order.$createdAt).toLocaleString()}</span>
+                                    <div style={{ fontSize: '0.75rem', color: '#555', fontWeight: 600 }}>
+                                        {new Date(order.$createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
                             </div>
@@ -76,7 +76,7 @@ const AdminOrders = () => {
                                     <div style={{ fontWeight: 900, color: '#fff', fontSize: '1.2rem' }}>R$ {parseFloat(order.total || 0).toFixed(2)}</div>
                                 </div>
                                 <div style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 900, background: order.status === 'completed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)', color: order.status === 'completed' ? '#22c55e' : '#fbbf24' }}>
-                                    {order.status?.toUpperCase() || 'PENDENTE'}
+                                    #{order.$id?.toUpperCase()}
                                 </div>
                                 <ChevronDown size={20} style={{ transform: expandedOrder === order.$id ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }} />
                             </div>
@@ -84,84 +84,75 @@ const AdminOrders = () => {
                         <AnimatePresence>
                             {expandedOrder === order.$id && (
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)', padding: '30px' }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                                        <div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '30px' }}>
+                                        {/* COLUNA ESQUERDA: ITENS */}
+                                        <div style={{ minWidth: 0 }}>
                                             <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>ITENS DO PEDIDO</h4>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '40px 120px 1fr 80px', gap: '15px', padding: '0 5px 8px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '5px' }}>
+                                                    <div style={{ fontSize: '0.6rem', color: '#aaa', fontWeight: 900 }}>QTD</div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#aaa', fontWeight: 900 }}>CÓD. EXTERNO</div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#aaa', fontWeight: 900 }}>NOME ITEM</div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#aaa', fontWeight: 900, textAlign: 'right' }}>PREÇO</div>
+                                                </div>
                                                 {(() => {
                                                     try {
                                                         const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
                                                         return items.map((item, idx) => (
-                                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                                                <span>{item.quantity}x {item.title}{item.external_code ? <span style={{ color: '#D4AF37', fontSize: '0.7rem', marginLeft: '8px', fontWeight: 700 }}>[Ref: {item.external_code}]</span> : null}</span>
-                                                                <span style={{ fontWeight: 800 }}>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '40px 120px 1fr 80px', gap: '15px', alignItems: 'center', padding: '0 5px' }}>
+                                                                <div style={{ fontWeight: 900, color: '#D4AF37', fontSize: '0.85rem' }}>{item.quantity}x</div>
+                                                                <div style={{ color: '#fff', fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 700 }}>{item.external_code || '---'}</div>
+                                                                <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 500 }}>{item.title}</div>
+                                                                <div style={{ fontWeight: 800, textAlign: 'right', color: '#fff', fontSize: '0.85rem' }}>R$ {(item.price * item.quantity).toFixed(2)}</div>
                                                             </div>
                                                         ));
                                                     } catch (e) {
-                                                        return <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>Erro ao ler itens do pedido.</div>;
+                                                        return <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>Erro ao carregar itens</div>;
                                                     }
                                                 })()}
                                             </div>
                                         </div>
-                                        <div>
+
+                                        {/* COLUNA DIREITA: ENTREGA */}
+                                        <div style={{ borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: '20px' }}>
                                             <h4 style={{ margin: '0 0 15px', fontSize: '0.75rem', color: '#555', fontWeight: 900 }}>DADOS DE ENTREGA</h4>
-                                            <div style={{ fontSize: '0.85rem', color: '#888', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                                                    <Phone size={16} color="#D4AF37" style={{ marginTop: '2px' }} />
-                                                    <div>
-                                                        <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: 900, textTransform: 'uppercase' }}>WhatsApp</div>
-                                                        <div style={{ fontWeight: 700, color: '#fff' }}>{order.customer_phone || 'N/A'}</div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Cliente</span>
+                                                    <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 700 }}>{order.customer_name}</div>
+                                                    <div style={{ color: '#888', fontSize: '0.8rem' }}>{order.customer_phone}</div>
+                                                </div>
+
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Forma de Entrega</span>
+                                                    <div style={{ color: '#D4AF37', fontSize: '0.8rem', fontWeight: 800 }}>
+                                                        {order.delivery_mode === 'pickup' ? 'RETIRADA NA LOJA' : 'ENTREGA NO ENDEREÇO'}
                                                     </div>
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                                                    <MapPin size={16} color="#D4AF37" style={{ marginTop: '2px' }} />
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ fontSize: '0.65rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px' }}>Endereço de Entrega</div>
-                                                        {(() => {
-                                                            try {
-                                                                if (!order.delivery_address) return <div style={{ fontWeight: 700, color: '#fff' }}>Retirada na Loja</div>;
-                                                                const addr = typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address;
-                                                                if (!addr || typeof addr !== 'object') throw new Error();
-                                                                
-                                                                return (
-                                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                                                        <div style={{ gridColumn: 'span 2' }}>
-                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>RUA</span>
-                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_street || addr.street || '---'}</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>NÚMERO</span>
-                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_number || addr.number || 'S/N'}</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>BAIRRO</span>
-                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_neighborhood || addr.neighborhood || '---'}</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>CIDADE</span>
-                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_city || addr.city || '---'} - {addr.address_state || addr.state || ''}</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>CEP</span>
-                                                                            <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_cep || addr.cep || '---'}</span>
-                                                                        </div>
-                                                                        { (addr.address_complement || addr.complement) && (
-                                                                            <div style={{ gridColumn: 'span 2' }}>
-                                                                                <span style={{ fontSize: '0.6rem', color: '#555', display: 'block' }}>COMPLEMENTO</span>
-                                                                                <span style={{ fontWeight: 700, color: '#fff' }}>{addr.address_complement || addr.complement}</span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            } catch (e) {
-                                                                return <div style={{ fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>{order.delivery_address || 'Retirada na Loja'}</div>;
-                                                            }
-                                                        })()}
-                                                    </div>
+
+                                                {order.delivery_mode === 'delivery' && order.delivery_address && (() => {
+                                                    try {
+                                                        const addr = typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address;
+                                                        return (
+                                                            <div>
+                                                                <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Endereço</span>
+                                                                <div style={{ color: '#fff', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                                                                    {addr.street}, {addr.number}<br />
+                                                                    {addr.neighborhood}<br />
+                                                                    {addr.city} - {addr.cep}
+                                                                    {addr.complement && <><br /><span style={{ color: '#666' }}>({addr.complement})</span></>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    } catch (e) { return null; }
+                                                })()}
+
+                                                <div>
+                                                    <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Pagamento</span>
+                                                    <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>{order.payment_method || 'A combinar'}</div>
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </motion.div>
                             )}

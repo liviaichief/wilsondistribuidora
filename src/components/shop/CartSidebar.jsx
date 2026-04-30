@@ -503,10 +503,36 @@ const CartSidebar = () => {
             <div className={`cart-backdrop ${isCartOpen ? 'visible' : ''}`} onClick={toggleCart}></div>
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
-                    <h2><ShoppingBag size={24} /> Meu Carrinho</h2>
-                    <button className="close-cart" onClick={toggleCart}>
-                        <X size={20} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <ShoppingBag size={24} />
+                        <h2>Meu Carrinho</h2>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {cartItems.length > 0 && (
+                            <button 
+                                className="empty-cart-action" 
+                                onClick={clearCart}
+                                style={{
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    color: '#ef4444',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.6rem',
+                                    fontWeight: 900,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    transition: '0.3s'
+                                }}
+                            >
+                                Esvaziar Carrinho
+                            </button>
+                        )}
+                        <button className="close-cart" onClick={toggleCart}>
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="cart-scrollable-area">
