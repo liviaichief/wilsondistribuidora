@@ -98,7 +98,7 @@ const Header = () => {
                                 }}
                                 style={{ cursor: 'pointer', userSelect: 'none' }}
                             >
-                                Olá, 
+                                Olá,&nbsp;
                             </span>
                             <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
                         </motion.div>
