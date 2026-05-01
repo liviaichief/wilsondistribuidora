@@ -518,17 +518,20 @@ const CartSidebar = () => {
                                     background: 'rgba(239, 68, 68, 0.1)',
                                     border: '1px solid rgba(239, 68, 68, 0.2)',
                                     color: '#ef4444',
-                                    padding: '6px 12px',
-                                    borderRadius: '8px',
+                                    padding: '8px',
+                                    borderRadius: '10px',
                                     cursor: 'pointer',
-                                    fontSize: '0.6rem',
-                                    fontWeight: 900,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                     transition: '0.3s'
                                 }}
+                                title="Esvaziar Carrinho"
                             >
-                                Esvaziar Carrinho
+                                <Trash2 size={18} />
+                                <span className="desktop-only" style={{ marginLeft: '8px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                                    Esvaziar Carrinho
+                                </span>
                             </button>
                         )}
                         <button className="close-cart" onClick={toggleCart}>
