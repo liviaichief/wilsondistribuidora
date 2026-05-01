@@ -145,7 +145,7 @@ const OrderHistory = () => {
                             <RefreshCcw size={20} />
                         </button>
                     </h2>
-                    <Link to="/" className="back-link"><ArrowLeft size={18} /> Voltar as compras</Link>
+                    <Link to="/" className="back-link"><ArrowLeft size={18} /> Loja</Link>
                 </div>
 
                 {loading ? (
