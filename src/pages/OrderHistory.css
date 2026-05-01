@@ -2,7 +2,7 @@
     min-height: 100vh;
     background: #121212;
     color: #fff;
-    padding-top: 110px; /* Ajustado para o novo header */
+    padding-top: 80px; /* Puxado para cima */
     padding-bottom: 2rem;
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0; /* Zerado para colar no topo */
+    margin-top: -10px; /* Puxando para cima do padding */
     margin-bottom: 1.5rem;
     border-bottom: 1px solid #333;
     padding-bottom: 1rem;
@@ -163,7 +163,7 @@
 }
 @media (max-width: 768px) {
     .order-history-container {
-        padding-top: 60px; /* Alinhado com header */
+        padding-top: 50px; /* Forçando aproximação máxima */
     }
 
     .history-content {
