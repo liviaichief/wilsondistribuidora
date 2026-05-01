@@ -85,11 +85,10 @@
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .category-bar-container {
-        margin-left: -1rem;
-        margin-right: -1rem;
-        width: 100vw; /* Força a largura total da janela */
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
         position: relative;
-        left: 0;
     }
 
     .category-bar-inner {

@@ -55,12 +55,14 @@
 
 @media (max-width: 768px) {
     .main-content {
-        padding: 65px 1rem 80px; /* Alinhado com o header de 60px */
+        padding: 60px 0 80px; /* Colado no topo e sem bordas laterais */
     }
 
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+        gap: 8px;
+        margin-top: 5px;
+        padding: 0 8px; /* Pequeno respiro apenas para os cards não tocarem no vidro do celular */
     }
 
     .no-products {
