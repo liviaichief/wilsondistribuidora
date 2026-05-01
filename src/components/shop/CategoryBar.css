@@ -85,20 +85,24 @@
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .category-bar-container {
-        margin-left: -1rem; /* Compensa o padding da main-content */
+        margin-left: -1rem;
         margin-right: -1rem;
-        width: calc(100% + 2rem);
+        width: 100vw; /* Força a largura total da janela */
+        position: relative;
+        left: 0;
     }
 
     .category-bar-inner {
         max-width: none;
+        width: 100%;
         border-radius: 0;
         border-left: none;
         border-right: none;
         margin: 0;
         padding: 12px 1rem;
-        background: rgba(15, 15, 15, 0.95); /* Um pouco mais sólido como o footer */
+        background: rgba(20, 20, 20, 0.98); /* Fundo cinza quase sólido para encostar na tela */
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: none; /* Removido para garantir solidez no limite */
     }
     
     .cat-tab-btn {
