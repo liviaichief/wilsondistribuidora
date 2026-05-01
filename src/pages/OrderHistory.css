@@ -9,7 +9,7 @@
 .history-content {
     max-width: 800px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0 2rem 2rem 2rem; /* Removido padding superior */
 }
 
 .history-header {
@@ -155,11 +155,11 @@
 }
 @media (max-width: 768px) {
     .order-history-container {
-        padding-top: 80px; /* Ajustado para o mobile */
+        padding-top: 60px; /* Altura exata do header mobile */
     }
 
     .history-content {
-        padding: 1rem; /* Reduce side padding on mobile */
+        padding: 0.5rem 1rem; /* Padding mínimo superior */
     }
 
     .history-header {
