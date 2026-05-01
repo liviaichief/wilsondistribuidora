@@ -557,7 +557,7 @@ const CartSidebar = () => {
                                         <div className="cart-item-info">
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
                                                 <h4>{formatTitleCase(item.title)}</h4>
-                                                <p className="cart-item-price" style={{ transform: 'translateY(5px)' }}>
+                                                <p className="cart-item-price" style={{ transform: 'translateY(10px)' }}>
                                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
                                                 </p>
                                             </div>
