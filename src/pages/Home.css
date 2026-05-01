@@ -55,7 +55,7 @@
 
 @media (max-width: 768px) {
     .main-content {
-        padding: 60px 0 80px; /* Colado no topo e sem bordas laterais */
+        padding: 58px 0 80px; /* Leve sobreposição para garantir zero gap */
     }
 
     .products-grid {
