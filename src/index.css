@@ -60,12 +60,12 @@ body {
 }
 
 /* Visibility Utilities */
-.desktop-only { display: block !important; }
-.mobile-only { display: none !important; }
-
 @media (max-width: 768px) {
     .desktop-only { display: none !important; }
-    .mobile-only { display: block !important; }
+}
+
+@media (min-width: 769px) {
+    .mobile-only { display: none !important; }
 }
 
 /* Scrollbar */
