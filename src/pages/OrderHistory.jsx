@@ -190,7 +190,6 @@ const OrderHistory = () => {
 
                                 <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
                                     <div className="order-total">
-                                        <span style={{ marginRight: '0.5rem' }}>Total:</span>
                                         <span className="total-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {parseFloat(order.total_amount || order.total).toFixed(2)}</span>
                                     </div>
                                     <button
