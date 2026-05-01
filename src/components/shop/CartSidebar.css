@@ -345,4 +345,8 @@
     .cart-footer {
         padding: 20px;
     }
+    .finish-checkout-btn {
+        padding: 13px !important;
+        font-size: 0.95rem;
+    }
 }
