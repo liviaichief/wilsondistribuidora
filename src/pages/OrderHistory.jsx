@@ -172,6 +172,41 @@ const OrderHistory = () => {
                                             {formatDate(order.created_at)}
                                         </span>
                                     </div>
+                                    <span className={`order-status ${order.status} desktop-only`} style={{
+                                        background: order.status === 'error' ? '#fee2e2' : ['pending', 'preparing'].includes(order.status) ? '#fef3c7' : '#d1fae5',
+                                        color: order.status === 'error' ? '#991b1b' : ['pending', 'preparing'].includes(order.status) ? '#92400e' : '#065f46',
+                                        padding: '0.25rem 0.75rem', borderRadius: '14px', fontSize: '0.8rem'
+                                    }}>
+                                        {[order.status] || order.status || 'Concluído'}
+                                    </span>
+                                </div>
+                                
+                                {/* BARRA DE RASTREIO VISUAL - APENAS DESKTOP */}
+                                <div className="order-tracking-bar desktop-only" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', position: 'relative', marginBottom: '10px' }}>
+                                    <div className="tracking-line" style={{ position: 'absolute', top: '35px', left: '10%', right: '10%', height: '2px', background: 'rgba(0,0,0,0.05)', zIndex: 1 }}></div>
+                                    {[
+                                        { label: 'Recebido', icon: ClipboardList, status: ['pending', 'confirmed', 'preparing', 'shipped', 'delivered'] },
+                                        { label: 'Preparando', icon: Package, status: ['preparing', 'shipped', 'delivered'] },
+                                        { label: 'A caminho', icon: Clock, status: ['shipped', 'delivered'] },
+                                        { label: 'Entregue', icon: Check, status: ['delivered', 'concluido', 'concluído'] }
+                                    ].map((step, index) => {
+                                        const isActive = step.status.includes((order.status || '').toLowerCase());
+                                        return (
+                                            <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, flex: 1 }}>
+                                                <div style={{ 
+                                                    background: isActive ? '#D4AF37' : '#fff', 
+                                                    color: isActive ? '#000' : '#ddd',
+                                                    width: '32px', height: '32px', borderRadius: '50%', 
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    border: `2px solid ${isActive ? '#D4AF37' : '#eee'}`,
+                                                    transition: 'all 0.3s ease'
+                                                }}>
+                                                    <step.icon size={16} />
+                                                </div>
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isActive ? '#D4AF37' : '#bbb', textTransform: 'uppercase' }}>{step.label}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
 
@@ -190,6 +225,7 @@ const OrderHistory = () => {
 
                                 <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
                                     <div className="order-total">
+                                        <span className="desktop-only" style={{ marginRight: '0.5rem' }}>Total:</span>
                                         <span className="total-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {parseFloat(order.total_amount || order.total).toFixed(2)}</span>
                                     </div>
                                     <button
@@ -208,7 +244,7 @@ const OrderHistory = () => {
                                         }}
                                         title="Adicionar itens ao carrinho novamente"
                                     >
-                                        Refazer Pedido
+                                        <ShoppingBag size={16} className="desktop-only" /> Refazer Pedido
                                     </button>
                                 </div>
                             </div>

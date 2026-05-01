@@ -59,6 +59,15 @@ body {
     vertical-align: middle;
 }
 
+/* Visibility Utilities */
+.desktop-only { display: block !important; }
+.mobile-only { display: none !important; }
+
+@media (max-width: 768px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--secondary-color); }

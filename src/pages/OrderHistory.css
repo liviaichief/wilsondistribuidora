@@ -2,14 +2,14 @@
     min-height: 100vh;
     background: #121212;
     color: #fff;
-    padding-top: 20px; /* Reduzido pois o layout já tem padding */
+    padding-top: 130px; /* Restaurado original desktop */
     padding-bottom: 2rem;
 }
 
 .history-content {
-    max-width: 1000px; /* Aumentado de 800px */
+    max-width: 800px; /* Restaurado original desktop */
     margin: 0 auto;
-    padding: 0 1rem 2rem 1rem; /* Reduzido padding lateral */
+    padding: 2rem; /* Restaurado original desktop */
 }
 
 .history-header {
