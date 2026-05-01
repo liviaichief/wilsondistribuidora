@@ -10,6 +10,8 @@ import Logout from './components/auth/Logout.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import Profile from './pages/Profile.jsx';
+import CartPage from './pages/CartPage.jsx';
 import ProfileModal from './components/auth/ProfileModal'; // Global Modal
 import AdminSettings from './pages/AdminSettings.jsx';
 import AdminFinance from './pages/AdminFinance.jsx';
@@ -73,6 +75,12 @@ function App() {
                       <OrderHistory />
                     </ProtectedRoute>
                   } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/cart" element={<CartPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/logout" element={<Logout />} />
                   <Route path="/reset-password" element={<ResetPassword />} />

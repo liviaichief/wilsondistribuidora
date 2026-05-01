@@ -148,9 +148,7 @@ const ProductDetail = () => {
             <Header />
             <div className="product-detail-container">
                 <div className="product-detail-top-bar">
-                    <button className="btn-back-nav" onClick={() => navigate(-1)}>
-                        <ArrowLeft size={20} /> Voltar
-                    </button>
+                    <div /> {/* Espaço vazio para manter o X à direita se necessário ou mudar o CSS */}
                     <button className="btn-close-nav" onClick={() => navigate('/')} title="Fechar e ir para o início">
                         <X size={24} />
                     </button>

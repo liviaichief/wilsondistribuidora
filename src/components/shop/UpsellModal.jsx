@@ -33,10 +33,14 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             position: 'relative', 
                             width: '100%', 
                             maxWidth: '480px', 
+                            maxHeight: '90vh',
                             background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(15, 15, 15, 0.98))', 
                             borderRadius: '35px', 
                             border: '1px solid rgba(212, 175, 55, 0.3)',
-                            boxShadow: '0 40px 100px -20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.1)'
+                            boxShadow: '0 40px 100px -20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden'
                         }}
                     >
                         {/* Category Badge */}
@@ -44,7 +48,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             <TrendingUp size={12} /> {baseProduct.categoryName || 'Sugestão'}
                         </div>
 
-                        <div style={{ padding: '50px 30px 25px', textAlign: 'center' }}>
+                        <div style={{ padding: '40px 25px 20px', textAlign: 'center', flexShrink: 0 }}>
                         <button onClick={onClose} style={{ position: 'absolute', right: '25px', top: '25px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <X size={18} />
                         </button>
@@ -80,7 +84,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             display: 'flex', 
                             flexDirection: 'column', 
                             gap: '12px',
-                            maxHeight: '380px',
+                            flex: 1,
                             overflowY: 'auto',
                             scrollbarWidth: 'thin',
                             scrollbarColor: 'rgba(212, 175, 55, 0.4) rgba(0,0,0,0.1)'
@@ -99,15 +103,16 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                                     style={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 
-                                        gap: '15px', 
-                                        padding: '12px', 
+                                        gap: '10px', 
+                                        padding: '10px', 
                                         background: isAdded ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)', 
-                                        borderRadius: '24px',
+                                        borderRadius: '20px',
                                         border: isAdded ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid rgba(255,255,255,0.05)',
-                                        transition: '0.3s'
+                                        transition: '0.3s',
+                                        overflow: 'hidden'
                                     }}
                                 >
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '18px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ width: '70px', height: '70px', borderRadius: '15px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
                                         <img 
                                             src={getImageUrl(item.image)} 
                                             alt={item.title} 
@@ -116,7 +121,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                                         />
                                     </div>
                                     
-                                    <div style={{ flex: 1 }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
                                         <h4 style={{ color: isAdded ? '#D4AF37' : '#fff', fontSize: '0.85rem', fontWeight: 700, margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                             {item.title}
                                         </h4>
@@ -136,9 +141,9 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                                                     background: '#D4AF37', 
                                                     color: '#000', 
                                                     border: 'none', 
-                                                    padding: '8px 15px', 
+                                                    padding: '8px 12px', 
                                                     borderRadius: '12px', 
-                                                    fontSize: '0.7rem', 
+                                                    fontSize: '0.65rem', 
                                                     fontWeight: 900, 
                                                     cursor: 'pointer',
                                                     display: 'flex',
@@ -149,7 +154,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                                                 <Plus size={14} /> ADICIONAR
                                             </button>
                                         ) : (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 5px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
                                                 <button 
                                                     onClick={() => onUpdateQuantity(item.id, qty - 1)}
                                                     style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -176,7 +181,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding: '25px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px' }}>
+                    <div style={{ padding: '20px 25px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px', flexShrink: 0 }}>
                         <button 
                             onClick={onClose}
                             style={{ 

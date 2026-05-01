@@ -83,6 +83,12 @@ const Header = () => {
                         <img src="/logo.png" alt="Wilson Distribuidora" />
                     </Link>
 
+                    {/* Saudação Mobile (Centralizada) */}
+                    <div className="user-greeting-mobile mobile-only">
+                        <span>Olá,&nbsp;</span>
+                        <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
+                    </div>
+
 
                     {/* Actions */}
                     <div className="header-actions">
@@ -105,7 +111,7 @@ const Header = () => {
 
                         {instagramLink && (
                             <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="action-btn insta-btn">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.2))' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.2))' }}>
                                     <defs>
                                         <linearGradient id="insta-grad" x1="0%" y1="100%" x2="100%" y2="0%">
                                             <stop offset="0%" stopColor="#f09433" />
@@ -122,9 +128,7 @@ const Header = () => {
                             </a>
                         )}
 
-                        <div 
-                    className="user-dropdown-wrapper" 
-                    ref={userMenuRef}
+                        <div className="user-dropdown-wrapper desktop-only" ref={userMenuRef}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
@@ -156,7 +160,7 @@ const Header = () => {
                                                         <Shield size={16} /> <span>Painel Admin</span>
                                                     </Link>
                                                 )}
-                                                <button className="menu-item" onClick={() => { setIsUserMenuOpen(false); openProfileModal(); }}>
+                                                <button className="menu-item" onClick={() => { setIsUserMenuOpen(false); navigate('/profile'); }}>
                                                     <User size={16} /> <span>Meus Dados</span>
                                                 </button>
                                                 <Link to="/orders" className="menu-item" onClick={() => setIsUserMenuOpen(false)}>
@@ -181,7 +185,7 @@ const Header = () => {
                             </AnimatePresence>
                         </div>
 
-                        <button className={`action-btn cart-toggle ${cartCount > 0 ? 'desktop-only' : ''}`} onClick={toggleCart}>
+                        <button className="action-btn cart-toggle desktop-only" onClick={handleFinalizeClick}>
                             <ShoppingBag size={22} />
                             {cartCount > 0 && (
                                 <motion.span
@@ -205,7 +209,6 @@ const Header = () => {
                                     onClick={handleFinalizeClick}
                                 >
                                     <span>FINALIZAR PEDIDO</span>
-                                    <ChevronRight size={18} />
                                 </motion.button>
                             )}
                         </AnimatePresence>

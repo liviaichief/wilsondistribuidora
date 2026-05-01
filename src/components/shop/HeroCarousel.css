@@ -59,11 +59,19 @@
 
 @media (max-width: 768px) {
     .hero-carousel {
-        height: 250px;
-        border-radius: 0;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        border-radius: 12px;
+        margin: 0 10px 1rem;
+        width: calc(100% - 20px);
     }
     
+    .carousel-image {
+        object-fit: contain;
+        background: #000;
+    }
+
     .carousel-overlay h2 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
 }

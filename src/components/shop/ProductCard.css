@@ -514,19 +514,34 @@
         font-size: 0.9rem; 
     }
     
+    .card-footer {
+        margin: 8px -12px -12px -12px;
+        padding: 0;
+        display: block; /* Para permitir que o conteúdo use 100% */
+    }
+
+    .action-area {
+        width: 100%;
+    }
+
     .add-cart-btn { 
         padding: 8px; 
         font-size: 0.7rem; 
         height: 36px; 
-        width: 100%; 
-        border-radius: 8px; 
+        width: 100% !important; 
+        border-radius: 0 0 16px 16px; 
+        justify-content: center;
+        margin: 0;
     }
     
     .qty-control { 
         height: 36px; 
         gap: 10px; 
-        border-radius: 8px; 
+        border-radius: 0 0 16px 16px; 
         width: 100%;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
     }
 
     .qty-btn {
@@ -536,5 +551,10 @@
 
     .qty-num {
         font-size: 0.8rem;
+    }
+
+    .box-toggle-mini button {
+        padding: 4px 8px !important;
+        font-size: 0.65rem !important;
     }
 }

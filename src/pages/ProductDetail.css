@@ -8,7 +8,7 @@
 
 @media (max-width: 768px) {
     .product-detail-container {
-        padding-top: calc(110px + env(safe-area-inset-top, 0px));
+        padding-top: calc(20px + env(safe-area-inset-top, 0px));
     }
 }
 
@@ -79,8 +79,8 @@
     align-items: center;
     width: 100%;
     margin-bottom: 1.5rem;
-    /* Adicionando padding superior e z-index para evitar que a Header cubra os botões no PWA ou ao abrir a tela com scroll irregular */
-    padding-top: 10px;
+    /* Adicionando z-index para evitar que a Header cubra os botões no PWA */
+    padding-top: 0;
     position: relative;
     z-index: 10;
 }
@@ -317,11 +317,17 @@
 
 @media (max-width: 480px) {
 
-    .btn-back-nav,
-    .btn-close-nav {
+    .btn-back-nav {
         font-size: 0.9rem;
         padding: 0.4rem 0.8rem;
         margin-bottom: 0;
+    }
+
+    .btn-close-nav {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
     }
 
     .btn-add-large {

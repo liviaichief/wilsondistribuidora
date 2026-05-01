@@ -149,9 +149,10 @@ const ProductCard = ({ product }) => {
             <div className="card-content">
                 <div className="title-row">
                     <h3 className="card-title">{formatTitleCase(product.title)}</h3>
-                    <span className="card-category">{(product.category_name || 'Geral').toUpperCase()}</span>
+                    <span className="card-category desktop-only">{(product.category_name || 'Geral').toUpperCase()}</span>
                 </div>
                 <p className="card-description">{product.description}</p>
+                
                 
                 {product.has_bundle_option && product.unit_price > 0 && (
                     <div style={{ fontSize: '0.75rem', color: '#999', marginBottom: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -186,13 +187,15 @@ const ProductCard = ({ product }) => {
                                 onClick={() => setIsBoxSelected(false)}
                                 className={!isBoxSelected ? 'active' : ''}
                             >
-                                {product.uom || 'UN'}
+                                <span className="desktop-only">{product.uom || 'UN'}</span>
+                                <span className="mobile-only">UNID</span>
                             </button>
                             <button 
                                 onClick={() => setIsBoxSelected(true)}
                                 className={isBoxSelected ? 'active' : ''}
                             >
-                                CAIXA
+                                <span className="desktop-only">CAIXA</span>
+                                <span className="mobile-only">CX</span>
                             </button>
                         </div>
                     ) : (

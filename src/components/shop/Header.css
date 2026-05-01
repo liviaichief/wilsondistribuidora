@@ -17,6 +17,23 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 2rem;
+    position: relative; /* Adicionado para centralizar saudação mobile */
+}
+
+.user-greeting-mobile {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: #888;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 5;
+}
+
+.user-greeting-mobile strong {
+    color: #D4AF37;
+    font-weight: 900;
 }
 
 .logo-container {
@@ -162,6 +179,8 @@
 }
 
 .insta-btn {
+    width: 30px !important;
+    height: 30px !important;
     background: #fff !important;
     border-color: rgba(255, 255, 255, 0.2);
 }
@@ -402,13 +421,13 @@
     }
 
     .header-inner {
-        height: 60px; /* Um pouco mais de espaço para os dedos */
+        height: 72px; 
         padding: calc(env(safe-area-inset-top, 0px) + 5px) 1rem 5px;
     }
 
     .logo-container {
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
@@ -416,6 +435,12 @@
         width: 40px;
         height: 40px;
         border-radius: 10px;
+    }
+
+    .insta-btn {
+        width: 26px !important;
+        height: 26px !important;
+        border-radius: 6px;
     }
 
     .header-actions {

@@ -50,7 +50,11 @@ const BottomNav = () => {
                 <span>Pedidos</span>
             </NavLink>
 
-            <div className="nav-item" onClick={handleCartClick}>
+            <div 
+                className={`nav-item ${location.pathname === '/cart' ? 'active' : ''}`}
+                onClick={handleCartClick}
+                style={{ cursor: 'pointer' }}
+            >
                 <div style={{ position: 'relative' }}>
                     <ShoppingBag size={24} />
                     {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -58,10 +62,10 @@ const BottomNav = () => {
                 <span>Carrinho</span>
             </div>
 
-            <div className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`} onClick={handleProfileClick}>
+            <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                 <User size={24} />
                 <span>Perfil</span>
-            </div>
+            </NavLink>
         </nav>
     );
 };

@@ -41,6 +41,8 @@ const CartSidebar = () => {
     const [whatsappNumber, setWhatsappNumber] = useState(''); // Default fallback
     const [whatsappMessage, setWhatsappMessage] = useState('*NOVO PEDIDO {pedido} - BASE APP*'); // Default fallback message
     const [isProcessing, setIsProcessing] = useState(false); // Added processing state
+    const [upsellAlreadyShown, setUpsellAlreadyShown] = useState(false);
+    const { triggerUpsell } = useCart();
 
     const [deliveryMode, setDeliveryMode] = useState(''); // 'pickup' | 'delivery'
     const [address, setAddress] = useState({
@@ -301,8 +303,17 @@ const CartSidebar = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = async () => {
+        // [UPSELL] Trigger before finalizing if not shown yet
+        if (!upsellAlreadyShown && cartItems.length > 0) {
+            const showed = triggerUpsell(cartItems);
+            if (showed) {
+                setUpsellAlreadyShown(true);
+                toggleCart(); // Close sidebar to show modal clearly
+                return;
+            }
+        }
+
         // If not logged in AND fields are empty, prompt login/guest choice
-        // If fields are filled, we assume implicit guest checkout
         if (!user && !guestMode && (!customerName || !customerPhone)) {
             openAuthModal('login');
             return;
@@ -555,9 +566,9 @@ const CartSidebar = () => {
                                     <div key={item.id} className="cart-item">
                                         <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
                                         <div className="cart-item-info">
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                                                <h4>{formatTitleCase(item.title)}</h4>
-                                                <p className="cart-item-price" style={{ transform: 'translateY(15px)' }}>
+                                            <h4 style={{ width: '100%', marginBottom: '4px' }}>{formatTitleCase(item.title)}</h4>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+                                                <p className="cart-item-price" style={{ transform: 'translateY(5px)' }}>
                                                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
                                                 </p>
                                             </div>
@@ -778,7 +789,6 @@ const CartSidebar = () => {
                         ) : (
                             <>
                                 <span>ENVIAR PEDIDO</span>
-                                <ChevronRight size={20} />
                             </>
                         )}
                     </button>

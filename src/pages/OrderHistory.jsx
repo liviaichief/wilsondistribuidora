@@ -145,7 +145,7 @@ const OrderHistory = () => {
                             <RefreshCcw size={20} />
                         </button>
                     </h2>
-                    <Link to="/" className="back-link"><ArrowLeft size={18} /> Loja</Link>
+                    <Link to="/" className="back-link desktop-only"><ArrowLeft size={18} /> Loja</Link>
                 </div>
 
                 {loading ? (
@@ -154,7 +154,7 @@ const OrderHistory = () => {
                     <div className="empty-history" style={{ textAlign: 'center', padding: '2rem' }}>
                         <ShoppingBag size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
                         <p>Você ainda não fez nenhum pedido.</p>
-                        <Link to="/" className="cta-btn" style={{ display: 'inline-block', marginTop: '1rem', padding: '0.5rem 1rem', background: '#333', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
+                        <Link to="/" className="cta-btn desktop-only" style={{ display: 'inline-block', marginTop: '1rem', padding: '0.5rem 1rem', background: '#333', color: 'white', textDecoration: 'none', borderRadius: '4px' }}>
                             Fazer meu primeiro pedido
                         </Link>
                     </div>
@@ -194,16 +194,16 @@ const OrderHistory = () => {
                                         return (
                                             <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, flex: 1 }}>
                                                 <div style={{ 
-                                                    background: isActive ? '#D4AF37' : '#fff', 
-                                                    color: isActive ? '#000' : '#ddd',
+                                                    background: isActive ? '#22c55e' : '#fff', 
+                                                    color: isActive ? '#fff' : '#ddd',
                                                     width: '32px', height: '32px', borderRadius: '50%', 
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    border: `2px solid ${isActive ? '#D4AF37' : '#eee'}`,
+                                                    border: `2px solid ${isActive ? '#22c55e' : '#eee'}`,
                                                     transition: 'all 0.3s ease'
                                                 }}>
                                                     <step.icon size={16} />
                                                 </div>
-                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isActive ? '#D4AF37' : '#bbb', textTransform: 'uppercase' }}>{step.label}</span>
+                                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isActive ? '#22c55e' : '#bbb', textTransform: 'uppercase' }}>{step.label}</span>
                                             </div>
                                         );
                                     })}
@@ -215,9 +215,24 @@ const OrderHistory = () => {
                                     {(() => {
                                         const items = Array.isArray(order.items) ? order.items : (order.items?.items || []);
                                         return items.map((item, idx) => (
-                                            <div key={idx} className="order-item-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                                                <span>{item.quantity}x {item.title || 'Produto'}</span>
-                                                <span>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                            <div key={idx} className="order-item-row" style={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                alignItems: 'flex-start', // Alinhado ao topo
+                                                gap: '15px',
+                                                fontSize: '0.9rem', 
+                                                marginBottom: '0.6rem' // Um pouco mais de espaço entre itens
+                                            }}>
+                                                <span style={{ flex: 1 }}>{item.quantity}x {item.title || 'Produto'}</span>
+                                                <span style={{ 
+                                                    whiteSpace: 'nowrap', 
+                                                    fontWeight: 600, 
+                                                    textAlign: 'right',
+                                                    color: '#fff',
+                                                    minWidth: '80px' // Garante alinhamento das colunas de preço
+                                                }}>
+                                                    R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                                                </span>
                                             </div>
                                         ));
                                     })()}
@@ -226,21 +241,24 @@ const OrderHistory = () => {
                                 <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
                                     <div className="order-total">
                                         <span className="desktop-only" style={{ marginRight: '0.5rem' }}>Total:</span>
-                                        <span className="total-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {parseFloat(order.total_amount || order.total).toFixed(2)}</span>
+                                        <span className="total-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            R$ {parseFloat(order.total_amount || order.total).toFixed(2).replace('.', ',')}
+                                        </span>
                                     </div>
                                     <button
                                         className="repeat-btn"
                                         onClick={() => handleRepeatOrder(order)}
                                         style={{
                                             padding: '0.5rem 1rem',
-                                            background: '#D4AF37',
-                                            color: 'black',
+                                            background: '#22c55e',
+                                            color: 'white',
                                             fontWeight: 'bold',
                                             border: 'none',
                                             borderRadius: '4px',
                                             cursor: 'pointer',
                                             display: 'inline-block',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            boxShadow: '0 4px 15px rgba(34, 197, 94, 0.3)'
                                         }}
                                         title="Adicionar itens ao carrinho novamente"
                                     >
@@ -257,13 +275,15 @@ const OrderHistory = () => {
                                     onClick={handleLoadMore}
                                     disabled={loading}
                                     style={{
-                                        padding: '10px 20px',
-                                        background: '#333',
+                                        padding: '10px 25px',
+                                        background: '#22c55e',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '4px',
+                                        borderRadius: '12px',
+                                        fontWeight: 'bold',
                                         cursor: loading ? 'wait' : 'pointer',
-                                        opacity: loading ? 0.7 : 1
+                                        opacity: loading ? 0.7 : 1,
+                                        boxShadow: '0 4px 15px rgba(34, 197, 94, 0.2)'
                                     }}
                                 >
                                     {loading ? 'Carregando...' : 'Carregar mais pedidos'}
