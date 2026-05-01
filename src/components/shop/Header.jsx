@@ -181,7 +181,7 @@ const Header = () => {
                             </AnimatePresence>
                         </div>
 
-                        <button className="action-btn cart-toggle" onClick={toggleCart}>
+                        <button className={`action-btn cart-toggle ${cartCount > 0 ? 'desktop-only' : ''}`} onClick={toggleCart}>
                             <ShoppingBag size={22} />
                             {cartCount > 0 && (
                                 <motion.span
