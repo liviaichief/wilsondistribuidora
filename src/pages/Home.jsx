@@ -119,7 +119,7 @@ const Home = () => {
 
             <Header />
 
-            <main className="main-content">
+            <div className="home-content-wrapper">
                 <CategoryBar activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
                 
                 <motion.div 
@@ -177,7 +177,7 @@ const Home = () => {
 
                 {/* Google Social Proof */}
                 {!loading && !isSystemBlocked && <GoogleReviews />}
-            </main>
+            </div>
         </div>
     );
 };
