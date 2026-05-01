@@ -555,10 +555,12 @@ const CartSidebar = () => {
                                     <div key={item.id} className="cart-item">
                                         <img src={getImageUrl(item.image)} alt={formatTitleCase(item.title)} className="cart-item-img" />
                                         <div className="cart-item-info">
-                                            <h4>{formatTitleCase(item.title)}</h4>
-                                            <p className="cart-item-price">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
-                                            </p>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                                                <h4>{formatTitleCase(item.title)}</h4>
+                                                <p className="cart-item-price">
+                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
+                                                </p>
+                                            </div>
                                             <div className="cart-item-controls">
                                                 <div className="qty-selector-mini">
                                                     <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={14} /></button>
