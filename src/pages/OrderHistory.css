@@ -7,9 +7,9 @@
 }
 
 .history-content {
-    max-width: 800px;
+    max-width: 1000px; /* Aumentado de 800px */
     margin: 0 auto;
-    padding: 0 2rem 2rem 2rem; /* Removido padding superior */
+    padding: 0 1rem 2rem 1rem; /* Reduzido padding lateral */
 }
 
 .history-header {
@@ -167,7 +167,7 @@
     }
 
     .history-content {
-        padding: 0.5rem 1rem; /* Padding mínimo superior */
+        padding: 0.5rem 0.5rem; /* Padding lateral mínimo para esticar o card */
     }
 
     .history-header {
