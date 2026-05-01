@@ -104,15 +104,16 @@
 .product-detail-image-wrapper {
     position: relative;
     width: 100%;
-    /* Default for mobile */
-    height: 250px;
+    aspect-ratio: 1;
     background-color: #2a2a2a;
+    overflow: hidden;
 }
 
 @media (min-width: 768px) {
     .product-detail-image-wrapper {
         height: 100%;
         min-height: 400px;
+        aspect-ratio: auto;
     }
 }
 
