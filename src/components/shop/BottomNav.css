@@ -1,9 +1,9 @@
 .bottom-nav {
     position: fixed;
-    bottom: -2px;
+    bottom: 0;
     left: 0;
     right: 0;
-    height: calc(65px + env(safe-area-inset-bottom, 0px));
+    height: 65px;
     background: #0a0a0a; /* Fundo sólido e escuro */
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
@@ -11,7 +11,6 @@
     justify-content: space-around;
     align-items: center;
     padding: 0 10px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
     z-index: 1000;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
