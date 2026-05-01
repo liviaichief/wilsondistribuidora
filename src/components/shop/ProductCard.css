@@ -461,33 +461,80 @@
 }
 
 @media (max-width: 480px) {
-    .card-content {
-        padding: 12px;
+    .premium-card { 
+        border-radius: 16px; 
+        margin-bottom: 0px; 
     }
-
-    .card-title {
-        font-size: 0.9rem;
+    
+    .card-image-container { 
+        height: 140px; 
     }
-
+    
+    .card-content { 
+        padding: 12px; 
+    }
+    
+    .title-row .product-name {
+        font-size: 0.85rem; 
+        line-height: 1.2; 
+        margin-bottom: 4px;
+        display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden; 
+        height: 2.4em;
+    }
+    
     .card-description {
-        font-size: 0.7rem;
-        -webkit-line-clamp: 3; /* More lines for better context */
+        font-size: 0.62rem; 
+        line-height: 1.2; 
+        margin-bottom: 8px;
+        display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden; 
+        height: 2.4em; 
+        color: #999;
     }
-
-    .add-cart-btn {
-        padding: 12px 20px;
-        font-size: 0.75rem;
+    
+    .price-uom-row { 
+        margin-top: auto; 
+        padding-top: 6px; 
+        gap: 6px; 
+        border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    
+    .inline-price { 
+        padding: 4px 8px; 
+        border-radius: 8px; 
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .inline-price .main-price { 
+        font-size: 0.9rem; 
+    }
+    
+    .add-cart-btn { 
+        padding: 8px; 
+        font-size: 0.7rem; 
+        height: 36px; 
+        width: 100%; 
+        border-radius: 8px; 
+    }
+    
+    .qty-control { 
+        height: 36px; 
+        gap: 10px; 
+        border-radius: 8px; 
         width: 100%;
-        justify-content: center;
     }
 
-    .card-price-float {
-        padding: 1px 8px;
-        top: 10px;
-        right: 10px;
+    .qty-btn {
+        width: 24px;
+        height: 24px;
     }
 
-    .main-price {
-        font-size: 0.95rem;
+    .qty-num {
+        font-size: 0.8rem;
     }
 }
