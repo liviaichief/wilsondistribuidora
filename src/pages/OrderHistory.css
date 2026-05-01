@@ -2,7 +2,7 @@
     min-height: 100vh;
     background: #121212;
     color: #fff;
-    padding-top: 120px; /* Header (110) + 10px de gap */
+    padding-top: 20px; /* Reduzido pois o layout já tem padding */
     padding-bottom: 2rem;
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0; 
+    margin-top: -10px; /* Puxando para cima do padding */
     margin-bottom: 1.5rem;
     border-bottom: 1px solid #333;
     padding-bottom: 1rem;
@@ -163,7 +163,7 @@
 }
 @media (max-width: 768px) {
     .order-history-container {
-        padding-top: 70px; /* Header (60) + 10px de gap */
+        padding-top: 0; /* Removido duplicidade */
     }
 
     .history-content {

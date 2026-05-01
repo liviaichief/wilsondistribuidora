@@ -55,7 +55,7 @@
 
 @media (max-width: 768px) {
     .main-content {
-        padding: 100px 1rem 80px;
+        padding: 65px 1rem 80px; /* Alinhado com o header de 60px */
     }
 
     .products-grid {
