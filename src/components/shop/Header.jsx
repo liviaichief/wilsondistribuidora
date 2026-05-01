@@ -201,7 +201,7 @@ const Header = () => {
                                     animate={{ opacity: 1, x: 0, scale: 1 }}
                                     exit={{ opacity: 0, x: -20, scale: 0.8 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="header-finish-btn"
+                                    className="header-finish-btn desktop-only"
                                     onClick={handleFinalizeClick}
                                 >
                                     <span>FINALIZAR PEDIDO</span>
