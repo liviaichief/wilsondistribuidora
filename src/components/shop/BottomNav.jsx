@@ -50,9 +50,9 @@ const BottomNav = () => {
                 <span>Pedidos</span>
             </NavLink>
 
-            <div className="nav-item cart-item-central" onClick={handleCartClick}>
-                <div className="cart-icon-wrapper">
-                    <ShoppingBag size={28} />
+            <div className="nav-item" onClick={handleCartClick}>
+                <div style={{ position: 'relative' }}>
+                    <ShoppingBag size={24} />
                     {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                 </div>
                 <span>Carrinho</span>
