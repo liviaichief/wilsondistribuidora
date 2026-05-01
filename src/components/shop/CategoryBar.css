@@ -87,8 +87,10 @@
     .category-bar-container {
         margin-left: 0;
         margin-right: 0;
+        margin-top: -10px; /* Puxa para cima para colar no header */
         width: 100%;
         position: relative;
+        z-index: 20; /* Garante que fique sobreposto se necessário */
     }
 
     .category-bar-inner {
