@@ -504,8 +504,10 @@ const CartSidebar = () => {
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <ShoppingBag size={24} />
-                        <h2>Meu Carrinho</h2>
+                        <h2 className="cart-title">
+                            <span className="desktop-only"><ShoppingBag size={24} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Meu </span>
+                            Carrinho
+                        </h2>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {cartItems.length > 0 && (
