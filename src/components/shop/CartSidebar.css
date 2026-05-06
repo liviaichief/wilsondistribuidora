@@ -363,3 +363,9 @@
         justify-content: center !important;
     }
 }
+
+@media (max-width: 768px) {
+    .cart-sidebar {
+        padding-bottom: 65px; /* Evita que o footer do carrinho seja coberto pelo bottom-nav */
+    }
+}

@@ -161,8 +161,9 @@ const Admin = () => {
     });
 
     return (
-        <div style={{ padding: '0 20px 40px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', marginTop: '20px' }}>
+        <div className="admin-page-wrapper" style={{ padding: '0 20px 40px' }}>
+            {/* DESKTOP VIEW */}
+            <div className="desktop-only" style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', marginTop: '20px' }}>
                 <div style={{ marginBottom: '30px', display: 'flex', gap: '15px', alignItems: 'center' }}>
                     <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 15px' }}>
                         <Search size={20} color="#555" />
@@ -260,12 +261,99 @@ const Admin = () => {
                 )}
             </div>
 
+            {/* MOBILE VIEW */}
+            <div className="mobile-only" style={{ flexDirection: 'column', padding: '0 0 20px', maxWidth: '800px', margin: '0 auto', marginTop: '20px' }}>
+                {/* Minimal Filter Bar */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', padding: '0 5px' }}>
+                <div style={{ flex: '1 1 180px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', padding: '0 12px', backdropFilter: 'blur(10px)' }}>
+                    <Search size={16} color="#888" />
+                    <input placeholder="Buscar produto..." value={titleFilter} onChange={e => setTitleFilter(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '12px 10px', width: '100%', outline: 'none', fontSize: '0.9rem' }} />
+                </div>
+                <div style={{ position: 'relative', flex: '1 1 130px' }}>
+                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ width: '100%', background: 'rgba(255,255,255,0.03)', color: '#fff', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px 15px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', outline: 'none', WebkitAppearance: 'none', backdropFilter: 'blur(10px)' }}>
+                        <option value="all">Todas Categorias</option>
+                        {categories.map(cat => <option key={cat.id} value={cat.id} style={{ background: '#111' }}>{cat.name}</option>)}
+                    </select>
+                </div>
+                <button onClick={openNewModal} title="Adicionar Produto" style={{ flex: '0 0 auto', width: '45px', height: '45px', background: 'linear-gradient(135deg, #D4AF37, #b8860b)', color: '#000', border: 'none', borderRadius: '12px', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.2)', transition: 'transform 0.2s' }} className="hover-scale">
+                    <Plus size={24} strokeWidth={2.5} />
+                </button>
+            </div>
+
+            {loading ? (
+                <div style={{ padding: '60px', textAlign: 'center' }}><Loader2 className="animate-spin" size={30} color="#D4AF37" /></div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {filteredProducts.map((p) => {
+                        const isLowStock = p.manage_stock && p.stock_quantity <= 0;
+                        const catName = categories.find(c => c.id === p.category)?.name || 'Sem Categoria';
+                        const displayPrice = p.is_promotion ? p.promo_price : p.price;
+                        
+                        return (
+                            <motion.div 
+                                key={p.id || p.$id} 
+                                onClick={() => handleEdit(p)} 
+                                whileHover={{ scale: 0.99, backgroundColor: 'rgba(255,255,255,0.04)' }}
+                                whileTap={{ scale: 0.97 }}
+                                style={{ 
+                                    display: 'flex', alignItems: 'center', padding: '12px 15px', 
+                                    background: 'rgba(20, 20, 20, 0.4)', borderRadius: '16px', 
+                                    border: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer',
+                                    opacity: p.active === false ? 0.6 : 1,
+                                    backdropFilter: 'blur(10px)'
+                                }}
+                            >
+                                <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    {p.image ? <img src={getImageUrl(p.image)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={18} color="#555" />}
+                                    {p.is_promotion && <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', background: '#9333ea', borderRadius: '50%', border: '2px solid #141414' }} />}
+                                </div>
+                                
+                                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                    <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '0.2px' }}>
+                                        {p.title}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#777', fontWeight: 600 }}>
+                                        <span style={{ color: '#D4AF37', background: 'rgba(212,175,55,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                            {p.sku || (p.$id ? p.$id.substring(0, 5).toUpperCase() : '---')}
+                                        </span>
+                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100px' }}>
+                                            {catName}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginLeft: '10px', flexShrink: 0, gap: '4px' }}>
+                                    <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.95rem' }}>
+                                        <span style={{ fontSize: '0.7rem', color: '#888', marginRight: '2px' }}>R$</span>
+                                        {maskCurrency(displayPrice)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        {p.manage_stock && (
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: isLowStock ? '#ef4444' : '#22c55e', background: isLowStock ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                {isLowStock ? 'ZERADO' : `${p.stock_quantity} UN`}
+                                            </span>
+                                        )}
+                                        {p.active === false && <EyeOff size={14} color="#ef4444" style={{ marginLeft: '2px' }} />}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                    {filteredProducts.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666', fontSize: '0.9rem', fontWeight: 600 }}>
+                            Nenhum produto encontrado.
+                        </div>
+                    )}
+                </div>
+            )}
+            </div>
+
             <AnimatePresence>
                 {isModalOpen && (
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', padding: '20px' }}>
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '30px', maxWidth: '800px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+                    <div className="product-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="product-modal-container">
                             {/* Header Fixo */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+                            <div className="pwa-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
                                 <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, display: 'flex', alignItems: 'center' }}>
                                     {currentProduct.id || currentProduct.$id ? 'Editar Produto' : 'Novo Produto'}
                                     {currentProduct.sku && (
@@ -278,15 +366,15 @@ const Admin = () => {
                             </div>
 
                             {/* Conteúdo Rolável */}
-                            <div style={{ overflowY: 'auto', padding: '30px', flexGrow: 1 }}>
-                                <form onSubmit={handleSave} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                            <div className="pwa-modal-content custom-scroll" style={{ overflowY: 'auto', padding: '30px', flexGrow: 1 }}>
+                                <form onSubmit={handleSave} className="product-modal-grid">
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Imagem do Produto</span>
-                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                            <div className="pwa-image-preview" style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                                                 {previewUrl ? <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
                                             </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px', marginBottom: '20px' }}>
+                                            <div className="pwa-image-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px', marginBottom: '20px' }}>
                                                 <button
                                                     type="button"
                                                     onClick={() => { setCurrentProduct({ ...currentProduct, image: '' }); setPreviewUrl(''); }}
@@ -326,10 +414,10 @@ const Admin = () => {
 
                                             {/* SEGUNDA FOTO */}
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Segunda Imagem (Carrossel)</span>
-                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginTop: '6px' }}>
+                                            <div className="pwa-image-preview" style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginTop: '6px' }}>
                                                 {previewUrl2 ? <img src={previewUrl2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
                                             </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px' }}>
+                                            <div className="pwa-image-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px' }}>
                                                 <button
                                                     type="button"
                                                     onClick={() => { setCurrentProduct({ ...currentProduct, image_2: '' }); setPreviewUrl2(''); }}
@@ -386,7 +474,7 @@ const Admin = () => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Título do Produto</span>
-                                            <input placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', marginBottom: '10px' }} />
+                                            <input className="pwa-input" placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', marginBottom: '10px' }} />
 
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Descrição</span>
@@ -396,7 +484,7 @@ const Admin = () => {
                                                     onGenerated={(desc) => setCurrentProduct({ ...currentProduct, description: desc })}
                                                 />
                                             </div>
-                                            <textarea placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
+                                            <textarea className="pwa-input" placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
                                         </div>
 
 
@@ -443,10 +531,11 @@ const Admin = () => {
                                         </div>
 
                                         {/* CODIGO EXTERNO E MEDIDA */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
+                                        <div className="pwa-split-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Codigo externo</span>
                                                 <input 
+                                                    className="pwa-input"
                                                     type="text" 
                                                     placeholder="Ex: REF-123" 
                                                     value={currentProduct.external_code || ''} 
@@ -456,12 +545,12 @@ const Admin = () => {
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Medida</span>
-                                                <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
+                                                <select className="pwa-input" value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
                                                 </select>
                                                 
                                                 {/* SWITCHES FARDO E CAIXA */}
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '4px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexWrap: 'wrap', gap: '10px', marginTop: '6px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <button
                                                             type="button"
@@ -492,6 +581,7 @@ const Admin = () => {
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
+                                                        className="pwa-price-input"
                                                         type="text"
                                                         placeholder="0,00"
                                                         value={maskCurrency(currentProduct.price)}
@@ -507,6 +597,7 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Unidade</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
+                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             value={maskCurrency(currentProduct.unit_price || 0)}
@@ -523,6 +614,7 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Caixa</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
+                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             value={maskCurrency(currentProduct.box_price || 0)}
@@ -535,11 +627,12 @@ const Admin = () => {
                                             )}
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                        <div className="pwa-split-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
+                                                        className="pwa-price-input"
                                                         type="text"
                                                         placeholder="0,00"
                                                         value={maskCurrency(currentProduct.cost_price || 0)}
@@ -566,6 +659,7 @@ const Admin = () => {
                                                 </div>
                                                 <div style={{ position: 'relative', opacity: currentProduct.has_assorted_min ? 1 : 0.5 }}>
                                                     <input
+                                                        className="pwa-input"
                                                         type="number"
                                                         min="1"
                                                         disabled={!currentProduct.has_assorted_min}
@@ -596,6 +690,7 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#9333ea', textTransform: 'uppercase' }}>Preço Promocional</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
+                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             readOnly={!currentProduct.is_promotion}
@@ -639,6 +734,7 @@ const Admin = () => {
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888' }}>Qtd</span>
                                                     <input
+                                                        className="pwa-input"
                                                         type="number"
                                                         value={currentProduct.stock_quantity}
                                                         placeholder="0"

@@ -16,7 +16,7 @@
 }
 
 .main-content {
-    padding: 60px 2rem 60px; /* 80px - 20px = 60px */
+    padding: 130px 2rem 60px; /* 110px header + 20px gap */
     max-width: 1600px;
     margin: 0 auto;
     position: relative;
@@ -55,7 +55,7 @@
 
 @media (max-width: 768px) {
     .main-content {
-        padding: 58px 0 80px; /* Leve sobreposição para garantir zero gap */
+        padding: 82px 0 80px; /* 72px header + 10px gap */
     }
 
     .products-grid {

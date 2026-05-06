@@ -204,7 +204,7 @@ const AdminSettings = () => {
                 <div>
 
                 {/* ══ ROW 1: Catálogo + Comunicação ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Catálogo: Categorias */}
                     <Card icon={<Tag size={22} />} color="#D4AF37" title="Categorias de Produto">
@@ -218,7 +218,7 @@ const AdminSettings = () => {
                 </div>
 
                 {/* ══ ROW 2: Comunicação + Ecossistema Google ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Comunicação */}
                     <Card 
@@ -272,7 +272,7 @@ const AdminSettings = () => {
                 </div>
 
                 {/* ══ ROW 3: Logística + Fidelidade ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Logística */}
                     <Card 
@@ -284,7 +284,7 @@ const AdminSettings = () => {
                         disabled={!isDirty(['shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
                     >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="admin-grid-2col" style={{ gap: '15px' }}>
                                 <Field label="Frete Grátis até (km)">
                                     <input type="number" value={settings.shipping_free_radius} onChange={e => setSettings({...settings, shipping_free_radius: e.target.value})} style={inputStyle} />
                                 </Field>
@@ -300,7 +300,7 @@ const AdminSettings = () => {
                             </div>
                             <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: '16px', padding: '18px' }}>
                                 <p style={{ margin: '0 0 12px', fontSize: '0.75rem', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>📍 Coordenadas da Loja</p>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div className="admin-grid-2col" style={{ gap: '12px' }}>
                                     <Field label="Latitude">
                                         <input value={settings.store_latitude} onChange={e => setSettings({...settings, store_latitude: e.target.value})} style={inputStyle} placeholder="-23.550520" />
                                     </Field>
@@ -328,7 +328,7 @@ const AdminSettings = () => {
                                     <option value="true" style={{ background: '#111' }}>✅ Ativado</option>
                                 </select>
                             </Field>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="admin-grid-2col" style={{ gap: '15px' }}>
                                 <Field label="% de Cashback por Compra">
                                     <input type="number" value={settings.cashback_percentage} onChange={e => setSettings({...settings, cashback_percentage: e.target.value})} style={inputStyle} />
                                 </Field>
@@ -402,7 +402,7 @@ const AdminSettings = () => {
                 </Card>
 
                 {/* ══ ROW 4: Automação + Financeiro ══ */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Automação */}
                     <Card 
@@ -414,7 +414,7 @@ const AdminSettings = () => {
                         disabled={!isDirty(['wa_bot_delay_hours', 'wa_reminder_day', 'wa_feedback_message'])}
                     >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="admin-grid-2col" style={{ gap: '15px' }}>
                                 <Field label="Delay Pesquisa de Satisfação (Horas)">
                                     <input type="number" value={settings.wa_bot_delay_hours} onChange={e => setSettings({...settings, wa_bot_delay_hours: e.target.value})} style={inputStyle} />
                                 </Field>

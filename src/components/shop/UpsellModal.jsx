@@ -90,7 +90,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             scrollbarColor: 'rgba(212, 175, 55, 0.4) rgba(0,0,0,0.1)'
                         }}
                     >
-                        {recommendations.map((item, index) => {
+                        {recommendations.slice(0, 3).map((item, index) => {
                             const qty = getQty(item.id);
                             const isAdded = qty > 0;
 

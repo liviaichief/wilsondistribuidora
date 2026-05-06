@@ -120,154 +120,244 @@ const AdminLayout = () => {
     const sidebarWidth = isMobile ? '85px' : '320px';
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#050505', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif' }}>
-            {/* Premium Glass Sidebar */}
-            <aside style={{ 
-                width: sidebarWidth, 
-                background: 'rgba(255, 255, 255, 0.02)', 
-                borderRight: '1px solid rgba(255, 255, 255, 0.05)', 
-                display: 'flex', 
-                flexDirection: 'column',
-                position: 'sticky',
-                top: 0,
-                height: '100vh',
-                zIndex: 100,
-                backdropFilter: 'blur(20px)',
-                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
-                <div style={{ padding: isMobile ? '25px 0' : '35px 30px 25px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => navigate('/')}
-                        style={{
-                            width: isMobile ? '45px' : '140px',
-                            height: isMobile ? '45px' : '140px',
-                            borderRadius: '50%',
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            filter: 'drop-shadow(0 8px 24px rgba(212,175,55,0.25))',
-                            position: 'relative',
-                            transition: 'all 0.3s'
-                        }}
-                    >
-                        <img
-                            src="/logo.png"
-                            alt="Logo"
+        <div style={{ 
+            display: 'flex', 
+            flexDirection: isMobile ? 'column' : 'row',
+            minHeight: '100vh', 
+            backgroundColor: '#050505', 
+            color: '#fff', 
+            fontFamily: 'Inter, system-ui, sans-serif' 
+        }}>
+            {/* Sidebar - Hidden on Mobile */}
+            {!isMobile && (
+                <aside style={{ 
+                    width: sidebarWidth, 
+                    background: 'rgba(255, 255, 255, 0.02)', 
+                    borderRight: '1px solid rgba(255, 255, 255, 0.05)', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    position: 'sticky',
+                    top: 0,
+                    height: '100vh',
+                    zIndex: 100,
+                    backdropFilter: 'blur(20px)',
+                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}>
+                    <div style={{ padding: '35px 30px 25px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            onClick={() => navigate('/')}
                             style={{
-                                width: '105%',
-                                height: '105%',
-                                objectFit: 'cover',
-                                objectPosition: 'center',
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)'
+                                width: '140px',
+                                height: '140px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                filter: 'drop-shadow(0 8px 24px rgba(212,175,55,0.25))',
+                                position: 'relative',
+                                transition: 'all 0.3s'
                             }}
-                        />
-                    </motion.div>
-                    {!isMobile && <div style={{ fontSize: '0.65rem', color: '#333', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Painel Admin</div>}
-                </div>
+                        >
+                            <img
+                                src="/logo.png"
+                                alt="Logo"
+                                style={{
+                                    width: '105%',
+                                    height: '105%',
+                                    objectFit: 'cover',
+                                    objectPosition: 'center',
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)'
+                                }}
+                            />
+                        </motion.div>
+                        <div style={{ fontSize: '0.65rem', color: '#333', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Painel Admin</div>
+                    </div>
 
-                <nav style={{ flex: 1, padding: isMobile ? '0 10px' : '0 20px', overflowY: 'auto', overflowX: 'hidden' }}>
-                    {!isMobile && <div style={{ padding: '0 15px 15px', fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase', letterSpacing: '2px' }}>Menu Principal</div>}
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {menuItems.map((item) => {
-                            const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
-                            return (
-                                <li key={item.path}>
-                                    <Link 
-                                        to={item.path} 
-                                        title={isMobile ? item.label : ''}
-                                        style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: isMobile ? 'center' : 'flex-start',
-                                            gap: isMobile ? '0' : '15px', 
-                                            padding: isMobile ? '16px 0' : '16px 20px', 
-                                            borderRadius: '16px', 
-                                            textDecoration: 'none', 
-                                            color: isActive ? '#fff' : '#888',
-                                            background: isActive ? 'linear-gradient(90deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.02))' : 'transparent',
-                                            border: `1px solid ${isActive ? 'rgba(212, 175, 55, 0.2)' : 'transparent'}`,
-                                            fontWeight: isActive ? 800 : 600,
-                                            fontSize: '0.95rem',
-                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                        }}
-                                        className="sidebar-link"
-                                    >
-                                        <item.icon size={22} color={isActive ? '#D4AF37' : 'currentColor'} strokeWidth={isActive ? 2.5 : 2} />
-                                        {!isMobile && <span style={{ flex: 1 }}>{item.label}</span>}
-                                        {!isMobile && isActive && <motion.div layoutId="activeDot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', boxShadow: '0 0 10px #D4AF37' }} />}
-                                    </Link>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
+                    <nav style={{ flex: 1, padding: '0 20px', overflowY: 'auto', overflowX: 'hidden' }}>
+                        <div style={{ padding: '0 15px 15px', fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase', letterSpacing: '2px' }}>Menu Principal</div>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {menuItems.map((item) => {
+                                const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+                                return (
+                                    <li key={item.path}>
+                                        <Link 
+                                            to={item.path} 
+                                            style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'flex-start',
+                                                gap: '15px', 
+                                                padding: '16px 20px', 
+                                                borderRadius: '16px', 
+                                                textDecoration: 'none', 
+                                                color: isActive ? '#fff' : '#888',
+                                                background: isActive ? 'linear-gradient(90deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.02))' : 'transparent',
+                                                border: `1px solid ${isActive ? 'rgba(212, 175, 55, 0.2)' : 'transparent'}`,
+                                                fontWeight: isActive ? 800 : 600,
+                                                fontSize: '0.95rem',
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                            }}
+                                            className="sidebar-link"
+                                        >
+                                            <item.icon size={22} color={isActive ? '#D4AF37' : 'currentColor'} strokeWidth={isActive ? 2.5 : 2} />
+                                            <span style={{ flex: 1 }}>{item.label}</span>
+                                            {isActive && <motion.div layoutId="activeDot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37', boxShadow: '0 0 10px #D4AF37' }} />}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </nav>
 
-                <div style={{ padding: isMobile ? '20px 10px' : '30px 30px 40px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(5, 5, 5, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <Link to="/" title="Ver Loja Pública" style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '12px', padding: '15px', borderRadius: '14px', background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', textDecoration: 'none', fontWeight: 800, fontSize: '0.9rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                        <Store size={20} /> {!isMobile && 'Ver Loja'} {!isMobile && <ExternalLink size={14} />}
-                    </Link>
-                    <button 
-                        title="Sair do Sistema"
-                        onClick={() => {
-                            showConfirm('Deseja encerrar sua sessão?', async () => {
-                                await signOut();
-                                navigate('/login');
-                            });
-                        }}
-                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '12px', padding: '15px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', color: '#aaa', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}
-                    >
-                        <LogOut size={20} /> {!isMobile && 'Sair'}
-                    </button>
-                </div>
-            </aside>
+                    <div style={{ padding: '30px 30px 40px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(5, 5, 5, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <Link to="/" title="Ver Loja Pública" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', padding: '15px', borderRadius: '14px', background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', textDecoration: 'none', fontWeight: 800, fontSize: '0.9rem', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                            <Store size={20} /> Ver Loja <ExternalLink size={14} />
+                        </Link>
+                        <button 
+                            title="Sair do Sistema"
+                            onClick={() => {
+                                showConfirm('Deseja encerrar sua sessão?', async () => {
+                                    await signOut();
+                                    navigate('/login');
+                                });
+                            }}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', padding: '15px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', color: '#aaa', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}
+                        >
+                            <LogOut size={20} /> Sair
+                        </button>
+                    </div>
+                </aside>
+            )}
 
             {/* Main Content Wrapper */}
-            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', position: 'relative' }}>
+            <main style={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                height: isMobile ? 'calc(100vh - 75px)' : '100vh', 
+                overflowY: 'auto', 
+                position: 'relative',
+                paddingBottom: isMobile ? '20px' : '0'
+            }}>
                 <header style={{ 
-                    padding: '25px 40px', 
+                    padding: isMobile ? '15px 20px' : '25px 40px', 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center', 
-                    background: 'rgba(5, 5, 5, 0.5)', 
+                    background: 'rgba(5, 5, 5, 0.8)', 
                     backdropFilter: 'blur(15px)', 
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     position: 'sticky',
                     top: 0,
                     zIndex: 90
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ fontWeight: 900, color: '#fff', fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '-0.5px' }}>Painel Executivo</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {isMobile && (
+                            <div 
+                                onClick={() => navigate('/')}
+                                style={{ width: '35px', height: '35px', borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(212,175,55,0.3)' }}
+                            >
+                                <img src="/logo.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        )}
+                        <div 
+                            onClick={() => { if (isMobile) toggleVersionInfo(); }}
+                            style={{ 
+                            fontWeight: 900, 
+                            color: '#fff', 
+                            fontSize: isMobile ? '1rem' : '1.4rem', 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '-0.5px',
+                            cursor: isMobile ? 'pointer' : 'default'
+                        }}>
+                            {isMobile ? 'Admin' : 'Painel Executivo'}
+                        </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '25px' }}>
+                        <Link 
+                            to="/"
+                            title="Voltar a Área do Cliente"
+                            style={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'rgba(212, 175, 55, 0.1)', 
+                                border: '1px solid rgba(212, 175, 55, 0.3)',
+                                color: '#D4AF37', 
+                                padding: isMobile ? '8px 12px' : '10px 16px', 
+                                borderRadius: '12px', 
+                                cursor: 'pointer',
+                                textDecoration: 'none',
+                                fontSize: isMobile ? '0.75rem' : '0.9rem',
+                                fontWeight: 800
+                            }}
+                        >
+                            <Store size={isMobile ? 16 : 18} />
+                            {!isMobile && <span>Ver Loja</span>}
+                        </Link>
+
                         <button 
                             onClick={toggleNotifications}
-                            style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', padding: '12px', borderRadius: '14px', cursor: 'pointer' }}
+                            style={{ 
+                                position: 'relative', 
+                                background: 'rgba(255,255,255,0.05)', 
+                                border: 'none', 
+                                color: '#fff', 
+                                padding: isMobile ? '10px' : '12px', 
+                                borderRadius: '12px', 
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
                         >
-                            <Bell size={22} />
+                            <Bell size={isMobile ? 18 : 22} />
                             {unreadCount > 0 && (
-                                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 900, width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #050505' }}>
+                                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', fontSize: '0.6rem', fontWeight: 900, width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #050505' }}>
                                     {unreadCount}
                                 </span>
                             )}
                         </button>
 
                         <div 
-                            onClick={toggleVersionInfo}
-                            style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', padding: '8px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}
+                            onClick={() => { if (!isMobile) toggleVersionInfo(); }}
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: isMobile ? '8px' : '15px', 
+                                cursor: isMobile ? 'default' : 'pointer', 
+                                padding: isMobile ? '4px 4px 4px 10px' : '8px 16px', 
+                                background: 'rgba(255,255,255,0.03)', 
+                                borderRadius: '16px', 
+                                border: '1px solid rgba(255,255,255,0.05)' 
+                            }}
                         >
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.9rem' }}>{profile?.full_name || 'Administrador'}</div>
-                                <div style={{ color: '#22c55e', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} /> Online
+                            {!isMobile && (
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.9rem' }}>{profile?.full_name || 'Administrador'}</div>
+                                    <div style={{ color: '#22c55e', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} /> Online
+                                    </div>
                                 </div>
-                            </div>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(212, 175, 55, 0.15)', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.2rem' }}>
+                            )}
+                            <div style={{ 
+                                width: isMobile ? '32px' : '40px', 
+                                height: isMobile ? '32px' : '40px', 
+                                borderRadius: '10px', 
+                                background: 'rgba(212, 175, 55, 0.15)', 
+                                color: '#D4AF37', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontWeight: 900, 
+                                fontSize: isMobile ? '0.9rem' : '1.2rem' 
+                            }}>
                                 {(profile?.full_name || 'A').charAt(0).toUpperCase()}
                             </div>
                         </div>
@@ -280,13 +370,13 @@ const AdminLayout = () => {
                             <motion.div 
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                style={{ backgroundColor: '#141414', border: '1px solid #ff4444', borderRadius: '35px', padding: '50px', maxWidth: '500px', width: '100%', textAlign: 'center', boxShadow: '0 40px 100px rgba(255,0,0,0.2)' }}
+                                style={{ backgroundColor: '#141414', border: '1px solid #ff4444', borderRadius: '35px', padding: isMobile ? '30px' : '50px', maxWidth: '500px', width: '100%', textAlign: 'center', boxShadow: '0 40px 100px rgba(255,0,0,0.2)' }}
                             >
                                 <div style={{ color: '#ff4444', marginBottom: '25px', display: 'flex', justifyContent: 'center' }}>
-                                    <AlertTriangle size={80} />
+                                    <AlertTriangle size={isMobile ? 60 : 80} />
                                 </div>
-                                <h2 style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', marginBottom: '20px', letterSpacing: '-1px' }}>Acesso Interrompido</h2>
-                                <p style={{ color: '#888', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '40px' }}>
+                                <h2 style={{ fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#fff', marginBottom: '20px', letterSpacing: '-1px' }}>Acesso Interrompido</h2>
+                                <p style={{ color: '#888', fontSize: isMobile ? '0.95rem' : '1.1rem', lineHeight: 1.6, marginBottom: '40px' }}>
                                     O painel administrativo foi bloqueado devido a pendências no licenciamento do software.
                                 </p>
                                 <button 
@@ -299,7 +389,7 @@ const AdminLayout = () => {
                         </div>
                     )}
                     
-                    <div style={{ padding: '40px' }}>
+                    <div style={{ padding: isMobile ? '16px 0' : '40px' }}>
                         <Outlet />
                     </div>
                 </div>
@@ -316,7 +406,19 @@ const AdminLayout = () => {
                             <motion.div 
                                 initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }}
                                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                                style={{ position: 'fixed', top: 0, right: 0, width: '400px', height: '100vh', backgroundColor: '#0a0a0a', borderLeft: '1px solid rgba(255,255,255,0.05)', zIndex: 200, display: 'flex', flexDirection: 'column', boxShadow: '-20px 0 50px rgba(0,0,0,0.5)' }}
+                                style={{ 
+                                    position: 'fixed', 
+                                    top: 0, 
+                                    right: 0, 
+                                    width: isMobile ? '100%' : '400px', 
+                                    height: '100vh', 
+                                    backgroundColor: '#0a0a0a', 
+                                    borderLeft: '1px solid rgba(255,255,255,0.05)', 
+                                    zIndex: 200, 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    boxShadow: '-20px 0 50px rgba(0,0,0,0.5)' 
+                                }}
                             >
                                 <div style={{ padding: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -364,17 +466,17 @@ const AdminLayout = () => {
                         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '20px' }}>
                             <motion.div 
                                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                                style={{ backgroundColor: '#141414', border: '1px solid rgba(212, 175, 55, 0.3)', borderRadius: '35px', padding: '45px', maxWidth: '450px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', position: 'relative' }}
+                                style={{ backgroundColor: '#141414', border: '1px solid rgba(212, 175, 55, 0.3)', borderRadius: '35px', padding: isMobile ? '30px' : '45px', maxWidth: '450px', width: '100%', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', position: 'relative' }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px' }}>
                                     <div style={{ backgroundColor: 'rgba(212, 175, 55, 0.1)', padding: '20px', borderRadius: '50%' }}>
                                         <Bell size={40} color="#D4AF37" />
                                     </div>
                                 </div>
-                                <h2 style={{ textAlign: 'center', color: '#fff', fontSize: '1.8rem', fontWeight: 900, marginBottom: '20px', letterSpacing: '-1px' }}>
+                                <h2 style={{ textAlign: 'center', color: '#fff', fontSize: isMobile ? '1.5rem' : '1.8rem', fontWeight: 900, marginBottom: '20px', letterSpacing: '-1px' }}>
                                     {modalNotification.title}
                                 </h2>
-                                <p style={{ color: '#aaa', textAlign: 'center', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '40px' }}>
+                                <p style={{ color: '#aaa', textAlign: 'center', fontSize: isMobile ? '1rem' : '1.1rem', lineHeight: '1.6', marginBottom: '40px' }}>
                                     {modalNotification.message}
                                 </p>
                                 <button 
@@ -402,6 +504,59 @@ const AdminLayout = () => {
                         </div>
                     )}
                 </AnimatePresence>
+
+                {isMobile && (
+                    <nav className="admin-mobile-nav" style={{ 
+                        position: 'fixed', 
+                        bottom: 0, 
+                        left: 0, 
+                        right: 0, 
+                        height: '75px', 
+                        background: 'rgba(5, 5, 5, 0.9)', 
+                        backdropFilter: 'blur(20px)', 
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: '20px',
+                        padding: '0 20px',
+                        zIndex: 100,
+                        overflowX: 'auto',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        {menuItems.map((item) => {
+                            const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+                            return (
+                                <Link 
+                                    key={item.path}
+                                    to={item.path} 
+                                    style={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column',
+                                        alignItems: 'center', 
+                                        gap: '6px', 
+                                        textDecoration: 'none', 
+                                        color: isActive ? '#D4AF37' : '#555',
+                                        transition: 'all 0.3s',
+                                        flexShrink: 0
+                                    }}
+                                >
+                                    <div style={{ 
+                                        padding: '8px 16px', 
+                                        borderRadius: '12px',
+                                        background: isActive ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                                    </div>
+                                    <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                )}
                 
                 <style>{`
                     .sidebar-link:hover { background: rgba(255,255,255,0.05) !important; color: #fff !important; }
@@ -409,6 +564,8 @@ const AdminLayout = () => {
                     ::-webkit-scrollbar-track { background: transparent; }
                     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); borderRadius: 10px; }
                     ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+                    .admin-mobile-nav::-webkit-scrollbar { display: none; }
+                    .admin-mobile-nav { -ms-overflow-style: none; scrollbar-width: none; }
                 `}</style>
             </main>
         </div >

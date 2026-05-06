@@ -34,13 +34,50 @@ const AdminUsers = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => { 
-        loadData(); 
-        
-        const handleFocus = () => loadData();
+    const [newUsersCount, setNewUsersCount] = useState(0);
+    const lastKnownCount = React.useRef(null);
+
+    // Sincronização silenciosa (sem spinner) para detectar novos usuários
+    const silentSync = React.useCallback(async () => {
+        try {
+            const [profilesRes, ordersRes] = await Promise.all([
+                getProfiles(),
+                getOrders().catch(() => ({ documents: [] }))
+            ]);
+            const freshUsers = profilesRes.documents || [];
+            const freshOrders = ordersRes.documents || [];
+
+            if (lastKnownCount.current !== null && freshUsers.length > lastKnownCount.current) {
+                const diff = freshUsers.length - lastKnownCount.current;
+                setNewUsersCount(diff);
+                showAlert(`${diff} novo(s) usuário(s) cadastrado(s)!`, 'success', null, 5000);
+            }
+
+            lastKnownCount.current = freshUsers.length;
+            setUsers(freshUsers);
+            setOrders(freshOrders);
+        } catch (e) {
+            // silencioso
+        }
+    }, [showAlert]);
+
+    useEffect(() => {
+        loadData();
+
+        // Sincroniza ao focar a janela (ex: usuário volta de outra aba)
+        const handleFocus = () => silentSync();
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') silentSync();
+        };
+
         window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
-    }, []);
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [silentSync]);
 
     const [showUserOrdersModal, setShowUserOrdersModal] = useState(false);
     const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -107,13 +144,17 @@ const AdminUsers = () => {
 
     const loadData = async () => {
         setLoading(true);
+        setNewUsersCount(0); // limpa badge ao carregar manualmente
         try {
             const [profilesRes, ordersRes] = await Promise.all([
                 getProfiles(),
                 getOrders().catch(() => ({ documents: [] }))
             ]);
-            setUsers(profilesRes.documents || []);
-            setOrders(ordersRes.documents || []);
+            const freshUsers = profilesRes.documents || [];
+            const freshOrders = ordersRes.documents || [];
+            lastKnownCount.current = freshUsers.length;
+            setUsers(freshUsers);
+            setOrders(freshOrders);
         } catch (err) { 
             showAlert('Erro ao carregar dados', 'error'); 
         } finally { 
@@ -357,9 +398,22 @@ const AdminUsers = () => {
                     disabled={loading}
                     className="hover-scale"
                     title="Atualizar Lista"
-                    style={{ padding: '15px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'relative', padding: '15px', borderRadius: '16px', background: newUsersCount > 0 ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${newUsersCount > 0 ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`, color: newUsersCount > 0 ? '#22c55e' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
                 >
                     <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                    {newUsersCount > 0 && (
+                        <span style={{
+                            position: 'absolute', top: '-8px', right: '-8px',
+                            background: '#22c55e', color: '#000',
+                            fontSize: '0.6rem', fontWeight: 900,
+                            width: '20px', height: '20px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '2px solid #050505',
+                            animation: 'pulse 1.5s infinite'
+                        }}>
+                            +{newUsersCount}
+                        </span>
+                    )}
                 </button>
                 <button 
                     onClick={() => setCreateModal(true)}
@@ -373,11 +427,18 @@ const AdminUsers = () => {
                     <button onClick={() => setRoleFilter('client')} style={{ padding: '12px 24px', borderRadius: '14px', border: 'none', background: roleFilter === 'client' ? 'rgba(34, 197, 94, 0.1)' : 'transparent', color: roleFilter === 'client' ? '#22c55e' : '#444', fontWeight: 900, cursor: 'pointer', transition: '0.3s' }}>CLIENTES</button>
                 </div>
             </div>
+            {/* Barra de status de sincronização automática */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', padding: '8px 16px', background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.08)', borderRadius: '12px' }}>
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', flexShrink: 0, animation: 'pulse 2s infinite' }} />
+                <span style={{ fontSize: '0.72rem', color: '#555', fontWeight: 700 }}>
+                    Sincronização automática ativa · atualiza ao abrir a tela · {users.length} usuário{users.length !== 1 ? 's' : ''} no banco
+                </span>
+            </div>
 
             <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="custom-scroll" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
-                        <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
+                        <table className="desktop-only products-table" style={{ width: '100%', minWidth: '900px', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
                             <thead>
                                 <tr style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     <th style={{ textAlign: 'left', padding: '0 20px' }}>NOMES</th>
@@ -443,6 +504,53 @@ const AdminUsers = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <div className="mobile-only" style={{ flexDirection: 'column', gap: '10px' }}>
+                            {filteredUsers.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555', fontWeight: 800 }}>Nenhum usuário encontrado...</div>
+                            ) : filteredUsers.map((u) => (
+                                <motion.div 
+                                    key={u.$id} 
+                                    onClick={() => { setSelectedUser(u); setIsEditing(false); }}
+                                    whileTap={{ scale: 0.98 }}
+                                    style={{ 
+                                        background: selectedUser?.$id === u.$id ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.02)', 
+                                        borderRadius: '16px', 
+                                        padding: '16px', 
+                                        border: `1px solid ${selectedUser?.$id === u.$id ? 'rgba(212, 175, 55, 0.3)' : 'rgba(255,255,255,0.05)'}`,
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'space-between', 
+                                        cursor: 'pointer', 
+                                        transition: '0.2s',
+                                        backdropFilter: 'blur(10px)'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                                        <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#D4AF37', fontSize: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            {(u.full_name || u.name || 'U').charAt(0).toUpperCase()}
+                                        </div>
+                                        <div style={{ minWidth: 0 }}>
+                                            <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.full_name || u.name || 'Usuário'}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#777', fontWeight: 600 }}>{u.whatsapp || u.email}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                                        <span style={{ 
+                                            fontSize: '0.65rem', 
+                                            fontWeight: 900, 
+                                            color: u.role === 'master' ? '#a855f7' : (u.role === 'admin' || u.role === 'owner' ? '#ef4444' : '#fff'), 
+                                            background: u.role === 'master' ? 'rgba(168, 85, 247, 0.1)' : (u.role === 'admin' || u.role === 'owner' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)'), 
+                                            padding: '4px 8px', 
+                                            borderRadius: '8px' 
+                                        }}>
+                                            {(u.role === 'client' ? 'CLI' : u.role?.toUpperCase().substring(0,3)) || 'CLI'}
+                                        </span>
+                                        <button onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, userId: u.$id, userName: u.full_name || u.name }); }} title="Excluir" style={{ padding: '6px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', zIndex: 20 }}><Trash2 size={16} /></button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

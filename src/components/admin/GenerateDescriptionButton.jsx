@@ -81,7 +81,7 @@ const GenerateDescriptionButton = ({ productTitle, category, onGenerated }) => {
                     }}
                 >
                     <Sparkles size={14} />
-                    GERAR DESCRIÇÃO COM IA
+                    GERAR COM IA
                 </button>
             )}
         </div>

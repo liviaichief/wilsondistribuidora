@@ -164,7 +164,7 @@
 }
 @media (max-width: 768px) {
     .order-history-container {
-        padding-top: 10px;
+        padding-top: 82px; /* 72px header + 10px gap */
     }
 
     .history-content {

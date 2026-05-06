@@ -178,14 +178,14 @@ export const CartProvider = ({ children }) => {
             recommendations = scoredRecs
                 .filter(p => p.score > 0)
                 .sort((a, b) => (b.score - a.score) || (0.5 - Math.random()))
-                .slice(0, 6); // Para o inteligente, 6 itens é um bom limite
+                .slice(0, 3); // Limite de 3 itens para o modal
             
             // 3. Fallback Total (Aleatório do Catálogo)
             if (recommendations.length === 0 && potentialRecs.length > 0) {
                 console.log("Absolute fallback: Random products");
                 recommendations = potentialRecs
                     .sort(() => 0.5 - Math.random())
-                    .slice(0, 6);
+                    .slice(0, 3);
             }
         }
 

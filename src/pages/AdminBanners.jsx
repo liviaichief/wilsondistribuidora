@@ -15,6 +15,13 @@ const AdminBanners = () => {
     const [banners, setBanners] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -164,6 +171,8 @@ const AdminBanners = () => {
     };
 
     const handleGenerateAI = async () => {
+        console.log('Iniciando geração de imagem IA...', { aiPrompt, aiText, hasReference: !!aiReferenceImage });
+        
         if (!aiPrompt) {
             showAlert('Por favor, descreva o que deseja na imagem.', 'warning');
             return;
@@ -171,33 +180,29 @@ const AdminBanners = () => {
 
         setIsGeneratingAI(true);
         try {
-            // Se houver imagem de referência, precisamos convertê-la para base64 ou descrevê-la
-            let referenceDescription = '';
-            if (aiReferenceImage) {
-                // Aqui poderíamos chamar o GPT-4o-vision no aiService
-                // Por enquanto, vamos passar o arquivo para o serviço tratar
-            }
-
-            const imageUrl = await generateBannerImage(`${aiPrompt}. Texto para inspiração: ${aiText}`, aiReferenceImage);
+            const imageUrl = await generateBannerImage(`${aiPrompt}${aiText ? `. Adicione este texto ou inspiração: ${aiText}` : ''}`, aiReferenceImage);
+            console.log('Imagem gerada pela OpenAI:', imageUrl);
             
-            // OpenAI returns a temporary URL. We must download and upload to Appwrite.
-            // Using our serverless proxy to avoid CORS issues
             const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Falha ao baixar imagem via proxy');
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Falha ao baixar imagem via proxy');
+            }
             
             const blob = await response.blob();
             const file = new File([blob], `ai_banner_${Date.now()}.png`, { type: 'image/png' });
             
-            setPreviewUrl(imageUrl); // Preview immediate
+            setPreviewUrl(imageUrl);
             setIsUploading(true);
             
             const fileId = await uploadFileToAppwrite(file, false);
             setFormData(prev => ({ ...prev, image_url: fileId }));
-            showAlert('Imagem gerada e salva com sucesso!', 'success');
+            showAlert('Imagem gerada e aplicada!', 'success');
         } catch (error) {
-            console.error('Erro na IA:', error);
-            showAlert('Erro ao gerar imagem: ' + error.message, 'error');
+            console.error('Erro detalhado na IA:', error);
+            showAlert('Erro na IA: ' + (error.message || 'Erro desconhecido'), 'error');
         } finally {
             setIsGeneratingAI(false);
             setIsUploading(false);
@@ -275,12 +280,28 @@ const AdminBanners = () => {
 
     return (
         <div style={{ padding: '0 20px 40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px', marginTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-end', marginBottom: isMobile ? '20px' : '30px', marginTop: isMobile ? '10px' : '20px', padding: isMobile ? '0 10px' : '0' }}>
                 <button 
                     onClick={() => handleOpenModal()} 
-                    style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '16px', padding: '16px 28px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)', transition: 'all 0.3s' }}
+                    style={{ 
+                        background: '#D4AF37', 
+                        color: '#000', 
+                        border: 'none', 
+                        borderRadius: isMobile ? '14px' : '16px', 
+                        padding: isMobile ? '12px 24px' : '16px 28px', 
+                        fontWeight: 900, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '10px', 
+                        cursor: 'pointer', 
+                        boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)', 
+                        transition: 'all 0.3s',
+                        width: isMobile ? '100%' : 'auto',
+                        justifyContent: 'center',
+                        fontSize: isMobile ? '0.8rem' : '1rem'
+                    }}
                 >
-                    <Plus size={20} strokeWidth={3} /> NOVO BANNER
+                    <Plus size={isMobile ? 18 : 20} strokeWidth={3} /> NOVO BANNER
                 </button>
             </div>
 
@@ -294,46 +315,69 @@ const AdminBanners = () => {
                     <h3 style={{ color: '#555' }}>Nenhum banner ativo.</h3>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '30px' }}>
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(400px, 1fr))', 
+                    gap: isMobile ? '20px' : '30px',
+                    padding: isMobile ? '0 5px' : '0'
+                }}>
                     <AnimatePresence>
                         {banners.map((banner, index) => (
                             <motion.div 
                                 key={banner.id}
                                 layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                                 onDoubleClick={() => handleOpenModal(banner)}
-                                style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '28px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                                style={{ 
+                                    background: 'rgba(255,255,255,0.02)', 
+                                    borderRadius: isMobile ? '24px' : '28px', 
+                                    border: '1px solid rgba(255,255,255,0.05)', 
+                                    overflow: 'hidden', 
+                                    cursor: 'pointer', 
+                                    position: 'relative',
+                                    backdropFilter: 'blur(10px)'
+                                }}
                                 className="banner-card-hover"
                             >
-                                <div style={{ aspectRatio: '16/9', background: '#000', position: 'relative' }}>
+                                <div style={{ aspectRatio: isMobile ? '16/10' : '16/9', background: '#000', position: 'relative' }}>
                                     {(() => {
                                         const mediaUrl = getImageUrl(banner.image_url, { t: new Date().getTime() });
                                         const isVideo = banner.image_url?.startsWith('v_');
-                                        if (isVideo) return <video src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />;
-                                        return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }} onError={(e) => {
+                                        if (isVideo) return <video src={mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />;
+                                        return <img src={mediaUrl} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#000' }} onError={(e) => {
                                             e.target.onerror = null;
                                             e.target.src = 'https://placehold.co/600x400/1e1e1e/D4AF37?text=Erro+no+Carregamento';
                                         }} />;
                                     })()}
-                                    <div style={{ position: 'absolute', top: 20, left: 20, background: banner.active ? '#22c55e' : '#444', color: '#fff', padding: '6px 14px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 900 }}>{banner.active ? 'ATIVO' : 'PAUSADO'}</div>
-                                    <div style={{ position: 'absolute', bottom: 20, right: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Clock size={14} /> {banner.duration}s
+                                    <div style={{ position: 'absolute', top: isMobile ? 15 : 20, left: isMobile ? 15 : 20, background: banner.active ? 'rgba(34, 197, 94, 0.9)' : 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(5px)', color: '#fff', padding: '6px 14px', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900 }}>{banner.active ? 'ATIVO' : 'PAUSADO'}</div>
+                                    <div style={{ position: 'absolute', bottom: isMobile ? 15 : 20, right: isMobile ? 15 : 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 12px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Clock size={12} /> {banner.duration}s
                                     </div>
                                 </div>
-                                <div style={{ padding: '25px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                                        <div>
-                                            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>{banner.title || `Banner #${banner.id.substring(0, 6)}`}</h3>
-                                            <div style={{ color: '#555', fontSize: '0.85rem', marginTop: '4px', fontWeight: 700 }}>{products.find(p => p.id === banner.product_id)?.title || 'Sem link externo'}</div>
+                                <div style={{ padding: isMobile ? '18px' : '25px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isMobile ? '15px' : '20px' }}>
+                                        <div style={{ flex: 1, paddingRight: '10px' }}>
+                                            <h3 style={{ margin: 0, fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{banner.title || `Banner #${banner.id.substring(0, 6)}`}</h3>
+                                            <div style={{ color: '#555', fontSize: isMobile ? '0.75rem' : '0.85rem', marginTop: '4px', fontWeight: 700 }}>{products.find(p => p.id === banner.product_id)?.title || 'Sem link externo'}</div>
                                         </div>
-                                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{banner.display_order}</div>
+                                        <div style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.8rem' }}>{banner.display_order}</div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <button onClick={() => toggleActive(banner)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: banner.active ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', color: banner.active ? '#ef4444' : '#22c55e', cursor: 'pointer', fontWeight: 800 }}>{banner.active ? 'Pausar' : 'Ativar'}</button>
-                                        <button onClick={() => handleOpenModal(banner)} style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}><Edit size={20} /></button>
-                                        <button onClick={() => handleDelete(banner)} style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={20} /></button>
+                                    <div style={{ display: 'flex', gap: '8px', paddingTop: isMobile ? '15px' : '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <button onClick={() => toggleActive(banner)} style={{ 
+                                            flex: 2, 
+                                            padding: isMobile ? '10px' : '12px', 
+                                            borderRadius: '12px', 
+                                            border: 'none', 
+                                            background: banner.active ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+                                            color: banner.active ? '#ef4444' : '#22c55e', 
+                                            cursor: 'pointer', 
+                                            fontWeight: 800,
+                                            fontSize: isMobile ? '0.75rem' : '0.85rem'
+                                        }}>{banner.active ? 'Pausar' : 'Ativar'}</button>
+                                        <button onClick={() => handleOpenModal(banner)} style={{ padding: isMobile ? '10px' : '12px', borderRadius: '12px', border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}><Edit size={isMobile ? 18 : 20} /></button>
+                                        <button onClick={() => handleDelete(banner)} style={{ padding: isMobile ? '10px' : '12px', borderRadius: '12px', border: 'none', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={isMobile ? 18 : 20} /></button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -344,11 +388,11 @@ const AdminBanners = () => {
 
             <AnimatePresence>
                 {isModalOpen && (
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', padding: '20px' }}>
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '35px', padding: '40px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 40px 100px rgba(0,0,0,0.8)', position: 'relative' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                                <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900, color: '#fff' }}>{editingBanner ? 'Configurar Banner' : 'Novo Banner'}</h2>
-                                <button onClick={() => setIsModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}><X size={24} /></button>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(20px)', padding: isMobile ? '0' : '20px' }}>
+                        <motion.div initial={{ y: isMobile ? 100 : 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: isMobile ? 100 : 20, opacity: 0 }} style={{ backgroundColor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: isMobile ? '30px 30px 0 0' : '35px', padding: isMobile ? '25px 20px 40px' : '40px', maxWidth: '600px', width: '100%', maxHeight: isMobile ? '92vh' : '90vh', overflowY: 'auto', boxShadow: '0 -10px 40px rgba(0,0,0,0.5)', position: 'relative' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '20px' : '30px' }}>
+                                <h2 style={{ margin: 0, fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>{editingBanner ? 'Configurar Banner' : 'Novo Banner'}</h2>
+                                <button onClick={() => setIsModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', cursor: 'pointer', padding: isMobile ? '8px' : '10px', borderRadius: '12px' }}><X size={isMobile ? 20 : 24} /></button>
                             </div>
 
                             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -359,28 +403,28 @@ const AdminBanners = () => {
 
                                 {/* Gerador de Banner com IA — só aparece se habilitado nas configs */}
                                 {aiBannerEnabled && (
-                                <div style={{ padding: '25px', background: 'rgba(212, 175, 55, 0.03)', borderRadius: '24px', border: '1px solid rgba(212, 175, 55, 0.1)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ padding: isMobile ? '18px' : '25px', background: 'rgba(212, 175, 55, 0.02)', borderRadius: '24px', border: '1px solid rgba(212, 175, 55, 0.08)', display: 'flex', flexDirection: 'column', gap: isMobile ? '15px' : '20px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#D4AF37' }}>
-                                            <Sparkles size={18} />
-                                            <span style={{ fontWeight: 900, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Gerador de Banner com IA</span>
+                                            <Sparkles size={16} />
+                                            <span style={{ fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Gerador de Banner com IA</span>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ display: 'flex', gap: '12px', flexDirection: isMobile ? 'column' : 'row' }}>
                                             {/* Imagem de Referência */}
-                                            <div style={{ width: '80px', height: '80px', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px dashed rgba(212, 175, 55, 0.3)', position: 'relative', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                            <div style={{ width: isMobile ? '100%' : '80px', height: isMobile ? '120px' : '80px', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px dashed rgba(212, 175, 55, 0.3)', position: 'relative', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                                                 {aiReferencePreview ? (
                                                     <img src={aiReferencePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ref" />
                                                 ) : (
                                                     <div style={{ textAlign: 'center', color: '#D4AF37', fontSize: '0.6rem' }}>
-                                                        <ImagePlus size={20} style={{ marginBottom: '4px' }} />
-                                                        <span>MODELO</span>
+                                                        <ImagePlus size={isMobile ? 24 : 20} style={{ marginBottom: '4px' }} />
+                                                        <div style={{ fontWeight: 800 }}>MODELO</div>
                                                     </div>
                                                 )}
                                                 <input type="file" accept="image/*" onChange={handleReferenceImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                                                {aiReferencePreview && <button onClick={(e) => { e.stopPropagation(); setAiReferenceImage(null); setAiReferencePreview(''); }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>x</button>}
+                                                {aiReferencePreview && <button onClick={(e) => { e.stopPropagation(); setAiReferenceImage(null); setAiReferencePreview(''); }} style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>x</button>}
                                             </div>
 
                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
@@ -388,12 +432,12 @@ const AdminBanners = () => {
                                                     value={aiPrompt} 
                                                     onChange={e => setAiPrompt(e.target.value)}
                                                     placeholder="O que deve aparecer na imagem? (ex: Churrasco suculento na brasa)"
-                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', paddingRight: '45px', color: '#fff', fontSize: '0.85rem', resize: 'none', height: '80px' }}
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', paddingRight: '45px', color: '#fff', fontSize: '0.8rem', resize: 'none', height: isMobile ? '80px' : '80px' }}
                                                 />
                                                 <button 
                                                     type="button"
                                                     onClick={handleVoiceInput}
-                                                    style={{ position: 'absolute', top: '10px', right: '10px', background: isListening ? '#ef4444' : 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', color: isListening ? '#fff' : '#888' }}
+                                                    style={{ position: 'absolute', top: '10px', right: '10px', background: isListening ? '#ef4444' : 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', color: isListening ? '#fff' : '#666' }}
                                                     title="Gravar por voz"
                                                 >
                                                     {isListening ? <Mic size={16} className="animate-pulse" /> : <Mic size={16} />}
@@ -401,25 +445,39 @@ const AdminBanners = () => {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                        <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
                                             <input 
                                                 value={aiText} 
                                                 onChange={e => setAiText(e.target.value)}
                                                 placeholder="Texto opcional para o banner"
-                                                style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '14px', color: '#fff', fontSize: '0.9rem' }}
+                                                style={{ flex: 1, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px 14px', color: '#fff', fontSize: '0.85rem' }}
                                             />
                                             <button 
                                                 type="button"
                                                 onClick={handleGenerateAI}
                                                 disabled={isGeneratingAI || isUploading}
-                                                style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '12px', padding: '0 25px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 5px 15px rgba(212, 175, 55, 0.2)' }}
+                                                style={{ 
+                                                    background: '#D4AF37', 
+                                                    color: '#000', 
+                                                    border: 'none', 
+                                                    borderRadius: '12px', 
+                                                    padding: isMobile ? '12px' : '0 25px', 
+                                                    fontWeight: 900, 
+                                                    cursor: 'pointer', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '10px', 
+                                                    boxShadow: '0 5px 15px rgba(212, 175, 55, 0.2)',
+                                                    justifyContent: 'center',
+                                                    fontSize: isMobile ? '0.75rem' : '0.85rem'
+                                                }}
                                             >
                                                 {isGeneratingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                                                {isGeneratingAI ? 'CRIANDO...' : 'GERAR'}
+                                                {isGeneratingAI ? 'CRIANDO...' : 'GERAR IMAGEM'}
                                             </button>
                                         </div>
                                     </div>
-                                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#666', fontWeight: 600 }}>Dica: Se anexar um **modelo**, a IA tentará seguir o estilo visual dele.</p>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', color: '#444', fontWeight: 600 }}>Dica: Se anexar um **modelo**, a IA tentará seguir o estilo visual dele.</p>
                                 </div>
                                 )}
 
@@ -528,14 +586,14 @@ const AdminBanners = () => {
                                     </AnimatePresence>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Ordem</label>
-                                        <input type="number" value={formData.display_order} onChange={e => setFormData({ ...formData, display_order: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff', fontWeight: 900 }} />
+                                <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px' }}>
+                                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ordem</label>
+                                        <input type="number" value={formData.display_order} onChange={e => setFormData({ ...formData, display_order: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: isMobile ? '14px 10px' : '14px 18px', color: '#fff', fontWeight: 900, width: '100%', outline: 'none' }} />
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase' }}>Duração (s)</label>
-                                        <input type="number" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px 18px', color: '#fff', fontWeight: 900 }} />
+                                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Duração (s)</label>
+                                        <input type="number" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: isMobile ? '14px 10px' : '14px 18px', color: '#fff', fontWeight: 900, width: '100%', outline: 'none' }} />
                                     </div>
                                 </div>
 
@@ -551,13 +609,13 @@ const AdminBanners = () => {
                                     type="submit" 
                                     disabled={isSaving || isUploading || !isDirty()} 
                                     style={{ 
-                                        background: isDirty() ? '#fff' : 'rgba(255,255,255,0.1)', 
-                                        color: isDirty() ? '#000' : '#666', 
+                                        background: isDirty() ? '#fff' : 'rgba(255,255,255,0.05)', 
+                                        color: isDirty() ? '#000' : '#444', 
                                         border: 'none', 
                                         borderRadius: '18px', 
-                                        padding: '20px', 
+                                        padding: isMobile ? '16px' : '20px', 
                                         fontWeight: 900, 
-                                        fontSize: '1.1rem', 
+                                        fontSize: isMobile ? '0.95rem' : '1.1rem', 
                                         cursor: isDirty() ? 'pointer' : 'not-allowed', 
                                         marginTop: '10px',
                                         transition: 'all 0.3s'

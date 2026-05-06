@@ -5,9 +5,9 @@
 }
 
 .profile-content {
-    padding: 20px 0 100px; /* Removido padding lateral para abas de fora a fora */
+    padding: 130px 0 100px; /* 110px header + 20px gap */
     max-width: 800px;
-    margin: -60px auto 0;
+    margin: 0 auto;
 }
 
 .admin-access-container {
@@ -275,7 +275,7 @@
 
 @media (max-width: 480px) {
     .profile-content {
-        padding: 90px 15px 100px;
+        padding: 92px 15px 100px; /* 72px header + 20px gap */
     }
     .profile-card {
         padding: 20px;
