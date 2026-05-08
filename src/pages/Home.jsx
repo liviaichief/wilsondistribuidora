@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import HeroCarousel from '../components/shop/HeroCarousel';
 import Header from '../components/shop/Header';
 import CategoryBar from '../components/shop/CategoryBar';
@@ -21,6 +22,8 @@ const Home = () => {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const brandFilter = searchParams.get('brand');
     const loader = useRef(null);
 
     const hasMore = displayItems.length < filteredItems.length;
@@ -29,6 +32,11 @@ const Home = () => {
         const fetchInitialData = async () => {
             setLoading(true);
             try {
+                // Ao carregar a página (F5), se houver filtros na URL, limpamos para voltar à Home limpa
+                if (searchParams.toString() !== '') {
+                    setSearchParams({});
+                }
+
                 const { getCategories } = await import('../services/dataService');
                 const [data, categoriesList] = await Promise.all([
                     getProducts(),
@@ -65,17 +73,33 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        let newFiltered = [];
-        if (activeCategory === 'all') {
-            const promoProducts = allProducts.filter(d => d.is_promotion === true);
-            const otherProducts = allProducts.filter(d => d.is_promotion !== true);
-            newFiltered = [...promoProducts, ...otherProducts];
+        let items = [...allProducts];
+        
+        // 1. Aplicar filtro de categoria
+        if (activeCategory !== 'all') {
+            items = items.filter(d => (d.category || '').toString().trim().toLowerCase() === activeCategory.toString().trim().toLowerCase());
         } else {
-            newFiltered = allProducts.filter(d => (d.category || '').toString().trim().toLowerCase() === activeCategory.toString().trim().toLowerCase());
+            // Se for "Geral", mostramos apenas promoções por padrão (a menos que uma marca seja selecionada)
+            if (!brandFilter) {
+                items = items.filter(d => d.is_promotion === true);
+            }
         }
-        setFilteredItems(newFiltered);
+
+        // 2. Aplicar Reordenação por Marca (Move para o topo)
+        if (brandFilter) {
+            const brandItems = items.filter(d => (d.brand || '').toString().trim().toLowerCase() === brandFilter.toLowerCase());
+            const otherItems = items.filter(d => (d.brand || '').toString().trim().toLowerCase() !== brandFilter.toLowerCase());
+            
+            // Combinar: Marca selecionada primeiro, depois o restante
+            items = [...brandItems, ...otherItems];
+            
+            // Feedback visual: scroll suave para o topo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        setFilteredItems(items);
         setPage(1);
-    }, [activeCategory, allProducts]);
+    }, [activeCategory, allProducts, brandFilter]);
 
     useEffect(() => {
         setDisplayItems(filteredItems.slice(0, page * ITEMS_PER_PAGE));
@@ -94,6 +118,15 @@ const Home = () => {
         if (loader.current) observer.observe(loader.current);
         return () => { if (loader.current) observer.unobserve(loader.current); }
     }, [handleObserver]);
+
+    const handleCategoryChange = (catId) => {
+        setActiveCategory(catId);
+        setPage(1);
+        // Ao trocar de categoria, limpamos o filtro de marca da URL para voltar ao comportamento normal
+        if (searchParams.has('brand')) {
+            setSearchParams({});
+        }
+    };
 
     return (
         <div className="home-container">
@@ -120,18 +153,23 @@ const Home = () => {
             <Header />
 
             <div className="home-content-wrapper">
-                <CategoryBar activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+                <CategoryBar 
+                    activeCategory={activeCategory} 
+                    onCategoryChange={handleCategoryChange} 
+                />
                 
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <HeroCarousel />
-                </motion.div>
+                {activeCategory === 'all' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <HeroCarousel />
+                    </motion.div>
+                )}
 
                 <div className="products-grid">
-                    <AnimatePresence mode="popLayout">
+                    <AnimatePresence>
                         {error ? (
                             <motion.div 
                                 key="error"

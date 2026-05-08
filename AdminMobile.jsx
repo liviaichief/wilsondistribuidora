@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, saveProduct, deleteProduct, getCategories, getUOMs, getBrandsList } from '../services/dataService';
+import { getProducts, saveProduct, deleteProduct, getCategories, getUOMs } from '../services/dataService';
 import { storage, BUCKET_ID, account } from '../lib/appwrite';
 import { ID, Permission, Role } from 'appwrite';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search, Save, Loader2, Package, Eye, EyeOff, TrendingUp, Check } from 'lucide-react';
@@ -22,7 +22,6 @@ const Admin = () => {
     const { showAlert, showConfirm } = useAlert();
     const [categories, setCategories] = useState([]);
     const [uoms, setUoms] = useState([]);
-    const [brandsList, setBrandsList] = useState([]);
     const [originalProduct, setOriginalProduct] = useState(null);
 
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -35,18 +34,16 @@ const Admin = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
         title: '', description: '', price: '', category: '', image: '', image_2: '', is_promotion: false, promo_price: '', active: true, cost_price: 0, has_box_option: false, box_price: '',
-        has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: '', brand: ''
+        has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: ''
     });
 
     useEffect(() => {
         loadProducts();
         loadCategories();
         loadUOMs();
-        loadBrands();
     }, []);
 
     const loadUOMs = async () => { try { const data = await getUOMs(); setUoms(data); } catch (e) { console.error(e); } };
-    const loadBrands = async () => { try { const data = await getBrandsList(); setBrandsList(data); } catch (e) { console.error(e); } };
     const loadCategories = async () => { try { const data = await getCategories(); setCategories(data); } catch (e) { console.error(e); } };
     const loadProducts = async () => {
         setLoading(true);
@@ -106,7 +103,7 @@ const Admin = () => {
     const openNewModal = () => {
         const empty = {
             title: '', description: '', price: '', category: '', image: '', image_2: '', uom: 'KG', is_promotion: false, promo_price: '', active: true, manage_stock: false, stock_quantity: 0, cost_price: 0, has_box_option: false, box_price: '',
-            has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: '', brand: ''
+            has_bundle_option: false, unit_price: 0, has_assorted_min: false, assorted_min_qty: 0, external_code: ''
         };
         setCurrentProduct(empty);
         setOriginalProduct(empty);
@@ -153,8 +150,7 @@ const Admin = () => {
             currentProduct.unit_price !== originalProduct.unit_price ||
             currentProduct.has_assorted_min !== originalProduct.has_assorted_min ||
             currentProduct.assorted_min_qty !== originalProduct.assorted_min_qty ||
-            currentProduct.external_code !== originalProduct.external_code ||
-            currentProduct.brand !== originalProduct.brand
+            currentProduct.external_code !== originalProduct.external_code
         );
     };
 
@@ -165,7 +161,7 @@ const Admin = () => {
     });
 
     return (
-        <div className="admin-page-wrapper" style={{ padding: '0 20px 40px' }}>
+        <div style={{ padding: '0 20px 40px' }}>
             {/* DESKTOP VIEW */}
             <div className="desktop-only" style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', marginTop: '20px' }}>
                 <div style={{ marginBottom: '30px', display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -191,9 +187,7 @@ const Admin = () => {
                                 <tr style={{ color: '#555', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     <th style={{ textAlign: 'left', padding: '0 20px' }}>PRODUTO</th>
                                     <th style={{ textAlign: 'left', padding: '0 20px' }}>ID PRODUTO</th>
-                                    <th style={{ textAlign: 'left', padding: '0 10px', width: '120px' }}>CATEGORIA</th>
-                                    <th style={{ textAlign: 'center', padding: '0 10px', width: '80px' }}>MEDIDA</th>
-                                    <th style={{ textAlign: 'left', padding: '0 10px', width: '120px' }}>MARCA</th>
+                                    <th style={{ textAlign: 'left', padding: '0 20px' }}>CATEGORIA</th>
                                     <th style={{ textAlign: 'left', padding: '0 20px' }}>PREÇO</th>
                                     <th style={{ textAlign: 'center', padding: '0 20px' }}>ESTOQUE</th>
                                     <th style={{ textAlign: 'center', padding: '0 20px' }}>STATUS</th>
@@ -214,19 +208,9 @@ const Admin = () => {
                                                 {p.sku || (p.$id ? p.$id.substring(0, 6).toUpperCase() : '---')}
                                             </code>
                                         </td>
-                                        <td style={{ padding: '15px 10px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.1)', padding: '3px 8px', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <td style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a855f7', background: 'rgba(168, 85, 247, 0.1)', padding: '4px 10px', borderRadius: '8px' }}>
                                                 {categories.find(c => c.id === p.category)?.name?.toUpperCase() || p.category?.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '15px 10px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#6366f1', background: 'rgba(99, 102, 241, 0.1)', padding: '3px 8px', borderRadius: '6px' }}>
-                                                {p.uom || 'UN'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '15px 10px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)', padding: '3px 8px', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {p.brand || '---'}
                                             </span>
                                         </td>
                                         <td style={{ padding: '15px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -278,7 +262,7 @@ const Admin = () => {
             </div>
 
             {/* MOBILE VIEW */}
-            <div className="mobile-only" style={{ flexDirection: 'column', padding: '0 0 20px', maxWidth: '800px', margin: '0 auto', marginTop: '20px' }}>
+            <div className="mobile-only" style={{ padding: '0 0 20px', maxWidth: '800px', margin: '0 auto', marginTop: '20px' }}>
                 {/* Minimal Filter Bar */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', padding: '0 5px' }}>
                 <div style={{ flex: '1 1 180px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', padding: '0 12px', backdropFilter: 'blur(10px)' }}>
@@ -332,17 +316,9 @@ const Admin = () => {
                                         <span style={{ color: '#D4AF37', background: 'rgba(212,175,55,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                                             {p.sku || (p.$id ? p.$id.substring(0, 5).toUpperCase() : '---')}
                                         </span>
-                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '80px' }}>
+                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100px' }}>
                                             {catName}
                                         </span>
-                                        <span style={{ color: '#6366f1', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '6px' }}>
-                                            {p.uom || 'UN'}
-                                        </span>
-                                        {p.brand && (
-                                            <span style={{ color: '#fbbf24', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '6px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '80px' }}>
-                                                {p.brand}
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
 
@@ -370,14 +346,13 @@ const Admin = () => {
                     )}
                 </div>
             )}
-            </div>
 
             <AnimatePresence>
                 {isModalOpen && (
                     <div className="product-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', padding: '20px' }}>
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="product-modal-container">
                             {/* Header Fixo */}
-                            <div className="pwa-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '25px 30px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
                                 <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, display: 'flex', alignItems: 'center' }}>
                                     {currentProduct.id || currentProduct.$id ? 'Editar Produto' : 'Novo Produto'}
                                     {currentProduct.sku && (
@@ -390,15 +365,15 @@ const Admin = () => {
                             </div>
 
                             {/* Conteúdo Rolável */}
-                            <div className="pwa-modal-content custom-scroll" style={{ overflowY: 'auto', padding: '30px', flexGrow: 1 }}>
+                            <div style={{ overflowY: 'auto', padding: '30px', flexGrow: 1 }} className="custom-scroll">
                                 <form onSubmit={handleSave} className="product-modal-grid">
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Imagem do Produto</span>
-                                            <div className="pwa-image-preview" style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                                                 {previewUrl ? <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
                                             </div>
-                                            <div className="pwa-image-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px', marginBottom: '20px' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px', marginBottom: '20px' }}>
                                                 <button
                                                     type="button"
                                                     onClick={() => { setCurrentProduct({ ...currentProduct, image: '' }); setPreviewUrl(''); }}
@@ -438,10 +413,10 @@ const Admin = () => {
 
                                             {/* SEGUNDA FOTO */}
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Segunda Imagem (Carrossel)</span>
-                                            <div className="pwa-image-preview" style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginTop: '6px' }}>
+                                            <div style={{ width: '100%', aspectRatio: '1', background: 'rgba(0,0,0,0.3)', borderRadius: '20px', border: '2px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginTop: '6px' }}>
                                                 {previewUrl2 ? <img src={previewUrl2} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={40} color="#333" />}
                                             </div>
-                                            <div className="pwa-image-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '10px' }}>
                                                 <button
                                                     type="button"
                                                     onClick={() => { setCurrentProduct({ ...currentProduct, image_2: '' }); setPreviewUrl2(''); }}
@@ -498,7 +473,7 @@ const Admin = () => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Título do Produto</span>
-                                            <input className="pwa-input" placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', marginBottom: '10px' }} />
+                                            <input placeholder="Título" value={currentProduct.title} onChange={e => setCurrentProduct({ ...currentProduct, title: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', marginBottom: '10px' }} />
 
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Descrição</span>
@@ -508,7 +483,7 @@ const Admin = () => {
                                                     onGenerated={(desc) => setCurrentProduct({ ...currentProduct, description: desc })}
                                                 />
                                             </div>
-                                            <textarea className="pwa-input" placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
+                                            <textarea placeholder="Ex: Carne marmorizada ideal para grelha..." value={currentProduct.description} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '15px', color: '#fff', fontSize: '1rem', outline: 'none', height: '100px', resize: 'none' }} />
                                         </div>
 
 
@@ -554,13 +529,11 @@ const Admin = () => {
                                             </AnimatePresence>
                                         </div>
 
-
                                         {/* CODIGO EXTERNO E MEDIDA */}
-                                        <div className="pwa-split-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Codigo externo</span>
                                                 <input 
-                                                    className="pwa-input"
                                                     type="text" 
                                                     placeholder="Ex: REF-123" 
                                                     value={currentProduct.external_code || ''} 
@@ -570,26 +543,12 @@ const Admin = () => {
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Medida</span>
-                                                <select className="pwa-input" value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
+                                                <select value={currentProduct.uom} onChange={e => setCurrentProduct({ ...currentProduct, uom: e.target.value })} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', outline: 'none' }}>
                                                     {uoms.map(u => <option key={u.id} value={u.name} style={{ background: '#111' }}>{u.name}</option>)}
                                                 </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="pwa-split-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '4px' }}>
-                                            {/* MARCA (Abaixo do código externo) */}
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Marca</span>
-                                                <select className="pwa-input" value={currentProduct.brand || ''} onChange={e => setCurrentProduct({ ...currentProduct, brand: e.target.value })} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '1rem', outline: 'none' }}>
-                                                    <option value="" style={{ background: '#111' }}>Sem Marca</option>
-                                                    {brandsList.map(b => <option key={b.id} value={b.name} style={{ background: '#111' }}>{b.name}</option>)}
-                                                </select>
-                                            </div>
-
-                                            {/* SWITCHES FARDO E CAIXA (Alinhado com Marca) */}
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'transparent', textTransform: 'uppercase' }}>.</span>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexWrap: 'wrap', gap: '10px', height: '100%', minHeight: '45px' }}>
+                                                
+                                                {/* SWITCHES FARDO E CAIXA */}
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '4px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <button
                                                             type="button"
@@ -615,13 +574,11 @@ const Admin = () => {
                                             </div>
                                         </div>
 
-
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                                             <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Original</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
-                                                        className="pwa-price-input"
                                                         type="text"
                                                         placeholder="0,00"
                                                         value={maskCurrency(currentProduct.price)}
@@ -637,7 +594,6 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Unidade</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
-                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             value={maskCurrency(currentProduct.unit_price || 0)}
@@ -654,7 +610,6 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#555', textTransform: 'uppercase' }}>Preço Caixa</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
-                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             value={maskCurrency(currentProduct.box_price || 0)}
@@ -667,12 +622,11 @@ const Admin = () => {
                                             )}
                                         </div>
 
-                                        <div className="pwa-split-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Preço de Custo</span>
                                                 <div style={{ position: 'relative' }}>
                                                     <input
-                                                        className="pwa-price-input"
                                                         type="text"
                                                         placeholder="0,00"
                                                         value={maskCurrency(currentProduct.cost_price || 0)}
@@ -699,7 +653,6 @@ const Admin = () => {
                                                 </div>
                                                 <div style={{ position: 'relative', opacity: currentProduct.has_assorted_min ? 1 : 0.5 }}>
                                                     <input
-                                                        className="pwa-input"
                                                         type="number"
                                                         min="1"
                                                         disabled={!currentProduct.has_assorted_min}
@@ -730,7 +683,6 @@ const Admin = () => {
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#9333ea', textTransform: 'uppercase' }}>Preço Promocional</span>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
-                                                            className="pwa-price-input"
                                                             type="text"
                                                             placeholder="0,00"
                                                             readOnly={!currentProduct.is_promotion}
@@ -774,7 +726,6 @@ const Admin = () => {
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888' }}>Qtd</span>
                                                     <input
-                                                        className="pwa-input"
                                                         type="number"
                                                         value={currentProduct.stock_quantity}
                                                         placeholder="0"

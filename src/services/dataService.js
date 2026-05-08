@@ -182,7 +182,8 @@ export const saveProduct = async (product) => {
             unit_price: product.unit_price ? (parseFloat(product.unit_price) || 0) : null,
             has_assorted_min: !!product.has_assorted_min,
             assorted_min_qty: product.assorted_min_qty ? (parseInt(product.assorted_min_qty) || 0) : null,
-            external_code: product.external_code || null
+            external_code: product.external_code || null,
+            brand: product.brand || null
         };
 
         if (product.image_2 !== undefined) payload.image_2 = product.image_2;
@@ -818,3 +819,49 @@ export const createProfile = async (profileId, data) => {
         throw error;
     }
 };
+
+// --- BRANDS MANAGEMENT ---
+export const getBrands = async () => {
+    try {
+        const response = await databases.getDocument(DATABASE_ID, 'settings', 'project_brands');
+        if (response && response.value) {
+            return JSON.parse(response.value);
+        }
+    } catch (e) {
+        return [];
+    }
+    return [];
+};
+
+export const saveBrands = async (brands) => {
+    try {
+        await updateSettings('project_brands', JSON.stringify(brands));
+        return true;
+    } catch (e) {
+        console.error("Error saving brands:", e);
+        throw e;
+    }
+};
+
+export const getBrandsList = async () => {
+    try {
+        const response = await databases.getDocument(DATABASE_ID, 'settings', 'project_brands_list');
+        if (response && response.value) {
+            return JSON.parse(response.value);
+        }
+    } catch (e) {
+        return [];
+    }
+    return [];
+};
+
+export const saveBrandsList = async (brands) => {
+    try {
+        await updateSettings('project_brands_list', JSON.stringify(brands));
+        return true;
+    } catch (e) {
+        console.error("Error saving brand list:", e);
+        throw e;
+    }
+};
+

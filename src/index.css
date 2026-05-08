@@ -41,6 +41,9 @@ body {
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior-y: none;
 }
 
 /* Luxury/PWA specific typography overrides ONLY on mobile */

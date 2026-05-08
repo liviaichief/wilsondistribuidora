@@ -74,8 +74,8 @@ const HeroCarousel = () => {
         }
     };
 
-    if (slides.length === 0) {
-        return <div className="hero-carousel" style={{ backgroundColor: '#121212' }}></div>;
+        if (slides.length === 0) {
+        return null;
     }
 
     return (

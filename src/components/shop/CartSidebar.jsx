@@ -88,15 +88,63 @@ const CartSidebar = () => {
                 const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
                 const data = await res.json();
                 if (!data.erro) {
-                    setAddress(prev => ({
-                        ...prev,
+                    const newAddress = {
+                        ...address,
+                        cep: maskedCep,
                         street: data.logradouro || '',
                         neighborhood: data.bairro || '',
                         city: data.localidade || '',
                         state: data.uf || '',
                         number: '',
                         complement: ''
-                    }));
+                    };
+                    setAddress(newAddress);
+
+                    // [SYNC] Sincroniza o endereço completo no banco de dados se o usuário estiver logado
+                    if (user) {
+                        try {
+                            await updateProfile({
+                                address_cep: maskedCep,
+                                address_street: data.logradouro || '',
+                                address_neighborhood: data.bairro || '',
+                                address_city: data.localidade || '',
+                                address_state: data.uf || ''
+                            });
+                        } catch (e) {
+                            console.warn("Could not sync address after CEP fetch:", e);
+                        }
+                    }
+
+                    // Geocode the address to get lat/lng for shipping calculation
+                    if (window.google && googleConfig?.store_latitude) {
+                        const geocoder = new window.google.maps.Geocoder();
+                        const fullAddress = `${newAddress.street}, ${newAddress.neighborhood}, ${newAddress.city} - ${newAddress.state}, ${rawCep}, Brazil`;
+                        
+                        geocoder.geocode({ address: fullAddress }, (results, status) => {
+                            if (status === 'OK' && results[0]) {
+                                const lat = results[0].geometry.location.lat();
+                                const lng = results[0].geometry.location.lng();
+                                setAddress(prev => ({ ...prev, lat, lng }));
+                                calculateShipping(lat, lng);
+                            } else {
+                                // Fallback: try geocoding just the CEP
+                                geocoder.geocode({ address: `${rawCep}, Brazil` }, (fallbackResults, fallbackStatus) => {
+                                    if (fallbackStatus === 'OK' && fallbackResults[0]) {
+                                        const lat = fallbackResults[0].geometry.location.lat();
+                                        const lng = fallbackResults[0].geometry.location.lng();
+                                        setAddress(prev => ({ ...prev, lat, lng }));
+                                        calculateShipping(lat, lng);
+                                    } else {
+                                        console.warn("Geocoding failed for CEP:", fallbackStatus);
+                                        setDeliveryFee(parseFloat(googleConfig.shipping_fixed_rate || 15));
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                         // Fallback fixed rate if Google Maps isn't loaded
+                         setDeliveryFee(parseFloat(googleConfig?.shipping_fixed_rate || 15));
+                    }
                 } else {
                     showAlert('CEP não encontrado.', 'warning');
                 }
@@ -303,16 +351,6 @@ const CartSidebar = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = async () => {
-        // [UPSELL] Trigger before finalizing if not shown yet
-        if (!upsellAlreadyShown && cartItems.length > 0) {
-            const showed = triggerUpsell(cartItems);
-            if (showed) {
-                setUpsellAlreadyShown(true);
-                toggleCart(); // Close sidebar to show modal clearly
-                return;
-            }
-        }
-
         // If not logged in AND fields are empty, prompt login/guest choice
         if (!user && !guestMode && (!customerName || !customerPhone)) {
             openAuthModal('login');
@@ -635,14 +673,18 @@ const CartSidebar = () => {
 
                                 {deliveryMode === 'delivery' && (
                                     <div className="checkout-input-group" style={{ marginTop: '15px' }}>
-                                        <div style={{ marginBottom: '10px' }}>
+
+                                        <div style={{ position: 'relative' }}>
                                             <input
                                                 type="text"
-                                                ref={autocompleteRef}
-                                                placeholder="🔍 Busca rápida pelo Google (Rua, CEP, etc)..."
+                                                placeholder="CEP"
+                                                value={address.cep}
+                                                onChange={handleCepChange}
+                                                onBlur={(e) => handleAutoSync('addr_cep', e.target.value)}
                                                 className="checkout-input"
-                                                style={{ border: '1px dashed rgba(66, 133, 244, 0.5)', background: 'rgba(66, 133, 244, 0.05)', fontSize: '0.85rem' }}
+                                                maxLength={9}
                                             />
+                                            {isFetchingCep && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '15px', top: '15px', color: '#D4AF37' }} />}
                                         </div>
 
                                         <input
@@ -688,10 +730,10 @@ const CartSidebar = () => {
                                             />
                                             <input
                                                 type="text"
-                                                placeholder="CEP"
-                                                value={address.cep}
-                                                onChange={(e) => setAddress({ ...address, cep: e.target.value })}
-                                                onBlur={(e) => handleAutoSync('addr_cep', e.target.value)}
+                                                placeholder="Estado (UF)"
+                                                value={address.state || ''}
+                                                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                                                onBlur={(e) => handleAutoSync('addr_state', e.target.value)}
                                                 className="checkout-input"
                                                 style={{ flex: 1 }}
                                             />

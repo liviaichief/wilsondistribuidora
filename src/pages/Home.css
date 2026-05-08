@@ -15,7 +15,7 @@
     overflow-x: hidden;
 }
 
-.main-content {
+.home-content-wrapper {
     padding: 130px 2rem 60px; /* 110px header + 20px gap */
     max-width: 1600px;
     margin: 0 auto;
@@ -54,7 +54,7 @@
 }
 
 @media (max-width: 768px) {
-    .main-content {
+    .home-content-wrapper {
         padding: 82px 0 80px; /* 72px header + 10px gap */
     }
 

@@ -426,6 +426,15 @@ export const AuthProvider = ({ children }) => {
                 data
             );
 
+            // [SYNC] Se o nome completo mudou, sincroniza com a conta do Appwrite
+            if (data.full_name) {
+                try {
+                    await account.updateName(data.full_name);
+                } catch (nameErr) {
+                    console.warn("[AuthContext] Could not sync account name:", nameErr);
+                }
+            }
+
             // Refresh local profile state
             const doc = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, targetDocId);
             setProfile(doc);

@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 
 import AdminCategories from './AdminCategories';
 import AdminUOMs from './AdminUOMs';
+import AdminBrandsList from '../components/admin/AdminBrandsList';
 import AdminUpsellManager from '../components/admin/AdminUpsellManager';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
@@ -18,7 +19,7 @@ const Card = ({ children, icon, color = '#D4AF37', title, style = {}, onSave, sa
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: '28px',
-        padding: '35px',
+        padding: '25px',
         backdropFilter: 'blur(10px)',
         position: 'relative',
         ...style
@@ -29,7 +30,7 @@ const Card = ({ children, icon, color = '#D4AF37', title, style = {}, onSave, sa
                     <div style={{ background: `${color}18`, padding: '10px', borderRadius: '12px', color, display: 'flex' }}>
                         {icon}
                     </div>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h3>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h3>
                 </div>
                 {onSave && (
                     <button
@@ -203,8 +204,14 @@ const AdminSettings = () => {
             {activeTab === 'geral' ? (
                 <div>
 
-                {/* ══ ROW 1: Catálogo + Comunicação ══ */}
-                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                {/* ══ ROW 1: Catálogo ══ */}
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(3, 1fr)', 
+                    gap: '20px', 
+                    marginBottom: '30px',
+                    width: '100%'
+                }} className="admin-catalog-row">
 
                     {/* Catálogo: Categorias */}
                     <Card icon={<Tag size={22} />} color="#D4AF37" title="Categorias de Produto">
@@ -214,6 +221,11 @@ const AdminSettings = () => {
                     {/* Catálogo: Unidades */}
                     <Card icon={<Settings2 size={22} />} color="#a78bfa" title="Unidades de Medida">
                         <AdminUOMs />
+                    </Card>
+
+                    {/* Catálogo: Marcas */}
+                    <Card icon={<Tag size={22} />} color="#fbbf24" title="Marcas de Produtos">
+                        <AdminBrandsList />
                     </Card>
                 </div>
 

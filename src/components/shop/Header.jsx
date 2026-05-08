@@ -4,7 +4,8 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { ShoppingBag, User, LogOut, ClipboardList, Shield, Beer, Store, Box, Instagram, Sparkles, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getSettings } from '../../services/dataService';
+import { getSettings, getBrands } from '../../services/dataService';
+import { getImageUrl } from '../../lib/imageUtils';
 import { APP_VERSION, BUILD_DATE } from '../../version';
 import './Header.css';
 
@@ -17,6 +18,9 @@ const Header = () => {
     const [upsellAlreadyShown, setUpsellAlreadyShown] = React.useState(false);
     const [showVersion, setShowVersion] = React.useState(false);
     const [instagramLink, setInstagramLink] = React.useState('');
+    const [brands, setBrands] = React.useState([]);
+    const [isMobileView, setIsMobileView] = React.useState(window.innerWidth < 768);
+    const [currentBrandIndex, setCurrentBrandIndex] = React.useState(0);
     const userMenuRef = React.useRef(null);
     const closeTimerRef = React.useRef(null);
 
@@ -47,8 +51,36 @@ const Header = () => {
             const setts = await getSettings();
             if (setts?.instagram_link) setInstagramLink(setts.instagram_link);
         };
+        const fetchBrandsData = async () => {
+            try {
+                const data = await getBrands();
+                setBrands(data.filter(b => b.active) || []);
+            } catch (e) {
+                console.error("Erro marcas header:", e);
+            }
+        };
         fetchInsta();
+        fetchBrandsData();
+
+        const handleResize = () => setIsMobileView(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    React.useEffect(() => {
+        if (!isMobileView || brands.length === 0) return;
+        
+        const currentBrand = brands[currentBrandIndex] || brands[0];
+        const duration = (parseInt(currentBrand.duration) || 5) * 1000;
+        
+        const timer = setTimeout(() => {
+            const increment = brands.length > 1 ? 2 : 1;
+            setCurrentBrandIndex((prev) => (prev + increment) % brands.length);
+        }, duration);
+        
+        return () => clearTimeout(timer);
+    }, [brands, currentBrandIndex, isMobileView]);
+
 
     React.useEffect(() => {
         const handleClickOutside = (e) => {
@@ -74,20 +106,141 @@ const Header = () => {
         setUpsellAlreadyShown(false);
     }, [cartCount]);
 
+    const getInstagramHref = () => {
+        if (!instagramLink) return '#';
+        
+        let url = instagramLink.trim();
+        
+        // Se for um email e não contiver instagram.com, trata como mailto
+        if (url.includes('@') && !url.toLowerCase().includes('instagram.com')) {
+            return `mailto:${url}`;
+        }
+
+        // Se for apenas um username (sem pontos ou barras)
+        if (!url.includes('.') && !url.includes('/') && !url.startsWith('http')) {
+            url = `https://www.instagram.com/${url}`;
+        }
+        
+        // Garante que tenha protocolo
+        if (!url.startsWith('http') && !url.startsWith('instagram://') && !url.startsWith('intent://') && !url.startsWith('mailto:')) {
+            url = `https://${url}`;
+        }
+
+        try {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile && url.includes('instagram.com')) {
+                // Tenta extrair o username de forma mais segura usando URL
+                const tempUrl = url.startsWith('http') ? url : `https://${url}`;
+                const urlObj = new URL(tempUrl);
+                const pathParts = urlObj.pathname.split('/').filter(Boolean);
+                const username = pathParts[0]; // O primeiro segmento costuma ser o username
+                
+                if (username && !['p', 'reels', 'stories', 'explore'].includes(username)) {
+                    if (/Android/i.test(navigator.userAgent)) {
+                        return `intent://instagram.com/_u/${username}/#Intent;package=com.instagram.android;scheme=https;end`;
+                    } else {
+                        return `instagram://user?username=${username}`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Erro ao gerar link do Instagram:", e);
+        }
+        return url;
+    };
+
+    const handleInstagramClick = (e) => {
+        const href = getInstagramHref();
+        // Para deep links ou mailto, evitamos o target="_blank" que pode abrir abas em branco
+        if (href.startsWith('instagram://') || href.startsWith('intent://') || href.startsWith('mailto:')) {
+            e.preventDefault();
+            window.location.href = href;
+        }
+    };
+
     return (
         <>
             <header className="main-header glass-header">
                 <div className="header-inner">
                     {/* Logo */}
-                    <Link to="/" className="logo-container" onClick={() => window.location.href = '/'}>
+                    <a href="/" className="logo-container">
                         <img src="/logo.png" alt="Wilson Distribuidora" />
-                    </Link>
+                    </a>
 
-                    {/* Saudação Mobile (Centralizada) */}
-                    <div className="user-greeting-mobile mobile-only">
-                        <span>Olá,&nbsp;</span>
-                        <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
-                    </div>
+                    {/* Brand Carousel (Centralizado) */}
+                    {brands.length > 0 && (() => {
+                        if (isMobileView) {
+                            // Mobile: 2 static brands, switching on a timer
+                            const brand1 = brands[currentBrandIndex % brands.length];
+                            const brand2 = brands[(currentBrandIndex + 1) % brands.length];
+                            
+                            // Prevent duplicating if there's only 1 brand total
+                            const brandsToShow = brands.length > 1 ? [brand1, brand2] : [brand1];
+
+                            return (
+                                <div className="header-brands-carousel" style={{ justifyContent: 'center' }}>
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={currentBrandIndex}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.5 }}
+                                            style={{ display: 'flex', gap: '15px', margin: '0 auto' }}
+                                        >
+                                            {brandsToShow.map((brand, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="brand-item"
+                                                    onClick={() => {
+                                                        if (brand && brand.linked_brand) navigate(`/?brand=${encodeURIComponent(brand.linked_brand)}`);
+                                                    }}
+                                                    style={{ cursor: brand && brand.linked_brand ? 'pointer' : 'default' }}
+                                                >
+                                                    {brand && <img src={getImageUrl(brand.image_url)} alt="Brand Logo" />}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        } else {
+                            // Desktop: Scrolling carousel
+                            const shouldScroll = brands.length > 4;
+                            const displayBrands = shouldScroll ? [...brands, ...brands, ...brands] : brands;
+                            const totalDuration = brands.reduce((acc, b) => acc + (parseInt(b.duration) || 5), 0);
+                            
+                            return (
+                                <div className="header-brands-carousel">
+                                    <div 
+                                        className={`brands-track ${shouldScroll ? 'is-scrolling' : ''}`}
+                                        style={shouldScroll ? { animationDuration: `${totalDuration}s` } : {}}
+                                    >
+                                        {displayBrands.map((brand, i) => (
+                                            <div 
+                                                key={i} 
+                                                className="brand-item"
+                                                onClick={() => {
+                                                    if (brand.linked_brand) navigate(`/?brand=${encodeURIComponent(brand.linked_brand)}`);
+                                                }}
+                                                style={{ cursor: brand.linked_brand ? 'pointer' : 'default' }}
+                                            >
+                                                <img src={getImageUrl(brand.image_url)} alt="Brand Logo" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        }
+                    })()}
+
+                    {/* Saudação Mobile (Centralizada) - Oculta se houver marcas para não sobrepor */}
+                    {brands.length === 0 && (
+                        <div className="user-greeting-mobile mobile-only">
+                            <span>Olá,&nbsp;</span>
+                            <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
+                        </div>
+                    )}
 
 
                     {/* Actions */}
@@ -96,21 +249,23 @@ const Header = () => {
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             className="user-greeting-desktop"
+                            onClick={() => {
+                                setShowVersion(true);
+                                setTimeout(() => setShowVersion(false), 5000);
+                            }}
+                            style={{ cursor: 'pointer', userSelect: 'none' }}
                         >
-                            <span 
-                                onDoubleClick={() => {
-                                    setShowVersion(true);
-                                    setTimeout(() => setShowVersion(false), 5000);
-                                }}
-                                style={{ cursor: 'pointer', userSelect: 'none' }}
-                            >
-                                Olá,&nbsp;
-                            </span>
                             <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
                         </motion.div>
 
                         {instagramLink && (
-                            <a href={instagramLink} target="_blank" rel="noopener noreferrer" className="action-btn insta-btn">
+                            <a 
+                                href={getInstagramHref()} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="action-btn insta-btn"
+                                onClick={handleInstagramClick}
+                            >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.2))' }}>
                                     <defs>
                                         <linearGradient id="insta-grad" x1="0%" y1="100%" x2="100%" y2="0%">

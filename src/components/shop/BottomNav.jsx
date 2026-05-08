@@ -44,12 +44,12 @@ const BottomNav = () => {
                 <Store size={24} />
                 <span>Loja</span>
             </NavLink>
-            
-            <NavLink to="/orders" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                <History size={24} />
-                <span>Pedidos</span>
-            </NavLink>
-
+            {user && (
+                <NavLink to="/orders" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    <History size={24} />
+                    <span>Pedidos</span>
+                </NavLink>
+            )}
             <div 
                 className={`nav-item ${location.pathname === '/cart' ? 'active' : ''}`}
                 onClick={handleCartClick}
@@ -62,7 +62,16 @@ const BottomNav = () => {
                 <span>Carrinho</span>
             </div>
 
-            <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink 
+                to="/profile" 
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                onClick={(e) => {
+                    if (!user) {
+                        e.preventDefault();
+                        openAuthModal('login');
+                    }
+                }}
+            >
                 <User size={24} />
                 <span>Perfil</span>
             </NavLink>

@@ -130,7 +130,7 @@ const AdminCategories = () => {
                         <motion.div
                             key={cat.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                             draggable={isEditing === null} onDragStart={() => handleDragStart(index)} onDragOver={handleDragOver} onDrop={() => handleDrop(index)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isEditing === cat.id ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid', borderColor: isEditing === cat.id ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.05)', cursor: isEditing === null ? 'grab' : 'default', transition: 'all 0.2s' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: isEditing === cat.id ? 'rgba(212, 175, 55, 0.06)' : 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid', borderColor: isEditing === cat.id ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.05)', cursor: isEditing === null ? 'grab' : 'default', transition: 'all 0.2s' }}
                         >
                             {isEditing === cat.id ? (
                                 <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
@@ -142,7 +142,7 @@ const AdminCategories = () => {
                                 <>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <GripVertical size={16} style={{ opacity: 0.2, cursor: 'grab' }} />
-                                        <div style={{ color: cat.active !== false ? '#fff' : '#555', fontWeight: 700, fontSize: '0.95rem' }}>{cat.name}</div>
+                                        <div style={{ color: cat.active !== false ? '#fff' : '#555', fontWeight: 700, fontSize: '0.85rem' }}>{cat.name}</div>
                                         {cat.active === false && <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700, background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '6px' }}>OCULTA</span>}
                                     </div>
                                     <div style={{ display: 'flex', gap: '6px' }}>

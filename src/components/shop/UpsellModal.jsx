@@ -34,19 +34,26 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             width: '100%', 
                             maxWidth: '480px', 
                             maxHeight: '90vh',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        {/* Category Badge (Fora do overflow hidden) */}
+                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: '#D4AF37', color: '#000', padding: '8px 20px', borderRadius: '20px', fontSize: '0.65rem', fontWeight: 900, zIndex: 10, boxShadow: '0 10px 20px rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                            <TrendingUp size={12} /> {baseProduct.categoryName || 'Sugestão'}
+                        </div>
+
+                        <div style={{
                             background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(15, 15, 15, 0.98))', 
                             borderRadius: '35px', 
                             border: '1px solid rgba(212, 175, 55, 0.3)',
                             boxShadow: '0 40px 100px -20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.1)',
                             display: 'flex',
                             flexDirection: 'column',
-                            overflow: 'hidden'
-                        }}
-                    >
-                        {/* Category Badge */}
-                        <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#D4AF37', color: '#000', padding: '8px 20px', borderRadius: '20px', fontSize: '0.65rem', fontWeight: 900, zIndex: 10, boxShadow: '0 10px 20px rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
-                            <TrendingUp size={12} /> {baseProduct.categoryName || 'Sugestão'}
-                        </div>
+                            overflow: 'hidden',
+                            width: '100%',
+                            flex: 1
+                        }}>
 
                         <div style={{ padding: '40px 25px 20px', textAlign: 'center', flexShrink: 0 }}>
                         <button onClick={onClose} style={{ position: 'absolute', right: '25px', top: '25px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -212,6 +219,7 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                         >
                             <ShoppingBag size={20} /> IR PARA O CARRINHO <ArrowRight size={18} />
                         </button>
+                    </div>
                     </div>
                 </motion.div>
             </div>

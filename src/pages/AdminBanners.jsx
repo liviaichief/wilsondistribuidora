@@ -7,7 +7,7 @@ import { ID, Query, Permission, Role } from 'appwrite';
 import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
 import { generateBannerImage } from '../services/aiService';
-import { getSettings, getCategories } from '../services/dataService';
+import { getSettings, getCategories, getBrands, saveBrands, getBrandsList } from '../services/dataService';
 import './Admin.css';
 
 const AdminBanners = () => {
@@ -15,6 +15,7 @@ const AdminBanners = () => {
     const [banners, setBanners] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [brands, setBrands] = useState([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
     useEffect(() => {
@@ -53,9 +54,31 @@ const AdminBanners = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showLinkPanel, setShowLinkPanel] = useState(false);
 
+    const [brandOptions, setBrandOptions] = useState([]);
+
     useEffect(() => {
         loadData();
+        loadBrands();
+        loadBrandOptions();
     }, []);
+
+    const loadBrandOptions = async () => {
+        try {
+            const data = await getBrandsList();
+            setBrandOptions(data || []);
+        } catch (e) {
+            console.error("Erro ao carregar lista de marcas:", e);
+        }
+    };
+
+    const loadBrands = async () => {
+        try {
+            const data = await getBrands();
+            setBrands(data || []);
+        } catch (e) {
+            console.error("Erro ao carregar marcas:", e);
+        }
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -232,7 +255,6 @@ const AdminBanners = () => {
                 image_url: formData.image_url,
                 thumbnail_url: formData.thumbnail_url,
                 product: formData.product_id || null,
-                category: formData.category_id || null,
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
                 duration: parseInt(formData.duration)
@@ -276,6 +298,72 @@ const AdminBanners = () => {
             await databases.updateDocument(DATABASE_ID, COLLECTIONS.BANNERS, banner.id, { active: !banner.active });
             loadData();
         } catch (e) { showAlert('Erro: ' + e.message, 'error'); }
+    };
+
+    // --- BRANDS HANDLERS ---
+    const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+    const [editingBrand, setEditingBrand] = useState(null);
+    const [brandFormData, setBrandFormData] = useState({ image_url: '', display_order: 0, active: true, duration: 5, linked_brand: '' });
+    const [brandPreview, setBrandPreview] = useState('');
+    const [isUploadingBrand, setIsUploadingBrand] = useState(false);
+    const [isSavingBrand, setIsSavingBrand] = useState(false);
+
+    const handleOpenBrandModal = (brand = null) => {
+        if (brand) {
+            setEditingBrand(brand);
+            setBrandFormData({ 
+                image_url: brand.image_url, 
+                display_order: brand.display_order, 
+                active: brand.active,
+                duration: brand.duration || 5,
+                linked_brand: brand.linked_brand || ''
+            });
+            setBrandPreview(getImageUrl(brand.image_url));
+        } else {
+            setEditingBrand(null);
+            setBrandFormData({ image_url: '', display_order: brands.length + 1, active: true, duration: 5, linked_brand: '' });
+            setBrandPreview('');
+        }
+        setIsBrandModalOpen(true);
+    };
+
+    const handleBrandImageChange = async (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setBrandPreview(URL.createObjectURL(file));
+            setIsUploadingBrand(true);
+            try {
+                const fileId = await uploadFileToAppwrite(file, false);
+                setBrandFormData(prev => ({ ...prev, image_url: fileId }));
+            } catch (err) { showAlert("Erro: " + err.message, "error"); } finally { setIsUploadingBrand(false); }
+        }
+    };
+
+    const handleSaveBrand = async () => {
+        setIsSavingBrand(true);
+        try {
+            let newBrands = [...brands];
+            if (editingBrand) {
+                newBrands = newBrands.map(b => b.id === editingBrand.id ? { ...b, ...brandFormData } : b);
+            } else {
+                newBrands.push({ ...brandFormData, id: ID.unique() });
+            }
+            await saveBrands(newBrands);
+            setBrands(newBrands);
+            setIsBrandModalOpen(false);
+            showAlert('Marca salva!', 'success');
+        } catch (e) { showAlert('Erro ao salvar marcas: ' + e.message, 'error'); } finally { setIsSavingBrand(false); }
+    };
+
+    const handleDeleteBrand = (brand) => {
+        showConfirm('Excluir esta marca?', async () => {
+            try {
+                const newBrands = brands.filter(b => b.id !== brand.id);
+                await saveBrands(newBrands);
+                setBrands(newBrands);
+                showAlert('Marca excluída!', 'success');
+            } catch (e) { showAlert('Erro ao excluir: ' + e.message, 'error'); }
+        });
     };
 
     return (
@@ -624,6 +712,159 @@ const AdminBanners = () => {
                                     {isSaving ? 'SALVANDO...' : 'SALVAR BANNER'}
                                 </button>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ─── SEÇÃO DE MARCAS (Logos do Header) ─── */}
+            <div style={{ marginTop: '60px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 900, color: '#fff' }}>Logos de Marcas (Header)</h2>
+                        <p style={{ margin: '5px 0 0', fontSize: '0.8rem', color: '#555', fontWeight: 600 }}>Imagens que aparecem em carrossel no topo do site.</p>
+                    </div>
+                    <button 
+                        onClick={() => handleOpenBrandModal()}
+                        style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', border: '1px solid rgba(212, 175, 55, 0.2)', borderRadius: '12px', padding: '10px 20px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}
+                    >
+                        <Plus size={16} /> ADICIONAR MARCA
+                    </button>
+                </div>
+
+                {brands.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.01)', borderRadius: '20px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                        <span style={{ color: '#444', fontSize: '0.85rem' }}>Nenhuma marca cadastrada para o header.</span>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
+                        {brands.sort((a,b) => (a.display_order || 0) - (b.display_order || 0)).map((brand, idx) => (
+                            <div key={brand.id || idx} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', padding: '15px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div style={{ aspectRatio: '3/2', background: '#000', borderRadius: '10px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+                                    <img src={getImageUrl(brand.image_url)} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} alt="Brand" />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#333' }}>ORDEM: {brand.display_order}</span>
+                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                        <button onClick={() => handleOpenBrandModal(brand)} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '5px' }}><Edit size={14} /></button>
+                                        <button onClick={() => handleDeleteBrand(brand)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '5px' }}><Trash2 size={14} /></button>
+                                    </div>
+                                </div>
+                                {!brand.active && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}><span style={{ background: '#000', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '4px 8px', borderRadius: '5px' }}>INATIVO</span></div>}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* ─── MODAL DE MARCAS ─── */}
+            <AnimatePresence>
+                {isBrandModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', padding: '20px' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '25px', padding: '30px', maxWidth: '450px', width: '100%' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                                <h3 style={{ margin: 0, color: '#fff', fontWeight: 900 }}>{editingBrand ? 'Editar Marca' : 'Nova Marca'}</h3>
+                                <button onClick={() => setIsBrandModalOpen(false)} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer' }}><X size={20} /></button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Logo da Marca (PNG Transparente)</label>
+                                    <div style={{ height: '120px', background: 'rgba(0,0,0,0.3)', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '15px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {brandPreview ? (
+                                            <>
+                                                <img src={brandPreview} style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} alt="Preview" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={(e) => { 
+                                                        e.preventDefault();
+                                                        e.stopPropagation(); 
+                                                        setBrandPreview(''); 
+                                                        setBrandFormData(p => ({...p, image_url: ''})); 
+                                                    }}
+                                                    style={{ 
+                                                        position: 'absolute', 
+                                                        top: '10px', 
+                                                        right: '10px', 
+                                                        background: '#ef4444', 
+                                                        color: '#fff', 
+                                                        border: 'none', 
+                                                        borderRadius: '50%', 
+                                                        width: '28px', 
+                                                        height: '28px', 
+                                                        cursor: 'pointer', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center',
+                                                        zIndex: 50,
+                                                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                                                    }}
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div style={{ textAlign: 'center', color: '#333' }}><ImageIcon size={32} /><p style={{ fontSize: '0.7rem', fontWeight: 700 }}>Selecionar Logo</p></div>
+                                        )}
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            onChange={handleBrandImageChange} 
+                                            style={{ 
+                                                position: 'absolute', 
+                                                inset: 0, 
+                                                opacity: 0, 
+                                                cursor: 'pointer', 
+                                                zIndex: brandPreview ? 1 : 10 
+                                            }} 
+                                        />
+                                        {isUploadingBrand && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" color="#D4AF37" /></div>}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Vincular à Marca (Filtro)</label>
+                                    <select 
+                                        value={brandFormData.linked_brand} 
+                                        onChange={e => setBrandFormData({...brandFormData, linked_brand: e.target.value})} 
+                                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px', color: '#fff', fontWeight: 700, width: '100%', outline: 'none' }}
+                                    >
+                                        <option value="" style={{ background: '#111' }}>Nenhuma (Apenas imagem)</option>
+                                        {brandOptions.map(b => (
+                                            <option key={b.id} value={b.name} style={{ background: '#111' }}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                    <p style={{ margin: 0, fontSize: '0.65rem', color: '#555' }}>Ao clicar nesta logo no site, o usuário verá apenas produtos desta marca.</p>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Ordem</label>
+                                        <input type="number" value={brandFormData.display_order} onChange={e => setBrandFormData({...brandFormData, display_order: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '10px', color: '#fff', fontWeight: 900, width: '100%', boxSizing: 'border-box' }} />
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Tempo (s)</label>
+                                        <input type="number" value={brandFormData.duration} onChange={e => setBrandFormData({...brandFormData, duration: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '10px', color: '#fff', fontWeight: 900, width: '100%', boxSizing: 'border-box' }} />
+                                    </div>
+                                    <div style={{ width: '60px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 900, color: '#444', textTransform: 'uppercase' }}>Ativo</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', height: '40px' }}>
+                                            <label className="switch">
+                                                <input type="checkbox" checked={brandFormData.active} onChange={e => setBrandFormData({...brandFormData, active: e.target.checked})} />
+                                                <span className="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    onClick={handleSaveBrand}
+                                    disabled={isSavingBrand || isUploadingBrand || !brandFormData.image_url}
+                                    style={{ background: '#D4AF37', color: '#000', border: 'none', borderRadius: '15px', padding: '15px', fontWeight: 900, cursor: 'pointer', marginTop: '10px' }}
+                                >
+                                    {isSavingBrand ? 'SALVANDO...' : 'SALVAR MARCA'}
+                                </button>
+                            </div>
                         </motion.div>
                     </div>
                 )}
