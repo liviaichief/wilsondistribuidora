@@ -30,6 +30,10 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import PWAInstallPrompt from './components/common/PWAInstallPrompt';
 import UpdateManager from './components/common/UpdateManager';
+import { FeatureGate } from './components/common/FeatureGate';
+import BBQMasterChat from './components/shop/BBQMasterChat';
+import SeasonalThemeInjector from './components/common/SeasonalThemeInjector';
+import { FEATURES } from './config/plans';
 
 const GlobalProfileModalWrapper = () => {
   const { isProfileModalOpen, closeProfileModal, user } = useAuth();
@@ -88,39 +92,39 @@ function App() {
 
                 {/* Admin Layout */}
                 <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                  <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }>
                   <Route index element={<Admin />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="users" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminUsers />
                     </ProtectedRoute>
                   } />
                   <Route path="banners" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminBanners />
                     </ProtectedRoute>
                   } />
                   <Route path="catalogo" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminCatalog />
                     </ProtectedRoute>
                   } />
                   <Route path="pedidos" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminOrders />
                     </ProtectedRoute>
                   } />
                   <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminSettings />
                     </ProtectedRoute>
                   } />
                   <Route path="financeiro" element={
-                    <ProtectedRoute allowedRoles={['admin', 'owner', 'master']}>
+                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
                       <AdminFinance />
                     </ProtectedRoute>
                   } />
@@ -141,6 +145,12 @@ function App() {
 
               {/* Google Tag Manager Dynamic Loader */}
               <GoogleTagManagerLoader />
+
+              {/* Chat IA Mestre do Churrasco */}
+              <BBQMasterChat />
+
+              {/* Injeta tema sazonal no <body> */}
+              <SeasonalThemeInjector />
 
             </OrderProvider>
           </CartProvider>

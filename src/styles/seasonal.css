@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════════
+   Seasonal Theme Overrides
+   Activated via data-season attribute on <body>
+   ═══════════════════════════════════════════════ */
+
+/* ── Copa do Mundo ⚽ ── */
+body[data-season="copa"] {
+  --season-primary: #009c3b;
+  --season-accent:  #FFDF00;
+  --season-dark:    #006428;
+}
+
+/* Scrollbar verde */
+body[data-season="copa"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 156, 59, 0.3);
+}
+
+/* BottomNav ativo */
+body[data-season="copa"] .bottom-nav-item.active,
+body[data-season="copa"] .bottom-nav-active {
+  color: var(--season-primary) !important;
+}
+
+/* Category bar — item ativo */
+body[data-season="copa"] .category-item.active,
+body[data-season="copa"] [class*="category"][class*="active"] {
+  background: linear-gradient(135deg, #009c3b, #006428) !important;
+  color: #fff !important;
+  border-color: #009c3b !important;
+}
+
+/* Botão "Adicionar ao carrinho" */
+body[data-season="copa"] .add-to-cart-btn,
+body[data-season="copa"] [class*="add-cart"],
+body[data-season="copa"] [class*="addCart"] {
+  background: linear-gradient(135deg, #009c3b 0%, #006428 100%) !important;
+  box-shadow: 0 4px 15px rgba(0, 156, 59, 0.35) !important;
+}
+
+/* Preço promocional */
+body[data-season="copa"] .promo-price,
+body[data-season="copa"] [class*="promo_price"],
+body[data-season="copa"] [class*="promoPrice"] {
+  color: #009c3b !important;
+}
+
+/* Badge de desconto */
+body[data-season="copa"] .discount-badge,
+body[data-season="copa"] [class*="discount"] {
+  background: #009c3b !important;
+}
+
+/* Héro carousel border */
+body[data-season="copa"] .hero-carousel {
+  box-shadow: 0 4px 0 0 #009c3b;
+}
+
+/* Accents on links/buttons */
+body[data-season="copa"] a:not([class]),
+body[data-season="copa"] .text-accent {
+  color: #009c3b;
+}
+
+/* ── Natal 🎄 ── */
+body[data-season="natal"] {
+  --season-primary: #cc0000;
+  --season-accent:  #22c55e;
+}
+
+/* ── São João 🎆 ── */
+body[data-season="sao_joao"] {
+  --season-primary: #f59e0b;
+  --season-accent:  #ef4444;
+}

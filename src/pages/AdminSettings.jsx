@@ -10,8 +10,12 @@ import AdminCategories from './AdminCategories';
 import AdminUOMs from './AdminUOMs';
 import AdminBrandsList from '../components/admin/AdminBrandsList';
 import AdminUpsellManager from '../components/admin/AdminUpsellManager';
+import AdminPlanManager from '../components/admin/AdminPlanManager';
+import AdminOnboarding from './admin/AdminOnboarding';
+import AdminBBQMaster from '../components/admin/AdminBBQMaster';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
+import { getCurrentSeason } from '../services/seasonalService';
 
 /* ─── Helpers ─── */
 const Card = ({ children, icon, color = '#D4AF37', title, style = {}, onSave, saving, disabled }) => (
@@ -85,7 +89,8 @@ const inputStyle = {
 
 /* ─── Main Component ─── */
 const AdminSettings = () => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, role } = useAuth();
+    const isOwner = role === 'owner';
     const [settings, setSettings] = useState({
         whatsapp_number: '',
         whatsapp_message: '*NOVO PEDIDO {pedido} - BASE APP*',
@@ -110,7 +115,11 @@ const AdminSettings = () => {
         wa_reminder_day: '4',
         show_profit_dashboard: true,
         ai_banner_enabled: true,
-        ai_description_enabled: true
+        ai_description_enabled: true,
+        bbq_master_enabled: true,
+        bbq_master_name: '',
+        bbq_master_system_prompt: '',
+        bbq_master_quick_questions: ''
     });
     const [originalSettings, setOriginalSettings] = useState({});
     const [loading, setLoading] = useState(true);
@@ -167,37 +176,37 @@ const AdminSettings = () => {
     return (
         <div style={{ padding: '0 20px 60px' }}>
             <div style={{ display: 'flex', gap: '15px', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '20px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <button 
+                <button
                     onClick={() => setActiveTab('geral')}
-                    style={{ 
-                        padding: '12px 30px', 
-                        borderRadius: '14px', 
-                        border: 'none', 
-                        background: activeTab === 'geral' ? '#D4AF37' : 'transparent', 
-                        color: activeTab === 'geral' ? '#000' : '#888', 
-                        fontWeight: 900, 
-                        fontSize: '0.85rem', 
-                        cursor: 'pointer',
-                        transition: '0.3s'
-                    }}
+                    style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'geral' ? '#D4AF37' : 'transparent', color: activeTab === 'geral' ? '#000' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s' }}
                 >
                     GERAL
                 </button>
-                <button 
+                {!isOwner && <>
+                <button
                     onClick={() => setActiveTab('upsell')}
-                    style={{ 
-                        padding: '12px 30px', 
-                        borderRadius: '14px', 
-                        border: 'none', 
-                        background: activeTab === 'upsell' ? '#D4AF37' : 'transparent', 
-                        color: activeTab === 'upsell' ? '#000' : '#888', 
-                        fontWeight: 900, 
-                        fontSize: '0.85rem', 
-                        cursor: 'pointer',
-                        transition: '0.3s'
-                    }}
+                    style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'upsell' ? '#D4AF37' : 'transparent', color: activeTab === 'upsell' ? '#000' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s' }}
                 >
                     UPSELL INTELIGENTE
+                </button>
+                <button
+                    onClick={() => setActiveTab('planos')}
+                    style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'planos' ? '#D4AF37' : 'transparent', color: activeTab === 'planos' ? '#000' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s' }}
+                >
+                    PLANOS & IDENTIDADE
+                </button>
+                <button
+                    onClick={() => setActiveTab('onboarding')}
+                    style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'onboarding' ? '#D4AF37' : 'transparent', color: activeTab === 'onboarding' ? '#000' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s' }}
+                >
+                    ONBOARDING
+                </button>
+                </>}
+                <button
+                    onClick={() => setActiveTab('bbqmaster')}
+                    style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'bbqmaster' ? '#800020' : 'transparent', color: activeTab === 'bbqmaster' ? '#fff' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                    🔥 MESTRE DO CHURRASCO
                 </button>
             </div>
 
@@ -257,10 +266,10 @@ const AdminSettings = () => {
                         </div>
                     </Card>
 
-                    {/* Google */}
-                    <Card 
-                        icon={<Settings2 size={22} />} 
-                        color="#4285F4" 
+                    {/* Google — visível apenas para master */}
+                    {!isOwner && <Card
+                        icon={<Settings2 size={22} />}
+                        color="#4285F4"
                         title="Ecossistema Google"
                         onSave={() => handleSaveSection('Google', ['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id'])}
                         saving={savingSection === 'Google'}
@@ -280,11 +289,71 @@ const AdminSettings = () => {
                                 <input value={settings.google_merchant_id} onChange={e => setSettings({...settings, google_merchant_id: e.target.value})} style={inputStyle} placeholder="123456789" />
                             </Field>
                         </div>
-                    </Card>
+                    </Card>}
                 </div>
 
-                {/* ══ ROW 3: Logística + Fidelidade ══ */}
-                <div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                {/* ══ Sazonalidade — visível para proprietário e master ══ */}
+                <Card
+                    icon={<Sparkles size={22} />}
+                    color="#f59e0b"
+                    title="Temas de Sazonalidade"
+                    style={{ marginBottom: '30px' }}
+                >
+                    {(() => {
+                        const currentSeason = getCurrentSeason();
+                        const SEASONS = [
+                            { id: 'natal',        name: 'Natal',           emoji: '🎄' },
+                            { id: 'carnaval',     name: 'Carnaval',        emoji: '🎉' },
+                            { id: 'dia_dos_pais', name: 'Dia dos Pais',    emoji: '👨' },
+                            { id: 'dia_das_maes', name: 'Dia das Mães',    emoji: '💐' },
+                            { id: 'copa',         name: 'Copa do Mundo',   emoji: '⚽' },
+                            { id: 'sao_joao',     name: 'São João',        emoji: '🎆' },
+                            { id: 'ano_novo',     name: 'Réveillon',       emoji: '🥂' },
+                        ];
+                        return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', color: '#666', lineHeight: 1.6 }}>
+                                    Tema sazonal ativo automaticamente com base na data. Você pode forçar um tema manualmente para adiantar decorações e promoções.
+                                </p>
+                                {currentSeason && (
+                                    <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ fontSize: '1.4rem' }}>{currentSeason.emoji}</span>
+                                        <div>
+                                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f59e0b' }}>Tema ativo agora: {currentSeason.name}</div>
+                                            <div style={{ fontSize: '0.68rem', color: '#666' }}>Detectado automaticamente pela data de hoje</div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {SEASONS.map(s => {
+                                        const isActive = settings.active_season === s.id;
+                                        return (
+                                            <button
+                                                key={s.id}
+                                                onClick={() => setSettings(prev => ({ ...prev, active_season: isActive ? null : s.id }))}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: `1px solid ${isActive ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.07)'}`, background: isActive ? 'rgba(245,158,11,0.12)' : 'transparent', color: isActive ? '#f59e0b' : '#666', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', transition: '0.2s' }}
+                                            >
+                                                {s.emoji} {s.name}
+                                                {isActive && <span style={{ fontSize: '0.6rem', background: '#f59e0b', color: '#000', borderRadius: '4px', padding: '1px 5px', fontWeight: 900 }}>ATIVO</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    onClick={() => handleSaveSection('Sazonalidade', ['active_season'])}
+                                    disabled={savingSection === 'Sazonalidade' || !isDirty(['active_season'])}
+                                    style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '10px', background: isDirty(['active_season']) ? '#f59e0b' : 'rgba(255,255,255,0.05)', border: 'none', color: isDirty(['active_season']) ? '#000' : '#444', fontWeight: 900, fontSize: '0.78rem', cursor: isDirty(['active_season']) ? 'pointer' : 'not-allowed', transition: '0.2s' }}
+                                >
+                                    {savingSection === 'Sazonalidade' ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                                    SALVAR TEMA
+                                </button>
+                            </div>
+                        );
+                    })()}
+                </Card>
+
+                {/* ══ ROW 3–4 + IA + Sistema: visíveis apenas para master ══ */}
+                {!isOwner && <><div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Logística */}
                     <Card 
@@ -474,8 +543,8 @@ const AdminSettings = () => {
                     </Card>
                 </div>
 
-            {/* ══ Saúde do Sistema (Admin Only) ══ */}
-            {isAdmin && (
+            {/* ══ Saúde do Sistema (master only) ══ */}
+            {isAdmin && !isOwner && (
                 <div style={{ marginTop: '50px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
                         <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}><Activity size={24} /></div>
@@ -484,9 +553,25 @@ const AdminSettings = () => {
                     <AdminHealthDashboard />
                 </div>
             )}
+            </>}
             </div>
-            ) : (
+            ) : activeTab === 'upsell' ? (
                 <AdminUpsellManager />
+            ) : activeTab === 'onboarding' ? (
+                <AdminOnboarding />
+            ) : activeTab === 'bbqmaster' ? (
+                <div style={{ maxWidth: '700px' }}>
+                    <AdminBBQMaster
+                        settings={settings}
+                        setSettings={setSettings}
+                        originalSettings={originalSettings}
+                    />
+                </div>
+            ) : (
+                /* Aba Planos & Identidade */
+                <div style={{ maxWidth: '800px' }}>
+                    <AdminPlanManager settings={settings} onSettingsChange={(updated) => setSettings(prev => ({ ...prev, ...updated }))} />
+                </div>
             )}
         </div>
     );

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import HeroCarousel from '../components/shop/HeroCarousel';
 import Header from '../components/shop/Header';
 import CategoryBar from '../components/shop/CategoryBar';
+import CopaBanner from '../components/shop/CopaBanner';
 import ProductCard from '../components/shop/ProductCard';
 import { getProducts } from '../services/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,49 +29,41 @@ const Home = () => {
 
     const hasMore = displayItems.length < filteredItems.length;
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            setLoading(true);
-            try {
-                // Ao carregar a página (F5), se houver filtros na URL, limpamos para voltar à Home limpa
-                if (searchParams.toString() !== '') {
-                    setSearchParams({});
-                }
+    // Extraída do useEffect para ser chamável pelo botão de retry (CRO-6)
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            if (searchParams.toString() !== '') setSearchParams({});
 
-                const { getCategories } = await import('../services/dataService');
-                const [data, categoriesList] = await Promise.all([
-                    getProducts(),
-                    getCategories()
-                ]);
+            const { getCategories } = await import('../services/dataService');
+            const [data, categoriesList] = await Promise.all([getProducts(), getCategories()]);
 
-                if (data.system_blocked) setIsSystemBlocked(true);
-                else setIsSystemBlocked(false);
+            if (data.system_blocked) setIsSystemBlocked(true);
+            else setIsSystemBlocked(false);
 
-                const activeCatIds = categoriesList.filter(c => c.active !== false).map(c => c.id);
-                const enrichedProducts = data.documents.map(d => {
-                    const catObj = categoriesList.find(c => c.id?.toString() === d.category?.toString());
-                    return {
-                        ...d,
-                        category_name: catObj ? catObj.name : 'Geral'
-                    };
-                });
+            const activeCatIds     = categoriesList.filter(c => c.active !== false).map(c => c.id);
+            const enrichedProducts = data.documents.map(d => {
+                const catObj = categoriesList.find(c => c.id?.toString() === d.category?.toString());
+                return { ...d, category_name: catObj ? catObj.name : 'Geral' };
+            });
 
-                const activeOnly = enrichedProducts.filter(d => {
-                    const isVisible = d.active !== false && activeCatIds.includes(d.category);
-                    const isStockDisabled = d.manage_stock && d.stock_quantity <= 0 && d.disable_on_zero_stock;
-                    return isVisible && !isStockDisabled;
-                });
-                
-                setAllProducts(activeOnly);
-            } catch (err) {
-                console.error("Home load error:", err);
-                setError("Falha ao carregar o cardápio. Verifique a conexão.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchInitialData();
+            const activeOnly = enrichedProducts.filter(d => {
+                const isVisible      = d.active !== false && activeCatIds.includes(d.category);
+                const isStockDisabled = d.manage_stock && d.stock_quantity <= 0 && d.disable_on_zero_stock;
+                return isVisible && !isStockDisabled;
+            });
+
+            setAllProducts(activeOnly);
+        } catch (err) {
+            console.error("Home load error:", err);
+            setError("Falha ao carregar o cardápio. Verifique a conexão e tente novamente.");
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => { loadData(); }, []);
 
     useEffect(() => {
         let items = [...allProducts];
@@ -79,9 +72,10 @@ const Home = () => {
         if (activeCategory !== 'all') {
             items = items.filter(d => (d.category || '').toString().trim().toLowerCase() === activeCategory.toString().trim().toLowerCase());
         } else {
-            // Se for "Geral", mostramos apenas promoções por padrão (a menos que uma marca seja selecionada)
+            // Aba "Geral": prefere promoções; se não houver, exibe todos (CRO-1)
             if (!brandFilter) {
-                items = items.filter(d => d.is_promotion === true);
+                const promos = items.filter(d => d.is_promotion === true);
+                items = promos.length > 0 ? promos : items;
             }
         }
 
@@ -152,6 +146,9 @@ const Home = () => {
 
             <Header />
 
+            {/* Faixa Copa do Mundo — aparece automaticamente quando season = copa */}
+            <CopaBanner />
+
             <div className="home-content-wrapper">
                 <CategoryBar 
                     activeCategory={activeCategory} 
@@ -180,7 +177,7 @@ const Home = () => {
                                 <AlertCircle size={50} color="#ef4444" style={{ marginBottom: '20px' }} />
                                 <h3>Opa! Algo deu errado.</h3>
                                 <p>{error}</p>
-                                <button onClick={() => window.location.reload()} style={{ marginTop: '20px', padding: '12px 30px', borderRadius: '14px', background: '#D4AF37', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Tentar Novamente</button>
+                                <button onClick={loadData} style={{ marginTop: '20px', padding: '12px 30px', borderRadius: '14px', background: '#D4AF37', border: 'none', fontWeight: 900, cursor: 'pointer' }}>Tentar Novamente</button>
                             </motion.div>
                         ) : loading ? (
                             Array.from({ length: 8 }).map((_, i) => (
