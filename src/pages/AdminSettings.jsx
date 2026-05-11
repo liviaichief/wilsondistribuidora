@@ -13,6 +13,7 @@ import AdminUpsellManager from '../components/admin/AdminUpsellManager';
 import AdminPlanManager from '../components/admin/AdminPlanManager';
 import AdminOnboarding from './admin/AdminOnboarding';
 import AdminBBQMaster from '../components/admin/AdminBBQMaster';
+import GoogleSetupAssistant from '../components/admin/GoogleSetupAssistant';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
 import { useTheme } from '../context/ThemeContext';
@@ -180,6 +181,7 @@ const AdminSettings = () => {
     if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Loader2 className="animate-spin" size={40} color="#D4AF37" /></div>;
 
     return (
+        <>
         <div style={{ padding: '0 20px 60px' }}>
             <div style={{ display: 'flex', gap: '15px', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '20px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <button
@@ -679,6 +681,10 @@ const AdminSettings = () => {
                 </div>
             )}
         </div>
+
+        {/* Google Setup Assistant — floating FAB, always visible in admin */}
+        <GoogleSetupAssistant />
+        </>
     );
 };
 

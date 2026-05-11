@@ -162,8 +162,36 @@ export const chatBBQMaster = async (history, systemPrompt) => {
     return response.choices[0].message.content.trim();
 };
 
+/**
+ * Envia uma mensagem para o Assistente Google com histórico completo da conversa.
+ * @param {Array<{role: 'user'|'assistant', content: string}>} history
+ * @param {string} systemPrompt
+ * @returns {Promise<string>}
+ */
+export const chatGoogleAssistant = async (history, systemPrompt) => {
+    const openai = await getClient();
+    if (!openai) {
+        throw new Error("OpenAI API Key não configurada.");
+    }
+
+    const messages = [
+        { role: 'system', content: systemPrompt },
+        ...history.map(m => ({ role: m.role, content: m.content })),
+    ];
+
+    const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0.65,
+        max_tokens: 400,
+    });
+
+    return response.choices[0].message.content.trim();
+};
+
 export default {
     generateProductDescription,
     generateBannerImage,
     chatBBQMaster,
+    chatGoogleAssistant,
 };
