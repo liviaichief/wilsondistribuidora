@@ -75,10 +75,20 @@ const ProductCard = ({ product }) => {
             className={`premium-card ${product.is_promotion ? 'promo-variant' : ''}`}
             onClick={() => navigate(`/produto/${product.id}`)}
         >
-            {/* Promo Badge */}
+            {/* Badge de promoção com percentual de desconto (CRO-5) */}
             <AnimatePresence>
-                {product.is_promotion && (
-                    <motion.div 
+                {product.is_promotion && !isBoxSelected && product.promo_price && product.price && (
+                    <motion.div
+                        initial={{ scale: 0, rotate: -10 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="glass-promo-badge"
+                    >
+                        <span>-{Math.round((1 - product.promo_price / product.price) * 100)}%</span>
+                    </motion.div>
+                )}
+                {product.is_promotion && !(!isBoxSelected && product.promo_price && product.price) && (
+                    <motion.div
+                        key="promo-plain"
                         initial={{ scale: 0, rotate: -10 }}
                         animate={{ scale: 1, rotate: 0 }}
                         className="glass-promo-badge"
@@ -87,6 +97,18 @@ const ProductCard = ({ product }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Indicador de estoque baixo (CRO-7) */}
+            {product.manage_stock && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
+                <div style={{
+                    position: 'absolute', top: '8px', right: '8px', zIndex: 3,
+                    background: 'rgba(239,68,68,0.9)', color: '#fff',
+                    fontSize: '0.65rem', fontWeight: 900, padding: '3px 8px',
+                    borderRadius: '20px', letterSpacing: '0.5px', backdropFilter: 'blur(4px)'
+                }}>
+                    Apenas {product.stock_quantity} restantes!
+                </div>
+            )}
  
             {/* Image Section */}
             <div className="card-media">

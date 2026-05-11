@@ -38,11 +38,6 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             flexDirection: 'column'
                         }}
                     >
-                        {/* Category Badge (Fora do overflow hidden) */}
-                        <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: '#D4AF37', color: '#000', padding: '8px 20px', borderRadius: '20px', fontSize: '0.65rem', fontWeight: 900, zIndex: 10, boxShadow: '0 10px 20px rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
-                            <TrendingUp size={12} /> {baseProduct.categoryName || 'Sugestão'}
-                        </div>
-
                         <div style={{
                             background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(15, 15, 15, 0.98))', 
                             borderRadius: '35px', 
@@ -101,18 +96,24 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                             const qty = getQty(item.id);
                             const isAdded = qty > 0;
 
+                            // Rótulo explicando por que o item foi recomendado (CRO-8)
+                            const reasonLabel = item.reason === 'history'  ? '🔄 Você comprou antes'
+                                              : item.reason === 'category' ? '🥩 Combina com o pedido'
+                                              : item.reason === 'promo'    ? '🔥 Em promoção'
+                                              : '⭐ Sugestão do chef';
+
                             return (
-                                <motion.div 
+                                <motion.div
                                     key={item.id || index}
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.1 }}
-                                    style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '10px', 
-                                        padding: '10px', 
-                                        background: isAdded ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)', 
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        padding: '10px',
+                                        background: isAdded ? 'rgba(212, 175, 55, 0.05)' : 'rgba(255,255,255,0.02)',
                                         borderRadius: '20px',
                                         border: isAdded ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid rgba(255,255,255,0.05)',
                                         transition: '0.3s',
@@ -120,20 +121,24 @@ const UpsellModal = ({ isOpen, onClose, baseProduct, recommendations, onAdd, onU
                                     }}
                                 >
                                     <div style={{ width: '70px', height: '70px', borderRadius: '15px', overflow: 'hidden', background: '#000', flexShrink: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <img 
-                                            src={getImageUrl(item.image)} 
-                                            alt={item.title} 
+                                        <img
+                                            src={getImageUrl(item.image)}
+                                            alt={item.title}
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isAdded ? 0.7 : 1 }}
                                             onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=Wilson'; }}
                                         />
                                     </div>
-                                    
+
                                     <div style={{ flex: 1, minWidth: 0 }}>
+                                        {/* Justificativa da recomendação (CRO-8) */}
+                                        <span style={{ fontSize: '0.62rem', color: '#888', fontWeight: 700, display: 'block', marginBottom: '3px' }}>
+                                            {reasonLabel}
+                                        </span>
                                         <h4 style={{ color: isAdded ? '#D4AF37' : '#fff', fontSize: '0.85rem', fontWeight: 700, margin: '0 0 6px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                             {item.title}
                                         </h4>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{ color: isAdded ? '#D4AF37' : '#D4AF37', fontWeight: 900, fontSize: '1rem' }}>
+                                            <span style={{ color: '#D4AF37', fontWeight: 900, fontSize: '1rem' }}>
                                                 R$ {item.price?.toFixed(2)}
                                             </span>
                                         </div>

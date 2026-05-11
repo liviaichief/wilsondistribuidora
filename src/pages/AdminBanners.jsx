@@ -8,6 +8,17 @@ import { getImageUrl } from '../lib/imageUtils';
 import imageCompression from 'browser-image-compression';
 import { generateBannerImage } from '../services/aiService';
 import { getSettings, getCategories, getBrands, saveBrands, getBrandsList } from '../services/dataService';
+import { getCurrentSeason } from '../services/seasonalService';
+
+const SEASONAL_EVENTS = [
+    { id: 'natal',        name: 'Natal',         emoji: '🎄' },
+    { id: 'carnaval',     name: 'Carnaval',       emoji: '🎉' },
+    { id: 'dia_dos_pais', name: 'Dia dos Pais',   emoji: '👨' },
+    { id: 'dia_das_maes', name: 'Dia das Mães',   emoji: '💐' },
+    { id: 'copa',         name: 'Copa do Mundo',  emoji: '⚽' },
+    { id: 'sao_joao',     name: 'São João',       emoji: '🎆' },
+    { id: 'ano_novo',     name: 'Réveillon',      emoji: '🥂' },
+];
 import './Admin.css';
 
 const AdminBanners = () => {
@@ -34,7 +45,8 @@ const AdminBanners = () => {
         active: true,
         display_order: 0,
         duration: 5,
-        thumbnail_url: ''
+        thumbnail_url: '',
+        season_tag: ''
     });
     const [imageFile, setImageFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -120,13 +132,14 @@ const AdminBanners = () => {
                 active: banner.active ?? true,
                 display_order: banner.display_order || 0,
                 duration: banner.duration || 5,
-                thumbnail_url: banner.thumbnail_url || ''
+                thumbnail_url: banner.thumbnail_url || '',
+                season_tag: banner.season_tag || ''
             });
             setPreviewUrl(getImageUrl(banner.image_url));
             if (banner.thumbnail_url) setThumbPreviewUrl(getImageUrl(banner.thumbnail_url));
         } else {
             setEditingBanner(null);
-            setFormData({ title: '', image_url: '', product_id: '', category_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '' });
+            setFormData({ title: '', image_url: '', product_id: '', category_id: '', active: true, display_order: banners.length + 1, duration: 5, thumbnail_url: '', season_tag: '' });
         }
         setAiPrompt('');
         setAiText('');
@@ -257,7 +270,8 @@ const AdminBanners = () => {
                 product: formData.product_id || null,
                 active: formData.active,
                 display_order: parseInt(formData.display_order),
-                duration: parseInt(formData.duration)
+                duration: parseInt(formData.duration),
+                season_tag: formData.season_tag || null
             };
             if (editingBanner) {
                 await databases.updateDocument(DATABASE_ID, COLLECTIONS.BANNERS, editingBanner.id, payload);
@@ -280,6 +294,7 @@ const AdminBanners = () => {
         if (parseInt(formData.display_order) !== parseInt(editingBanner.display_order || 0)) return true;
         if (parseInt(formData.duration) !== parseInt(editingBanner.duration || 5)) return true;
         if (formData.thumbnail_url !== (editingBanner.thumbnail_url || '')) return true;
+        if ((formData.season_tag || '') !== (editingBanner.season_tag || '')) return true;
         return false;
     };
 
@@ -448,7 +463,10 @@ const AdminBanners = () => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isMobile ? '15px' : '20px' }}>
                                         <div style={{ flex: 1, paddingRight: '10px' }}>
                                             <h3 style={{ margin: 0, fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{banner.title || `Banner #${banner.id.substring(0, 6)}`}</h3>
-                                            <div style={{ color: '#555', fontSize: isMobile ? '0.75rem' : '0.85rem', marginTop: '4px', fontWeight: 700 }}>{products.find(p => p.id === banner.product_id)?.title || 'Sem link externo'}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                                <span style={{ color: '#555', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: 700 }}>{products.find(p => p.id === banner.product_id)?.title || 'Sem link'}</span>
+                                                {banner.season_tag && (() => { const s = SEASONAL_EVENTS.find(ev => ev.id === banner.season_tag); return s ? <span style={{ fontSize: '0.65rem', background: 'rgba(212,175,55,0.12)', color: '#D4AF37', borderRadius: '6px', padding: '2px 7px', fontWeight: 700, border: '1px solid rgba(212,175,55,0.2)' }}>{s.emoji} {s.name}</span> : null; })()}
+                                            </div>
                                         </div>
                                         <div style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.8rem' }}>{banner.display_order}</div>
                                     </div>
@@ -683,6 +701,37 @@ const AdminBanners = () => {
                                         <label style={{ fontSize: '0.75rem', fontWeight: 900, color: '#888', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Duração (s)</label>
                                         <input type="number" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: isMobile ? '14px 10px' : '14px 18px', color: '#fff', fontWeight: 900, width: '100%', outline: 'none' }} />
                                     </div>
+                                </div>
+
+                                {/* Tema Sazonal */}
+                                <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                        <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#fff' }}>🎆 Tema Sazonal</span>
+                                        {formData.season_tag && (
+                                            <button onClick={() => setFormData({...formData, season_tag: ''})} style={{ background: 'none', border: 'none', color: '#555', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 700 }}>Limpar</button>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                        {SEASONAL_EVENTS.map(s => (
+                                            <button
+                                                key={s.id}
+                                                type="button"
+                                                onClick={() => setFormData({...formData, season_tag: formData.season_tag === s.id ? '' : s.id})}
+                                                style={{
+                                                    padding: '6px 12px', borderRadius: '10px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer',
+                                                    background: formData.season_tag === s.id ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.04)',
+                                                    border: `1px solid ${formData.season_tag === s.id ? 'rgba(212,175,55,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                                                    color: formData.season_tag === s.id ? '#D4AF37' : '#666',
+                                                    transition: '0.2s'
+                                                }}
+                                            >
+                                                {s.emoji} {s.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p style={{ margin: '10px 0 0', fontSize: '0.68rem', color: '#444', lineHeight: 1.4 }}>
+                                        Banners com tema sazonal aparecem com prioridade quando esse evento está ativo na loja.
+                                    </p>
                                 </div>
 
                                 <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

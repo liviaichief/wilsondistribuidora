@@ -56,23 +56,19 @@ export default function BBQMasterChat() {
     const userText = (text ?? input).trim();
     if (!userText || loading || !config) return;
 
+    const newHistory = [...messages, { role: 'user', content: userText }];
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userText }]);
+    setMessages(newHistory);
     setLoading(true);
 
     try {
-      const { generateProductDescription } = await import('../../services/aiService');
-      const prompt = `${config.systemPrompt}\n\nCliente perguntou: "${userText}"\n\nResponda de forma curta e útil.`;
-      const response = await generateProductDescription({ title: userText, description: '', prompt });
-
-      setMessages(prev => [...prev, {
-        role:    'assistant',
-        content: response || 'Ótima pergunta! Para o melhor churrasco, a temperatura e a qualidade da carne são essenciais. 🥩🔥',
-      }]);
+      const { chatBBQMaster } = await import('../../services/aiService');
+      const reply = await chatBBQMaster(newHistory, config.systemPrompt);
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       setMessages(prev => [...prev, {
         role:    'assistant',
-        content: 'Desculpe, não consegui responder agora. Tente novamente! 🙏',
+        content: 'Desculpe, não consegui responder agora. Verifique se a chave OpenAI está configurada nas settings. 🙏',
       }]);
     } finally {
       setLoading(false);

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getProfiles, updateProfile, getOrders, deleteProfile, createProfile, ID } from '../services/dataService';
-import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus, RefreshCw } from 'lucide-react';
+import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, ShieldCheck, ShieldOff, ShieldAlert, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus, RefreshCw, Lock, Unlock, KeyRound, MessageSquare, Link, Copy, LogOut, Smartphone } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { account } from '../lib/appwrite';
+import { openWhatsApp } from '../services/whatsappService';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const AdminUsers = () => {
@@ -12,6 +15,8 @@ const AdminUsers = () => {
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const { showAlert } = useAlert();
+    const { role: currentRole } = useAuth();
+    const isOwner = currentRole === 'owner';
     
     // Custom States
     const [deleteModal, setDeleteModal] = useState({ show: false, userId: null, userName: '' });
@@ -33,6 +38,8 @@ const AdminUsers = () => {
         address_complement: ''
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [detailTab, setDetailTab]         = useState('perfil'); // 'perfil' | 'seguranca'
+    const [securityLoading, setSecurityLoading] = useState({});
 
     const [newUsersCount, setNewUsersCount] = useState(0);
     const lastKnownCount = React.useRef(null);
@@ -60,6 +67,22 @@ const AdminUsers = () => {
             // silencioso
         }
     }, [showAlert]);
+
+    // Migra perfis com role='admin' para 'master' automaticamente ao carregar
+    useEffect(() => {
+        const migrateAdminToMaster = async () => {
+            try {
+                const res = await getProfiles();
+                const adminUsers = (res.documents || []).filter(u => u.role === 'admin');
+                if (adminUsers.length === 0) return;
+                await Promise.all(adminUsers.map(u => updateProfile(u.$id, { role: 'master' })));
+                console.log(`[migration] ${adminUsers.length} perfil(is) admin → master`);
+            } catch (err) {
+                console.warn('[migration] Falha ao migrar admin→master:', err.message);
+            }
+        };
+        migrateAdminToMaster();
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -298,7 +321,9 @@ const AdminUsers = () => {
             setNewUserForm({ full_name: '', email: '', whatsapp: '', role: 'client' });
             loadData();
         } catch (err) {
-            showAlert('Erro ao cadastrar usuário', 'error');
+            console.error('[handleCreateUser]', err);
+            const msg = err?.message || err?.response?.message || 'Verifique o console para detalhes.';
+            showAlert(`Erro ao cadastrar usuário: ${msg}`, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -373,13 +398,111 @@ const AdminUsers = () => {
         return orders.filter(o => o.user_id === userId).length;
     };
 
+    // ── Funções de Segurança ────────────────────────────────────────────────
+
+    const secBusy = (key, v) => setSecurityLoading(p => ({ ...p, [key]: v }));
+
+    // Envia e-mail de redefinição de senha via Appwrite
+    const handlePasswordRecoveryEmail = async (user) => {
+        if (!user.email) return showAlert('Usuário sem e-mail cadastrado.', 'warning');
+        secBusy('email', true);
+        try {
+            const resetUrl = `${window.location.origin}/reset-password`;
+            await account.createRecovery(user.email, resetUrl);
+            showAlert(`Link de redefinição enviado para ${user.email}`, 'success', null, 4000);
+        } catch (err) {
+            showAlert(`Erro ao enviar e-mail: ${err.message}`, 'error');
+        } finally {
+            secBusy('email', false);
+        }
+    };
+
+    // Envia link de redefinição via WhatsApp (abre conversa com o link)
+    const handlePasswordRecoveryWhatsApp = async (user) => {
+        const phone = (user.whatsapp || '').replace(/\D/g, '');
+        if (!phone) return showAlert('Usuário sem WhatsApp cadastrado.', 'warning');
+        secBusy('whatsapp', true);
+        try {
+            const resetUrl = `${window.location.origin}/reset-password`;
+            const name = user.full_name?.split(' ')[0] || 'Olá';
+            const msg = `Olá ${name}! 👋\n\nVocê solicitou a redefinição de senha.\n\nClique no link abaixo para criar uma nova senha:\n🔗 ${resetUrl}\n\n_O link expira em 1 hora._`;
+            openWhatsApp(`55${phone}`, msg);
+            showAlert('WhatsApp aberto com o link de redefinição.', 'success', null, 3000);
+        } catch (err) {
+            showAlert('Erro ao abrir WhatsApp.', 'error');
+        } finally {
+            secBusy('whatsapp', false);
+        }
+    };
+
+    // Bloqueia ou desbloqueia a conta do usuário
+    const handleToggleBlock = async (user) => {
+        const newBlocked = !user.is_blocked;
+        secBusy('block', true);
+        try {
+            await updateProfile(user.$id, { is_blocked: newBlocked });
+            setUsers(prev => prev.map(u => u.$id === user.$id ? { ...u, is_blocked: newBlocked } : u));
+            setSelectedUser(prev => ({ ...prev, is_blocked: newBlocked }));
+            showAlert(newBlocked ? 'Conta bloqueada com sucesso.' : 'Conta desbloqueada com sucesso.', newBlocked ? 'warning' : 'success', null, 3000);
+        } catch (err) {
+            showAlert(`Erro ao ${newBlocked ? 'bloquear' : 'desbloquear'} conta: ${err.message}`, 'error');
+        } finally {
+            secBusy('block', false);
+        }
+    };
+
+    // Ativa/desativa exigência de MFA para o perfil
+    const handleToggleMFA = async (user) => {
+        const newMFA = !user.mfa_required;
+        secBusy('mfa', true);
+        try {
+            await updateProfile(user.$id, { mfa_required: newMFA });
+            setUsers(prev => prev.map(u => u.$id === user.$id ? { ...u, mfa_required: newMFA } : u));
+            setSelectedUser(prev => ({ ...prev, mfa_required: newMFA }));
+            showAlert(newMFA ? 'MFA ativado para este usuário.' : 'MFA desativado.', 'success', null, 3000);
+        } catch (err) {
+            showAlert(`Erro ao configurar MFA: ${err.message}`, 'error');
+        } finally {
+            secBusy('mfa', false);
+        }
+    };
+
+    // Marca conta para forçar troca de senha no próximo login
+    const handleForcePasswordChange = async (user) => {
+        const curr = !user.force_password_change;
+        secBusy('forcePass', true);
+        try {
+            await updateProfile(user.$id, { force_password_change: curr });
+            setUsers(prev => prev.map(u => u.$id === user.$id ? { ...u, force_password_change: curr } : u));
+            setSelectedUser(prev => ({ ...prev, force_password_change: curr }));
+            showAlert(curr ? 'Usuário deverá redefinir senha no próximo acesso.' : 'Obrigação de troca de senha removida.', 'success', null, 3000);
+        } catch (err) {
+            showAlert('Erro ao configurar política de senha.', 'error');
+        } finally {
+            secBusy('forcePass', false);
+        }
+    };
+
+    // Copia link de convite para acesso à loja
+    const handleCopyInviteLink = (user) => {
+        const link = `${window.location.origin}/?ref=${user.$id}`;
+        navigator.clipboard.writeText(link).then(() => {
+            showAlert('Link de convite copiado!', 'success', null, 2000);
+        });
+    };
+
+    // ── Fim Funções de Segurança ────────────────────────────────────────────
+
     const filteredUsers = users.filter(u => {
+        // Proprietário não enxerga contas master
+        if (isOwner && (u.role === 'master' || u.role === 'admin')) return false;
+
         const userName = (u.full_name || u.name || '').toLowerCase();
         const userEmail = (u.email || '').toLowerCase();
         const searchTerm = (search || '').toLowerCase();
         const matchesSearch = userName.includes(searchTerm) || userEmail.includes(searchTerm);
-        const matchesRole = roleFilter === 'all' || 
-                           (roleFilter === 'admin' && (u.role === 'admin' || u.role === 'owner' || u.role === 'master')) || 
+        const matchesRole = roleFilter === 'all' ||
+                           (roleFilter === 'admin' && (u.role === 'admin' || u.role === 'owner' || u.role === 'master')) ||
                            (roleFilter === 'client' && (u.role === 'client' || u.role === 'user' || !u.role));
         return matchesSearch && matchesRole;
     });
@@ -388,43 +511,41 @@ const AdminUsers = () => {
 
     return (
         <div style={{ padding: '0 20px 40px' }}>
-            <div className="glass-card" style={{ padding: '30px', marginBottom: '30px', display: 'flex', gap: '20px', alignItems: 'center' }}>
-                <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 15px' }}>
-                    <Search size={20} color="#555" />
-                    <input placeholder="Buscar usuários por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '15px 12px', width: '100%', outline: 'none' }} />
+            <div className="glass-card" style={{ padding: '12px 16px', marginBottom: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Campo de busca */}
+                <div style={{ flex: 1, minWidth: '180px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+                    <Search size={14} color="#555" />
+                    <input placeholder="Buscar por nome ou e-mail..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'none', border: 'none', color: '#fff', padding: '8px 10px', width: '100%', outline: 'none', fontSize: '0.82rem' }} />
                 </div>
-                <button 
+
+                {/* Atualizar */}
+                <button
                     onClick={loadData}
                     disabled={loading}
-                    className="hover-scale"
                     title="Atualizar Lista"
-                    style={{ position: 'relative', padding: '15px', borderRadius: '16px', background: newUsersCount > 0 ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${newUsersCount > 0 ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`, color: newUsersCount > 0 ? '#22c55e' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
+                    style={{ position: 'relative', padding: '8px 11px', borderRadius: '10px', background: newUsersCount > 0 ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${newUsersCount > 0 ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)'}`, color: newUsersCount > 0 ? '#22c55e' : '#aaa', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
                 >
-                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                    <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                     {newUsersCount > 0 && (
-                        <span style={{
-                            position: 'absolute', top: '-8px', right: '-8px',
-                            background: '#22c55e', color: '#000',
-                            fontSize: '0.6rem', fontWeight: 900,
-                            width: '20px', height: '20px', borderRadius: '50%',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '2px solid #050505',
-                            animation: 'pulse 1.5s infinite'
-                        }}>
-                            +{newUsersCount}
+                        <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#22c55e', color: '#000', fontSize: '0.58rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {newUsersCount}
                         </span>
                     )}
                 </button>
-                <button 
+
+                {/* Novo Usuário */}
+                <button
                     onClick={() => setCreateModal(true)}
-                    style={{ padding: '15px 30px', borderRadius: '16px', background: '#D4AF37', border: 'none', color: '#000', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    style={{ padding: '8px 14px', borderRadius: '10px', background: '#D4AF37', border: 'none', color: '#000', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
                 >
-                    <Plus size={20} /> NOVO USUÁRIO
+                    <Plus size={14} /> Novo Usuário
                 </button>
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', padding: '5px', display: 'flex', gap: '5px' }}>
-                    <button onClick={() => setRoleFilter('all')} style={{ padding: '12px 24px', borderRadius: '14px', border: 'none', background: roleFilter === 'all' ? 'rgba(255,255,255,0.05)' : 'transparent', color: roleFilter === 'all' ? '#fff' : '#444', fontWeight: 900, cursor: 'pointer', transition: '0.3s' }}>TODOS</button>
-                    <button onClick={() => setRoleFilter('admin')} style={{ padding: '12px 24px', borderRadius: '14px', border: 'none', background: roleFilter === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: roleFilter === 'admin' ? '#ef4444' : '#444', fontWeight: 900, cursor: 'pointer', transition: '0.3s' }}>ADMINS</button>
-                    <button onClick={() => setRoleFilter('client')} style={{ padding: '12px 24px', borderRadius: '14px', border: 'none', background: roleFilter === 'client' ? 'rgba(34, 197, 94, 0.1)' : 'transparent', color: roleFilter === 'client' ? '#22c55e' : '#444', fontWeight: 900, cursor: 'pointer', transition: '0.3s' }}>CLIENTES</button>
+
+                {/* Filtros */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', padding: '3px', display: 'flex', gap: '2px' }}>
+                    <button onClick={() => setRoleFilter('all')} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: roleFilter === 'all' ? 'rgba(255,255,255,0.07)' : 'transparent', color: roleFilter === 'all' ? '#fff' : '#555', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem', transition: '0.2s' }}>Todos</button>
+                    {!isOwner && <button onClick={() => setRoleFilter('admin')} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: roleFilter === 'admin' ? 'rgba(168,85,247,0.1)' : 'transparent', color: roleFilter === 'admin' ? '#a855f7' : '#555', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem', transition: '0.2s' }}>Master</button>}
+                    <button onClick={() => setRoleFilter('client')} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: roleFilter === 'client' ? 'rgba(34,197,94,0.1)' : 'transparent', color: roleFilter === 'client' ? '#22c55e' : '#555', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem', transition: '0.2s' }}>Clientes</button>
                 </div>
             </div>
             {/* Barra de status de sincronização automática */}
@@ -435,8 +556,8 @@ const AdminUsers = () => {
                 </span>
             </div>
 
-            <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+            <div>
+                <div>
                     <div className="custom-scroll" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
                         <table className="desktop-only products-table" style={{ width: '100%', minWidth: '900px', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
                             <thead>
@@ -486,17 +607,17 @@ const AdminUsers = () => {
                                             <span style={{ 
                                                 fontSize: '0.65rem', 
                                                 fontWeight: 900, 
-                                                color: u.role === 'master' ? '#a855f7' : (u.role === 'admin' || u.role === 'owner' ? '#ef4444' : '#fff'), 
-                                                background: u.role === 'master' ? 'rgba(168, 85, 247, 0.1)' : (u.role === 'admin' || u.role === 'owner' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)'), 
+                                                color: (u.role === 'master' || u.role === 'admin') ? '#a855f7' : u.role === 'owner' ? '#D4AF37' : '#fff',
+                                                background: (u.role === 'master' || u.role === 'admin') ? 'rgba(168, 85, 247, 0.1)' : u.role === 'owner' ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255,255,255,0.05)',
                                                 padding: '4px 10px', 
                                                 borderRadius: '8px' 
                                             }}>
-                                                {(u.role === 'client' ? 'CLIENTE' : u.role?.toUpperCase()) || 'CLIENTE'}
+                                                {u.role === 'client' || !u.role ? 'CLIENTE' : u.role === 'owner' ? 'PROPRIETÁRIO' : 'MASTER'}
                                             </span>
                                         </td>
                                         <td style={{ padding: '12px 20px', borderRadius: '0 18px 18px 0', border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', textAlign: 'right', overflow: 'visible' }}>
                                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                                <button title="Ver Detalhes" style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}><Eye size={16} /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); setSelectedUser(u); setIsEditing(false); setDetailTab('perfil'); }} title="Ver Detalhes" style={{ padding: '8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', cursor: 'pointer' }}><Eye size={16} /></button>
                                                 <button onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, userId: u.$id, userName: u.full_name || u.name }); }} title="Excluir Usuário" style={{ padding: '8px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', zIndex: 20, position: 'relative' }}><Trash2 size={16} /></button>
                                             </div>
                                         </td>
@@ -539,12 +660,12 @@ const AdminUsers = () => {
                                         <span style={{ 
                                             fontSize: '0.65rem', 
                                             fontWeight: 900, 
-                                            color: u.role === 'master' ? '#a855f7' : (u.role === 'admin' || u.role === 'owner' ? '#ef4444' : '#fff'), 
-                                            background: u.role === 'master' ? 'rgba(168, 85, 247, 0.1)' : (u.role === 'admin' || u.role === 'owner' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)'), 
+                                            color: u.role === 'master' ? '#a855f7' : u.role === 'owner' ? '#D4AF37' : (u.role === 'admin' ? '#ef4444' : '#fff'),
+                                            background: u.role === 'master' ? 'rgba(168, 85, 247, 0.1)' : u.role === 'owner' ? 'rgba(212, 175, 55, 0.15)' : (u.role === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)'),
                                             padding: '4px 8px', 
                                             borderRadius: '8px' 
                                         }}>
-                                            {(u.role === 'client' ? 'CLI' : u.role?.toUpperCase().substring(0,3)) || 'CLI'}
+                                            {u.role === 'client' || !u.role ? 'CLI' : u.role === 'owner' ? 'PRO' : 'MAS'}
                                         </span>
                                         <button onClick={(e) => { e.stopPropagation(); setDeleteModal({ show: true, userId: u.$id, userName: u.full_name || u.name }); }} title="Excluir" style={{ padding: '6px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', zIndex: 20 }}><Trash2 size={16} /></button>
                                     </div>
@@ -553,47 +674,26 @@ const AdminUsers = () => {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div
-                    className="glass-card"
-                    style={{ 
-                        width: '380px', 
-                        position: 'sticky', 
-                        top: '10px', 
-                        height: 'calc(100vh - 200px)', 
-                        padding: '0', 
-                        border: '1px solid rgba(255,255,255,0.1)', 
-                        overflowY: 'auto', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        zIndex: 10,
-                        scrollbarWidth: 'none',
-                        background: selectedUser ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)'
-                    }}
-                >
-                    <AnimatePresence mode="wait">
-                        {!selectedUser ? (
-                            <motion.div
-                                key="empty"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', textAlign: 'center', color: '#444' }}
-                            >
-                                <div style={{ width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                                    <User size={30} />
-                                </div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#555', marginBottom: '10px' }}>Nenhum usuário selecionado</h3>
-                                <p style={{ fontSize: '0.8rem', fontWeight: 700 }}>Selecione um cliente na lista ao lado para visualizar os detalhes completos.</p>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key={selectedUser.$id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                style={{ display: 'flex', flexDirection: 'column', flex: 1 }}
-                            >
+            {/* Drawer modal — detalhe do usuário */}
+            <AnimatePresence>
+                {selectedUser && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={(e) => { if (e.target === e.currentTarget) { setSelectedUser(null); setIsEditing(false); setDetailTab('perfil'); } }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end' }}
+                    >
+                        <motion.div
+                            key={selectedUser.$id}
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                            style={{ width: '460px', maxWidth: '100vw', height: '100vh', padding: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', scrollbarWidth: 'none', background: 'rgba(10,10,10,0.99)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+                        >
                                 <div style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,0,0,0) 100%)', padding: '40px 30px 30px', position: 'relative' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <div style={{ width: '80px', height: '80px', borderRadius: '25px', background: 'rgba(212,175,55,0.2)', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 900, color: '#D4AF37', marginBottom: '20px' }}>
@@ -617,6 +717,110 @@ const AdminUsers = () => {
                                     )}
                                 </div>
 
+                                {/* Tab switcher: Perfil | Segurança (Segurança visível apenas para master) */}
+                                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 20px' }}>
+                                    {[{ id: 'perfil', label: 'Perfil', icon: <User size={13} /> }, ...(!isOwner ? [{ id: 'seguranca', label: 'Segurança', icon: <Shield size={13} /> }] : [])].map(tab => (
+                                        <button key={tab.id} onClick={() => setDetailTab(tab.id)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '12px 16px', background: 'none', border: 'none', borderBottom: `2px solid ${detailTab === tab.id ? '#D4AF37' : 'transparent'}`, color: detailTab === tab.id ? '#D4AF37' : '#555', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', transition: '0.2s', marginBottom: '-1px' }}>
+                                            {tab.icon} {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {detailTab === 'seguranca' ? (
+                                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                                    {/* Status da conta */}
+                                    <div style={{ background: selectedUser.is_blocked ? 'rgba(239,68,68,0.06)' : 'rgba(34,197,94,0.06)', border: `1px solid ${selectedUser.is_blocked ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.15)'}`, borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            {selectedUser.is_blocked ? <ShieldOff size={18} color="#ef4444" /> : <ShieldCheck size={18} color="#22c55e" />}
+                                            <div>
+                                                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: selectedUser.is_blocked ? '#ef4444' : '#22c55e' }}>{selectedUser.is_blocked ? 'Conta Bloqueada' : 'Conta Ativa'}</div>
+                                                <div style={{ fontSize: '0.68rem', color: '#555' }}>{selectedUser.is_blocked ? 'Usuário não consegue fazer login' : 'Acesso liberado normalmente'}</div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleToggleBlock(selectedUser)} disabled={securityLoading.block} style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', background: selectedUser.is_blocked ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)', color: selectedUser.is_blocked ? '#22c55e' : '#ef4444', fontWeight: 700, fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            {securityLoading.block ? <Loader2 size={13} className="animate-spin" /> : selectedUser.is_blocked ? <><Unlock size={13} /> Liberar</> : <><Lock size={13} /> Bloquear</>}
+                                        </button>
+                                    </div>
+
+                                    {/* Redefinição de senha */}
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <KeyRound size={15} color="#D4AF37" />
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ccc' }}>Redefinição de Senha</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <button onClick={() => handlePasswordRecoveryEmail(selectedUser)} disabled={securityLoading.email || !selectedUser.email} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '9px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8', fontWeight: 600, fontSize: '0.78rem', cursor: selectedUser.email ? 'pointer' : 'not-allowed', opacity: selectedUser.email ? 1 : 0.4 }}>
+                                                {securityLoading.email ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                                                Enviar link por e-mail
+                                                {selectedUser.email && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>{selectedUser.email}</span>}
+                                            </button>
+                                            <button onClick={() => handlePasswordRecoveryWhatsApp(selectedUser)} disabled={securityLoading.whatsapp || !selectedUser.whatsapp} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '9px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 600, fontSize: '0.78rem', cursor: selectedUser.whatsapp ? 'pointer' : 'not-allowed', opacity: selectedUser.whatsapp ? 1 : 0.4 }}>
+                                                {securityLoading.whatsapp ? <Loader2 size={14} className="animate-spin" /> : <MessageSquare size={14} />}
+                                                Enviar link por WhatsApp
+                                                {selectedUser.whatsapp && <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: '#555' }}>{selectedUser.whatsapp}</span>}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Políticas de senha */}
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <ShieldAlert size={15} color="#D4AF37" />
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ccc' }}>Políticas de Acesso</span>
+                                        </div>
+                                        {/* Forçar troca de senha */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.76rem', color: '#ccc', fontWeight: 600 }}>Forçar troca de senha</div>
+                                                <div style={{ fontSize: '0.67rem', color: '#555' }}>Usuário deve redefinir no próximo login</div>
+                                            </div>
+                                            <button onClick={() => handleForcePasswordChange(selectedUser)} disabled={securityLoading.forcePass} style={{ width: '42px', height: '24px', borderRadius: '12px', border: 'none', background: selectedUser.force_password_change ? '#D4AF37' : 'rgba(255,255,255,0.1)', cursor: 'pointer', position: 'relative', transition: '0.2s' }}>
+                                                {securityLoading.forcePass ? <Loader2 size={12} className="animate-spin" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff' }} /> : <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: selectedUser.force_password_change ? '21px' : '3px', transition: '0.2s' }} />}
+                                            </button>
+                                        </div>
+                                        {/* MFA — apenas para master/owner */}
+                                        {(selectedUser.role === 'master' || selectedUser.role === 'owner') && (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+                                                <div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <span style={{ fontSize: '0.76rem', color: '#ccc', fontWeight: 600 }}>Autenticação em dois fatores</span>
+                                                        <span style={{ fontSize: '0.6rem', background: 'rgba(168,85,247,0.15)', color: '#a855f7', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>MFA</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '0.67rem', color: '#555' }}>Recomendado para Master e Proprietário</div>
+                                                </div>
+                                                <button onClick={() => handleToggleMFA(selectedUser)} disabled={securityLoading.mfa} style={{ width: '42px', height: '24px', borderRadius: '12px', border: 'none', background: selectedUser.mfa_required ? '#a855f7' : 'rgba(255,255,255,0.1)', cursor: 'pointer', position: 'relative', transition: '0.2s' }}>
+                                                    {securityLoading.mfa ? <Loader2 size={12} className="animate-spin" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', color: '#fff' }} /> : <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: selectedUser.mfa_required ? '21px' : '3px', transition: '0.2s' }} />}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Ações rápidas */}
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <Link size={15} color="#D4AF37" />
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ccc' }}>Ações Rápidas</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <button onClick={() => handleCopyInviteLink(selectedUser)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '9px', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)', color: '#D4AF37', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
+                                                <Copy size={14} /> Copiar link de convite
+                                            </button>
+                                            <button onClick={() => setDeleteModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name })} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '9px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)', color: '#ef4444', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
+                                                <Trash2 size={14} /> Excluir conta permanentemente
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Info último acesso */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px' }}>
+                                        <Clock size={13} color="#444" />
+                                        <span style={{ fontSize: '0.7rem', color: '#555' }}>
+                                            Perfil atualizado em: {selectedUser.$updatedAt ? new Date(selectedUser.$updatedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                                        </span>
+                                    </div>
+                                </div>
+                                ) : (
                                 <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                         <div 
@@ -732,18 +936,20 @@ const AdminUsers = () => {
                                             >
                                                 CLIENTE
                                             </button>
-                                            <button 
-                                                onClick={() => isEditing ? setEditForm({...editForm, role: 'admin'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'admin' })}
-                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? 'rgba(239, 68, 68, 0.1)' : 'transparent', color: (isEditing ? editForm.role === 'admin' : selectedUser.role === 'admin') ? '#ef4444' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                            <button
+                                                onClick={() => isEditing ? setEditForm({...editForm, role: 'owner'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'owner' })}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'owner' : selectedUser.role === 'owner') ? 'rgba(212, 175, 55, 0.15)' : 'transparent', color: (isEditing ? editForm.role === 'owner' : selectedUser.role === 'owner') ? '#D4AF37' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                                             >
-                                                ADMIN
+                                                PROPRIETÁRIO
                                             </button>
-                                            <button 
+                                            {!isOwner && (
+                                            <button
                                                 onClick={() => isEditing ? setEditForm({...editForm, role: 'master'}) : setRoleModal({ show: true, userId: selectedUser.$id, userName: selectedUser.full_name || selectedUser.name, newRole: 'master' })}
                                                 style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', background: (isEditing ? editForm.role === 'master' : selectedUser.role === 'master') ? 'rgba(168, 85, 247, 0.1)' : 'transparent', color: (isEditing ? editForm.role === 'master' : selectedUser.role === 'master') ? '#a855f7' : '#444', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                                             >
                                                 MASTER
                                             </button>
+                                            )}
                                         </div>
                                     </div>
 
@@ -756,11 +962,11 @@ const AdminUsers = () => {
                                         </div>
                                     )}
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </div>
+                                )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {createModal && (
@@ -784,7 +990,7 @@ const AdminUsers = () => {
                                     </div>
                                     <div>
                                         <label style={{ fontSize: '0.7rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>E-mail</label>
-                                        <input required type="email" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value.toLowerCase()})} placeholder="exemplo@email.com" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }} />
+                                        <input required type="text" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value.toLowerCase()})} placeholder="exemplo@email.com" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }} />
                                     </div>
                                     <div>
                                         <label style={{ fontSize: '0.7rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>WhatsApp</label>
@@ -823,8 +1029,8 @@ const AdminUsers = () => {
                                         <label style={{ fontSize: '0.7rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Cargo / Permissão</label>
                                         <select value={newUserForm.role} onChange={e => setNewUserForm({...newUserForm, role: e.target.value})} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '12px', borderRadius: '12px', outline: 'none' }}>
                                             <option value="client" style={{ background: '#111' }}>Cliente</option>
-                                            <option value="admin" style={{ background: '#111' }}>Administrador</option>
-                                            <option value="master" style={{ background: '#111' }}>Master</option>
+                                            <option value="owner" style={{ background: '#111' }}>Proprietário</option>
+                                            {!isOwner && <option value="master" style={{ background: '#111' }}>Master</option>}
                                         </select>
                                     </div>
                                 </div>
@@ -854,7 +1060,7 @@ const AdminUsers = () => {
                             
                             <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', marginBottom: '15px' }}>Alterar Permissão</h3>
                             <p style={{ color: '#888', fontSize: '1.1rem', marginBottom: '35px', lineHeight: '1.6' }}>
-                                Você deseja alterar o nível de acesso de <strong style={{ color: '#fff' }}>{roleModal.userName}</strong> para <strong style={{ color: roleModal.newRole === 'admin' ? '#ef4444' : '#22c55e' }}>{roleModal.newRole?.toUpperCase()}</strong>?
+                                Você deseja alterar o nível de acesso de <strong style={{ color: '#fff' }}>{roleModal.userName}</strong> para <strong style={{ color: roleModal.newRole === 'master' ? '#a855f7' : roleModal.newRole === 'owner' ? '#D4AF37' : '#22c55e' }}>{roleModal.newRole === 'master' ? 'MASTER' : roleModal.newRole === 'owner' ? 'PROPRIETÁRIO' : 'CLIENTE'}</strong>?
                             </p>
 
                             <div style={{ display: 'flex', gap: '15px' }}>

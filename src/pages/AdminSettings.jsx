@@ -89,9 +89,7 @@ const inputStyle = {
 
 /* ─── Main Component ─── */
 const AdminSettings = () => {
-    const { isAdmin, role } = useAuth();
-    const isOwner = role === 'owner';
-    const isMaster = role === 'master';
+    const { isAdmin, isOwner, isMaster, role } = useAuth();
     const { reloadTheme } = useTheme();
     const [settings, setSettings] = useState({
         whatsapp_number: '',
@@ -120,6 +118,7 @@ const AdminSettings = () => {
         ai_description_enabled: true,
         active_theme: 'none',
         world_cup_force_live: false,
+        world_cup_live_score: '',
         bbq_master_enabled: true,
         bbq_master_name: '',
         bbq_master_system_prompt: '',
@@ -189,7 +188,7 @@ const AdminSettings = () => {
                 >
                     GERAL
                 </button>
-                {!isOwner && <>
+                {role !== 'owner' && <>
                 <button
                     onClick={() => setActiveTab('upsell')}
                     style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'upsell' ? '#D4AF37' : 'transparent', color: activeTab === 'upsell' ? '#000' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s' }}
@@ -274,7 +273,7 @@ const AdminSettings = () => {
                     </Card>
 
                     {/* Google — visível apenas para master */}
-                    {!isOwner && <Card
+                    {role !== 'owner' && <Card
                         icon={<Settings2 size={22} />}
                         color="#4285F4"
                         title="Ecossistema Google"
@@ -306,7 +305,7 @@ const AdminSettings = () => {
                     title="Temas Sazonais 🏆"
                     style={{ marginBottom: '30px' }}
                     onSave={async () => {
-                        await handleSaveSection('Temas', ['active_theme', 'world_cup_force_live']);
+                        await handleSaveSection('Temas', ['active_theme', 'world_cup_force_live', 'world_cup_live_score']);
                         reloadTheme();
                     }}
                     saving={savingSection === 'Temas'}
@@ -407,6 +406,26 @@ const AdminSettings = () => {
                                         </label>
                                     </div>
 
+                                    {/* Placar ao vivo */}
+                                    <div style={{ background: 'rgba(255,59,59,0.05)', border: '1px solid rgba(255,59,59,0.15)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 800, color: '#ff4d4d', fontSize: '0.75rem', marginBottom: '4px' }}>⚽ PLACAR AO VIVO</div>
+                                            <div style={{ fontSize: '0.65rem', color: '#666' }}>Exibido no widget durante o jogo. Ex: <strong style={{ color: '#aaa' }}>2-1</strong></div>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={settings.world_cup_live_score || ''}
+                                            onChange={e => setSettings({ ...settings, world_cup_live_score: e.target.value })}
+                                            placeholder="0-0"
+                                            maxLength={5}
+                                            style={{
+                                                width: '70px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,59,59,0.3)',
+                                                borderRadius: '10px', color: '#fff', fontSize: '1.2rem', fontWeight: 900,
+                                                textAlign: 'center', padding: '8px', letterSpacing: '2px',
+                                            }}
+                                        />
+                                    </div>
+
                                     <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -439,7 +458,7 @@ const AdminSettings = () => {
                 </Card>
 
                 {/* ══ ROW 3–4 + IA + Sistema: visíveis apenas para master ══ */}
-                {!isOwner && <><div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
+                {role !== 'owner' && <><div className="admin-grid-2col" style={{ gap: '30px', marginBottom: '30px', minWidth: 0 }}>
 
                     {/* Logística */}
                     <Card 
@@ -630,7 +649,7 @@ const AdminSettings = () => {
                 </div>
 
             {/* ══ Saúde do Sistema (master only) ══ */}
-            {isAdmin && !isOwner && (
+            {isAdmin && role !== 'owner' && (
                 <div style={{ marginTop: '50px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
                         <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}><Activity size={24} /></div>

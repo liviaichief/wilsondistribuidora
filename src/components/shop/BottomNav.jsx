@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Store, List, ShoppingBag, User, History } from 'lucide-react';
+import { Store, List, ShoppingCart, User, History } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import './BottomNav.css';
@@ -50,15 +50,13 @@ const BottomNav = () => {
                     <span>Pedidos</span>
                 </NavLink>
             )}
-            <div 
+            <div
                 className={`nav-item ${location.pathname === '/cart' ? 'active' : ''}`}
                 onClick={handleCartClick}
                 style={{ cursor: 'pointer' }}
             >
-                <div style={{ position: 'relative' }}>
-                    <ShoppingBag size={24} />
-                    {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-                </div>
+                <ShoppingCart size={24} />
+                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                 <span>Carrinho</span>
             </div>
 

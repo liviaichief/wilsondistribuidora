@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
 
                 // [SECURITY] Set role based on official account labels
                 if (mappedUser.labels.includes('master')) setRole('master');
-                else if (mappedUser.labels.includes('admin')) setRole('admin');
+                else if (mappedUser.labels.includes('admin')) setRole('master');
                 else if (mappedUser.labels.includes('owner')) setRole('owner');
                 else setRole('client');
 
@@ -450,14 +450,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     const authValue = React.useMemo(() => {
-        const isAdmin = role === 'admin' || role === 'owner' || role === 'master' || profile?.role === 'master';
+        const isMaster = role === 'master' || profile?.role === 'master';
+        const isOwner  = role === 'owner' || isMaster;
+        const isAdmin  = role === 'admin' || isOwner;
 
         return {
             user,
             profile,
             role,
             isAdmin,
-            isOwner: role === 'owner' || role === 'master' || isAdmin,
+            isMaster,
+            isOwner,
             loading,
             isAuthModalOpen,
             authModalView,

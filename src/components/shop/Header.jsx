@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, User, LogOut, ClipboardList, Shield, Beer, Store, Box, Instagram, Sparkles, X, ChevronRight } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, User, LogOut, ClipboardList, Shield, Beer, Store, Box, Instagram, Sparkles, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSettings, getBrands } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
@@ -341,7 +341,7 @@ const Header = () => {
                         </div>
 
                         <button className="action-btn cart-toggle desktop-only" onClick={handleFinalizeClick}>
-                            <ShoppingBag size={22} />
+                            <ShoppingCart size={22} />
                             {cartCount > 0 && (
                                 <motion.span
                                     initial={{ scale: 0 }}

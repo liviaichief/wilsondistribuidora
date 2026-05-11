@@ -151,7 +151,12 @@ const AuthModal = () => {
             } else if (errorMsg.includes('Password must be between 8')) {
                 errorMsg = 'A senha deve conter no mínimo 8 caracteres.';
             } else if (errorMsg.includes('A user with the same email already exists')) {
-                errorMsg = 'Já existe uma conta com este e-mail.';
+                // CRO-10: e-mail duplicado → direciona direto para login sem exigir nova ação do usuário
+                showAlert('Já existe uma conta com este e-mail. Clique em "Entrar" para fazer login.', 'error', 'E-mail já cadastrado');
+                // Muda para a tab de login automaticamente após 1.5s
+                setTimeout(() => { if (typeof setAuthModalView === 'function') setAuthModalView('login'); }, 1500);
+                setLoading(false);
+                return;
             } else if (errorMsg.includes('Invalid `email` param') || errorMsg.includes('email is invalid')) {
                 errorMsg = 'O endereço de e-mail informado não é válido.';
             } else if (errorMsg.includes('Rate limit exceeded')) {

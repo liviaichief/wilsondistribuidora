@@ -552,35 +552,34 @@ const CartSidebar = () => {
             <div className={`cart-backdrop ${isCartOpen ? 'visible' : ''}`} onClick={toggleCart}></div>
             <div className={`cart-sidebar ${isCartOpen ? 'open' : ''}`}>
                 <div className="cart-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <h2 className="cart-title">
-                            <span className="desktop-only"><ShoppingBag size={24} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Meu </span>
-                            Carrinho
-                        </h2>
-                    </div>
+                    <h2 className="cart-title">
+                        <ShoppingBag size={22} />
+                        Meu Carrinho
+                    </h2>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {cartItems.length > 0 && (
-                            <button 
-                                className="empty-cart-action" 
+                            <button
+                                className="empty-cart-action"
                                 onClick={clearCart}
                                 style={{
                                     background: 'rgba(239, 68, 68, 0.1)',
                                     border: '1px solid rgba(239, 68, 68, 0.2)',
                                     color: '#ef4444',
-                                    padding: '8px',
+                                    padding: '8px 14px',
                                     borderRadius: '10px',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 900,
+                                    textTransform: 'uppercase',
                                     transition: '0.3s'
                                 }}
                                 title="Esvaziar Carrinho"
                             >
-                                <Trash2 size={18} />
-                                <span className="desktop-only" style={{ marginLeft: '8px', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>
-                                    Esvaziar Carrinho
-                                </span>
+                                <Trash2 size={14} />
+                                Esvaziar
                             </button>
                         )}
                         <button className="close-cart" onClick={toggleCart}>

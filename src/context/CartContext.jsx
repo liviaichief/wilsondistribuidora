@@ -59,14 +59,28 @@ export const CartProvider = ({ children }) => {
         }
     }, [user]);
 
-    // [COMPORTAMENTO] Esvaziar carrinho ao fazer logout
-    // Detectamos a transição de user (logado) para null (não logado)
+    // [CRO-4] Ao fazer logout, salva o carrinho em sessionStorage antes de limpar
+    // O cliente pode recuperar os itens ao fazer login novamente na mesma sessão
     const [prevUser, setPrevUser] = useState(user);
 
     useEffect(() => {
         if (prevUser && !user) {
-            console.log("Detectado logout, esvaziando carrinho...");
+            // Preserva carrinho para recuperação pós-login (mesma aba/sessão)
+            if (cartItems.length > 0) {
+                sessionStorage.setItem('cart_backup', JSON.stringify(cartItems));
+            }
             setCartItems([]);
+        }
+        // Ao fazer login, verifica se há carrinho salvo para recuperar
+        if (!prevUser && user) {
+            const backup = sessionStorage.getItem('cart_backup');
+            if (backup) {
+                try {
+                    const saved = JSON.parse(backup);
+                    if (saved?.length > 0) setCartItems(saved);
+                    sessionStorage.removeItem('cart_backup');
+                } catch (_) {}
+            }
         }
         setPrevUser(user);
     }, [user, prevUser]);
@@ -166,26 +180,28 @@ export const CartProvider = ({ children }) => {
             const cartIds = items.map(i => i.id?.toString());
             let potentialRecs = allProducts.filter(p => !cartIds.includes(p.id?.toString()) && p.active !== false);
 
+            // Pontuação por relevância; reason é usado pelo UpsellModal para explicar a sugestão (CRO-8)
             const scoredRecs = potentialRecs.map(p => {
-                let score = 0;
                 const pIdStr = p.id?.toString().trim();
-                if (userHistory.some(hid => hid.toString().trim() === pIdStr)) score += 100;
-                if (p.category?.toString() === baseProduct.category?.toString()) score += 50;
-                if (p.is_promotion) score += 30;
-                return { ...p, score };
+                let score  = 0;
+                let reason = 'default';
+                if (userHistory.some(hid => hid.toString().trim() === pIdStr)) { score += 100; reason = 'history'; }
+                if (p.category?.toString() === baseProduct.category?.toString())   { score += 50;  if (reason === 'default') reason = 'category'; }
+                if (p.is_promotion)                                                { score += 30;  if (reason === 'default') reason = 'promo'; }
+                return { ...p, score, reason };
             });
 
             recommendations = scoredRecs
                 .filter(p => p.score > 0)
                 .sort((a, b) => (b.score - a.score) || (0.5 - Math.random()))
-                .slice(0, 3); // Limite de 3 itens para o modal
-            
-            // 3. Fallback Total (Aleatório do Catálogo)
+                .slice(0, 3);
+
+            // Fallback total: aleatório com reason genérico
             if (recommendations.length === 0 && potentialRecs.length > 0) {
-                console.log("Absolute fallback: Random products");
                 recommendations = potentialRecs
                     .sort(() => 0.5 - Math.random())
-                    .slice(0, 3);
+                    .slice(0, 3)
+                    .map(p => ({ ...p, reason: 'default' }));
             }
         }
 

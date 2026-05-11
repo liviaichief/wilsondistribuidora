@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import './styles/seasonal.css';
 import Home from './pages/Home';
 import Admin from './pages/Admin.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
@@ -125,7 +126,7 @@ function App() {
                       </ProtectedRoute>
                     } />
                     <Route path="financeiro" element={
-                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                      <ProtectedRoute allowedRoles={['master', 'owner']}>
                         <AdminFinance />
                       </ProtectedRoute>
                     } />

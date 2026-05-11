@@ -7,6 +7,7 @@ import { databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 vi.mock('../../lib/appwrite', () => ({
     databases: {
         listDocuments: vi.fn(),
+        getDocument: vi.fn().mockResolvedValue(null),
         createDocument: vi.fn(),
         updateDocument: vi.fn(),
         deleteDocument: vi.fn(),

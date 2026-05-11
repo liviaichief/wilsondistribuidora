@@ -13,7 +13,7 @@ const orchestratorClient = new AppwriteClient().setEndpoint('https://sfo.cloud.a
 const orchestratorDb = new AppwriteDatabases(orchestratorClient);
 
 const AdminLayout = () => {
-    const { signOut, user, profile } = useAuth();
+    const { signOut, user, profile, role } = useAuth();
     const location = useLocation();
     const { showConfirm, showAlert } = useAlert();
     const navigate = useNavigate();
@@ -106,7 +106,7 @@ const AdminLayout = () => {
         setTimeout(() => setShowVersionInfo(false), 3000);
     };
 
-    const menuItems = [
+    const allMenuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/admin', icon: ShoppingBag, label: 'Produtos' },
         { path: '/admin/catalogo', icon: BookOpen, label: 'Catálogo' },
@@ -116,6 +116,11 @@ const AdminLayout = () => {
         { path: '/admin/settings', icon: Settings, label: 'Configurações' },
         { path: '/admin/financeiro', icon: Database, label: 'Financeiro' },
     ];
+
+    const adminOnlyPaths = ['/admin', '/admin/catalogo', '/admin/banners', '/admin/pedidos', '/admin/users', '/admin/settings', '/admin/dashboard'];
+    const menuItems = (role === 'master' || role === 'owner')
+        ? allMenuItems
+        : allMenuItems.filter(item => adminOnlyPaths.includes(item.path));
 
     const sidebarWidth = isMobile ? '85px' : '320px';
 

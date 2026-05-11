@@ -26,6 +26,8 @@
     font-size: 0.65rem;
     font-weight: 500;
     gap: 4px;
+    padding: 0;
+    line-height: 1;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 60px;
     position: relative;
@@ -53,8 +55,8 @@
 
 .cart-badge {
     position: absolute;
-    top: -5px;
-    right: -10px;
+    top: 4px;
+    right: 10px;
     background: var(--accent-color, #D4AF37);
     color: #000;
     font-size: 0.6rem;

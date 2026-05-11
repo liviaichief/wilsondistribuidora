@@ -31,46 +31,55 @@ body[data-theme="world_cup"] ::-webkit-scrollbar-thumb {
 
 /* ══ Category bar — item ativo ══ */
 body[data-theme="world_cup"] .category-item.active,
-body[data-theme="world_cup"] .category-active {
-  background: rgba(0, 39, 118, 0.25) !important;
-  border: 1.5px solid #009c3b !important;
+body[data-theme="world_cup"] .category-active,
+body[data-theme="world_cup"] .cat-tab-btn.active {
+  background: rgba(0, 156, 59, 0.15) !important;
+  border: 1.5px solid rgba(0, 156, 59, 0.6) !important;
   color: #fff !important;
+  box-shadow: 0 0 12px rgba(0, 156, 59, 0.45), inset 0 0 8px rgba(0, 156, 59, 0.12) !important;
 }
 
-/* ══ Botão de ação primária (ADICIONAR / Carrinho) ══ */
-body[data-theme="world_cup"] .add-to-cart-btn,
-body[data-theme="world_cup"] [class*="addCart"],
-body[data-theme="world_cup"] [class*="add-cart"] {
+/* ══ Botão ADICIONAR ══ */
+body[data-theme="world_cup"] .add-cart-btn,
+body[data-theme="world_cup"] .btn-add-large {
+  background: linear-gradient(135deg, #009c3b 0%, #FEDD00 100%) !important;
+  box-shadow: 0 4px 15px rgba(0, 156, 59, 0.45) !important;
+  color: #003d15 !important;
+}
+
+body[data-theme="world_cup"] .add-cart-btn:hover,
+body[data-theme="world_cup"] .btn-add-large:hover {
+  background: linear-gradient(135deg, #007a2f 0%, #e6c800 100%) !important;
+  box-shadow: 0 6px 20px rgba(0, 156, 59, 0.55) !important;
+  transform: translateY(-2px);
+}
+
+/* ══ Badge PROMOÇÃO e desconto ══ */
+body[data-theme="world_cup"] .glass-promo-badge {
   background: #009c3b !important;
-  color: #fff !important;
   box-shadow: 0 4px 15px rgba(0, 156, 59, 0.4) !important;
 }
 
-body[data-theme="world_cup"] .add-to-cart-btn:hover,
-body[data-theme="world_cup"] [class*="addCart"]:hover {
-  background: #007a2f !important;
+/* ══ Preço principal — branco ══ */
+body[data-theme="world_cup"] .main-price,
+body[data-theme="world_cup"] .inline-price .main-price,
+body[data-theme="world_cup"] .price-stack-horizontal .main-price {
+  color: #ffffff !important;
 }
 
-/* ══ Preço promocional / destaque ══ */
-body[data-theme="world_cup"] .promo-price,
-body[data-theme="world_cup"] [class*="promo_price"],
-body[data-theme="world_cup"] [class*="promoPrice"],
-body[data-theme="world_cup"] .price-highlight {
+/* ══ Preço antigo riscado ══ */
+body[data-theme="world_cup"] .price-stack-horizontal .old-price {
+  color: #ef4444 !important;
+}
+
+/* ══ Botões de quantidade (+/-) ══ */
+body[data-theme="world_cup"] .qty-control {
+  border-color: rgba(0, 156, 59, 0.2) !important;
+}
+
+body[data-theme="world_cup"] .qty-btn:hover {
+  background: rgba(0, 156, 59, 0.15) !important;
   color: #009c3b !important;
-}
-
-/* ══ Badge PROMOÇÃO ══ */
-body[data-theme="world_cup"] .promo-badge,
-body[data-theme="world_cup"] [class*="promoBadge"],
-body[data-theme="world_cup"] [class*="promo-badge"] {
-  background: #009c3b !important;
-}
-
-/* ══ Badge de desconto (%-) ══ */
-body[data-theme="world_cup"] .discount-badge,
-body[data-theme="world_cup"] [class*="discount"] {
-  background: #009c3b !important;
-  color: #fff !important;
 }
 
 /* ══ Menu inferior mobile — ícone ativo ══ */
@@ -83,11 +92,6 @@ body[data-theme="world_cup"] .bottom-nav-active svg {
 body[data-theme="world_cup"] .bottom-nav-item.active,
 body[data-theme="world_cup"] .bottom-nav-active {
   border-top: 2px solid #009c3b;
-}
-
-/* ══ Hero carousel borda copa ══ */
-body[data-theme="world_cup"] .hero-carousel {
-  box-shadow: 0 0 0 2px rgba(0,156,59,0.3);
 }
 
 /* ══ Natal 🎄 ══ */

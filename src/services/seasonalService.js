@@ -80,16 +80,19 @@ export function getCurrentSeason(date = new Date()) {
 }
 
 /**
- * Filtra banners para mostrar somente os do evento sazonal ativo
- * Se não houver evento ativo, retorna todos os banners
- * @param {Array} banners - Lista de banners (com campo season_tag opcional)
- * @param {string|null} [seasonId] - ID do evento (usa getCurrentSeason() se omitido)
- * @returns {Array} Banners filtrados
+ * Filtra banners sazonais:
+ * - Banners sem season_tag aparecem sempre
+ * - Banners com season_tag só aparecem se a estação deles estiver ativa
+ * @param {Array} banners
+ * @param {string|null} [seasonId]
+ * @returns {Array}
  */
 export function getSeasonalBanners(banners = [], seasonId = null) {
   const activeSeason = seasonId ?? getCurrentSeason()?.id ?? null;
-  if (!activeSeason) return banners;
 
-  const seasonal = banners.filter(b => b.season_tag === activeSeason);
-  return seasonal.length > 0 ? seasonal : banners;
+  return banners.filter(b => {
+    const tag = b.season_tag || '';
+    if (!tag) return true;           // sem tag → sempre visível
+    return tag === activeSeason;     // com tag → só na estação correta
+  });
 }

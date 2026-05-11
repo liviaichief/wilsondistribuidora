@@ -1,12 +1,27 @@
 
 import OpenAI from 'openai';
+import { getSettings } from './settingsService';
 
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+let _client = null;
+let _cachedKey = null;
 
-const openai = apiKey ? new OpenAI({
-    apiKey: apiKey,
-    dangerouslyAllowBrowser: true // Necessário para chamadas diretas do frontend
-}) : null;
+async function getClient() {
+    // 1. Variável de ambiente local (desenvolvimento)
+    const envKey = import.meta.env.VITE_OPENAI_API_KEY;
+    const key = envKey || await (async () => {
+        if (_cachedKey) return _cachedKey;
+        const s = await getSettings();
+        _cachedKey = s.openai_api_key || null;
+        return _cachedKey;
+    })();
+
+    if (!key) return null;
+
+    if (!_client || _client.apiKey !== key) {
+        _client = new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true });
+    }
+    return _client;
+}
 
 /**
  * Gera uma descrição profissional para um produto usando GPT-4o-mini
@@ -16,16 +31,17 @@ const openai = apiKey ? new OpenAI({
  * @returns {Promise<string>} - Descrição gerada
  */
 export const generateProductDescription = async (productTitle, category = '', context = '') => {
+    const openai = await getClient();
     if (!openai) {
-        console.warn("OpenAI API Key não configurada. A geração de descrição está desativada.");
+        console.warn("OpenAI API Key não configurada.");
         return "Geração de descrição indisponível no momento.";
     }
 
     try {
-        const prompt = `Você é um especialista em marketing gastronômico para a Wilson Distribuidora, uma distribuidora de carnes premium. 
-        Gere uma descrição curta, apetitosa e persuasiva para o produto: "${productTitle}"${category ? ` da categoria ${category}` : ''}. 
+        const prompt = `Você é um especialista em marketing gastronômico para a Wilson Distribuidora, uma distribuidora de carnes premium.
+        Gere uma descrição curta, apetitosa e persuasiva para o produto: "${productTitle}"${category ? ` da categoria ${category}` : ''}.
         ${context ? `Contexto adicional para destacar: ${context}` : ''}
-        Destaque a qualidade, o frescor e a tradição da Wilson. 
+        Destaque a qualidade, o frescor e a tradição da Wilson.
         A descrição deve ter no máximo 3 frases.`;
 
         const response = await openai.chat.completions.create({
@@ -52,6 +68,7 @@ export const generateProductDescription = async (productTitle, category = '', co
  * @returns {Promise<string>} - URL da imagem gerada (temporária da OpenAI)
  */
 export const generateBannerImage = async (context, referenceImage = null) => {
+    const openai = await getClient();
     if (!openai) {
         throw new Error("OpenAI API Key não configurada.");
     }
@@ -118,7 +135,35 @@ export const generateBannerImage = async (context, referenceImage = null) => {
     }
 };
 
+/**
+ * Envia uma mensagem para o agente BBQ Master com histórico completo da conversa.
+ * @param {Array<{role: 'user'|'assistant', content: string}>} history
+ * @param {string} systemPrompt
+ * @returns {Promise<string>}
+ */
+export const chatBBQMaster = async (history, systemPrompt) => {
+    const openai = await getClient();
+    if (!openai) {
+        throw new Error("OpenAI API Key não configurada.");
+    }
+
+    const messages = [
+        { role: 'system', content: systemPrompt },
+        ...history.map(m => ({ role: m.role, content: m.content })),
+    ];
+
+    const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0.75,
+        max_tokens: 300,
+    });
+
+    return response.choices[0].message.content.trim();
+};
+
 export default {
     generateProductDescription,
-    generateBannerImage
+    generateBannerImage,
+    chatBBQMaster,
 };

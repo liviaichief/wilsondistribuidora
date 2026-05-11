@@ -10,8 +10,10 @@
     "preview": "vite preview",
     "health-check": "node maintenance/appwrite/db_health_job.js",
     "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "validate": "vitest run --reporter=verbose",
     "deploy": "npx vercel --prod"
   },
   "dependencies": {

@@ -4,13 +4,14 @@ import './index.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
+import { PlanProvider } from './context/PlanContext.jsx'
 
-// Register Service Worker for PWA
+// Registra Service Worker para funcionalidade PWA (offline + install prompt)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(registration => console.log('SW registered: ', registration))
-      .catch(registrationError => console.log('SW registration failed: ', registrationError));
+      .then(reg  => console.log('SW registrado:', reg))
+      .catch(err => console.log('SW falhou:', err));
   });
 }
 
@@ -18,7 +19,10 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
       <AlertProvider>
-        <App />
+        {/* PlanProvider carrega o plano ativo e configurações de identidade do cliente */}
+        <PlanProvider>
+          <App />
+        </PlanProvider>
       </AlertProvider>
     </ErrorBoundary>
   </StrictMode>,

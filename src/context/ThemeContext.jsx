@@ -5,13 +5,15 @@ const ThemeContext = createContext({
   theme: 'none',
   isLive: false,
   schedule: [],
+  liveScore: null,
   reloadTheme: () => {},
 });
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme]       = useState('none');
-  const [isLive, setIsLive]     = useState(false);
-  const [schedule, setSchedule] = useState([]);
+  const [theme, setTheme]           = useState('none');
+  const [isLive, setIsLive]         = useState(false);
+  const [schedule, setSchedule]     = useState([]);
+  const [liveScore, setLiveScore]   = useState(null);
 
   const loadTheme = useCallback(async () => {
     try {
@@ -30,6 +32,10 @@ export function ThemeProvider({ children }) {
 
       setTheme(activeTheme);
       setSchedule(sched);
+
+      // Placar ao vivo (formato "2-1" ou "0-0")
+      const score = s.world_cup_live_score || null;
+      setLiveScore(score);
 
       // Detecta jogo ao vivo (janela de 2h)
       const now = new Date();
@@ -51,7 +57,7 @@ export function ThemeProvider({ children }) {
   }, [loadTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isLive, schedule, reloadTheme: loadTheme }}>
+    <ThemeContext.Provider value={{ theme, isLive, schedule, liveScore, reloadTheme: loadTheme }}>
       {children}
     </ThemeContext.Provider>
   );
