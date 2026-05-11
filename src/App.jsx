@@ -12,7 +12,7 @@ import ResetPassword from './pages/ResetPassword.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Profile from './pages/Profile.jsx';
 import CartPage from './pages/CartPage.jsx';
-import ProfileModal from './components/auth/ProfileModal'; // Global Modal
+import ProfileModal from './components/auth/ProfileModal';
 import AdminSettings from './pages/AdminSettings.jsx';
 import AdminFinance from './pages/AdminFinance.jsx';
 import AdminBanners from './pages/AdminBanners.jsx';
@@ -22,6 +22,7 @@ import { getSettings } from './services/dataService';
 
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
+import { ThemeProvider } from './context/ThemeContext';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import { AuthProvider } from './context/AuthContext';
@@ -32,7 +33,6 @@ import PWAInstallPrompt from './components/common/PWAInstallPrompt';
 import UpdateManager from './components/common/UpdateManager';
 import { FeatureGate } from './components/common/FeatureGate';
 import BBQMasterChat from './components/shop/BBQMasterChat';
-import SeasonalThemeInjector from './components/common/SeasonalThemeInjector';
 import { FEATURES } from './config/plans';
 
 const GlobalProfileModalWrapper = () => {
@@ -67,93 +67,92 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <CartProvider>
-            <OrderProvider>
-              <Routes>
-                {/* Public Store Layout */}
-                <Route element={<MainLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/produto/:id" element={<ProductDetail />} />
-                  <Route path="/orders" element={
-                    <ProtectedRoute>
-                      <OrderHistory />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/cart" element={<CartPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/logout" element={<Logout />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                </Route>
+          <ThemeProvider>
+            <CartProvider>
+              <OrderProvider>
+                <Routes>
+                  {/* Public Store Layout */}
+                  <Route element={<MainLayout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/produto/:id" element={<ProductDetail />} />
+                    <Route path="/orders" element={
+                      <ProtectedRoute>
+                        <OrderHistory />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/profile" element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                  </Route>
 
-                {/* Admin Layout */}
-                <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }>
-                  <Route index element={<Admin />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="users" element={
+                  {/* Admin Layout */}
+                  <Route path="/admin" element={
                     <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminUsers />
+                      <AdminLayout />
                     </ProtectedRoute>
-                  } />
-                  <Route path="banners" element={
-                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminBanners />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="catalogo" element={
-                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminCatalog />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="pedidos" element={
-                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminOrders />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminSettings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="financeiro" element={
-                    <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
-                      <AdminFinance />
-                    </ProtectedRoute>
-                  } />
-                </Route>
-                
-                {/* Fallback para rotas inexistentes (evita tela em branco e becos sem saída) */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  }>
+                    <Route index element={<Admin />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="users" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminUsers />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="banners" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminBanners />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="catalogo" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminCatalog />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="pedidos" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminOrders />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="settings" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminSettings />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="financeiro" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminFinance />
+                      </ProtectedRoute>
+                    } />
+                  </Route>
 
-              {/* Global Modals */}
-              <GlobalProfileModalWrapper />
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
 
-              {/* PWA Install Custom Banner */}
-              <PWAInstallPrompt />
+                {/* Global Modals */}
+                <GlobalProfileModalWrapper />
 
-              {/* Background Auto-Update Manager */}
-              <UpdateManager />
+                {/* PWA Install Custom Banner */}
+                <PWAInstallPrompt />
 
-              {/* Google Tag Manager Dynamic Loader */}
-              <GoogleTagManagerLoader />
+                {/* Background Auto-Update Manager */}
+                <UpdateManager />
 
-              {/* Chat IA Mestre do Churrasco */}
-              <BBQMasterChat />
+                {/* Google Tag Manager Dynamic Loader */}
+                <GoogleTagManagerLoader />
 
-              {/* Injeta tema sazonal no <body> */}
-              <SeasonalThemeInjector />
+                {/* Chat IA Mestre do Churrasco */}
+                <BBQMasterChat />
 
-            </OrderProvider>
-          </CartProvider>
+              </OrderProvider>
+            </CartProvider>
+          </ThemeProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getBanners } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
+import { getSeasonalBanners } from '../../services/seasonalService';
+import CopaWidget from './CopaWidget';
 import './HeroCarousel.css';
 
 const HeroCarousel = () => {
@@ -24,7 +26,8 @@ const HeroCarousel = () => {
             console.log('HeroCarousel: Data received:', banners);
 
             if (banners && banners.length > 0) {
-                setSlides(banners);
+                // Filtra por tema sazonal ativo; se nenhum banner tem season_tag, mostra todos
+                setSlides(getSeasonalBanners(banners));
             } else {
                 console.log('HeroCarousel: No banners found, using defaults');
                 // Optional: setSlides(DEFAULT_SLIDES);
@@ -79,7 +82,10 @@ const HeroCarousel = () => {
     }
 
     return (
-        <div className="hero-carousel">
+        <div className="hero-carousel" style={{ position: 'relative' }}>
+            {/* Widget Copa do Mundo — aparece quando tema world_cup está ativo */}
+            <CopaWidget />
+
             <AnimatePresence mode='wait'>
                 <motion.div
                     key={currentIndex}

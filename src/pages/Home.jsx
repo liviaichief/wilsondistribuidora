@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import HeroCarousel from '../components/shop/HeroCarousel';
 import Header from '../components/shop/Header';
 import CategoryBar from '../components/shop/CategoryBar';
-import CopaBanner from '../components/shop/CopaBanner';
 import ProductCard from '../components/shop/ProductCard';
 import { getProducts } from '../services/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -145,9 +144,6 @@ const Home = () => {
             )}
 
             <Header />
-
-            {/* Faixa Copa do Mundo — aparece automaticamente quando season = copa */}
-            <CopaBanner />
 
             <div className="home-content-wrapper">
                 <CategoryBar 

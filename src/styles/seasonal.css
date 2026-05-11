@@ -1,74 +1,103 @@
 /* ═══════════════════════════════════════════════
    Seasonal Theme Overrides
-   Activated via data-season attribute on <body>
+   Activated via data-theme attribute on <body>
    ═══════════════════════════════════════════════ */
 
 /* ── Copa do Mundo ⚽ ── */
-body[data-season="copa"] {
-  --season-primary: #009c3b;
-  --season-accent:  #FFDF00;
-  --season-dark:    #006428;
+body[data-theme="world_cup"] {
+  --theme-primary: #009c3b;
+  --theme-accent:  #FEDD00;
+  --theme-dark:    #006428;
 }
 
-/* Scrollbar verde */
-body[data-season="copa"] ::-webkit-scrollbar-thumb {
-  background: rgba(0, 156, 59, 0.3);
+/* ══ Linha de cores do Brasil no topo da página ══ */
+body[data-theme="world_cup"]::before {
+  content: '';
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #009c3b 33%, #FEDD00 33% 66%, #002776 66%);
+  z-index: 9999;
+  pointer-events: none;
 }
 
-/* BottomNav ativo */
-body[data-season="copa"] .bottom-nav-item.active,
-body[data-season="copa"] .bottom-nav-active {
-  color: var(--season-primary) !important;
+/* ══ Scrollbar verde ══ */
+body[data-theme="world_cup"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 156, 59, 0.35);
 }
 
-/* Category bar — item ativo */
-body[data-season="copa"] .category-item.active,
-body[data-season="copa"] [class*="category"][class*="active"] {
-  background: linear-gradient(135deg, #009c3b, #006428) !important;
+/* ══ Category bar — item ativo ══ */
+body[data-theme="world_cup"] .category-item.active,
+body[data-theme="world_cup"] .category-active {
+  background: rgba(0, 39, 118, 0.25) !important;
+  border: 1.5px solid #009c3b !important;
   color: #fff !important;
-  border-color: #009c3b !important;
 }
 
-/* Botão "Adicionar ao carrinho" */
-body[data-season="copa"] .add-to-cart-btn,
-body[data-season="copa"] [class*="add-cart"],
-body[data-season="copa"] [class*="addCart"] {
-  background: linear-gradient(135deg, #009c3b 0%, #006428 100%) !important;
-  box-shadow: 0 4px 15px rgba(0, 156, 59, 0.35) !important;
+/* ══ Botão de ação primária (ADICIONAR / Carrinho) ══ */
+body[data-theme="world_cup"] .add-to-cart-btn,
+body[data-theme="world_cup"] [class*="addCart"],
+body[data-theme="world_cup"] [class*="add-cart"] {
+  background: #009c3b !important;
+  color: #fff !important;
+  box-shadow: 0 4px 15px rgba(0, 156, 59, 0.4) !important;
 }
 
-/* Preço promocional */
-body[data-season="copa"] .promo-price,
-body[data-season="copa"] [class*="promo_price"],
-body[data-season="copa"] [class*="promoPrice"] {
+body[data-theme="world_cup"] .add-to-cart-btn:hover,
+body[data-theme="world_cup"] [class*="addCart"]:hover {
+  background: #007a2f !important;
+}
+
+/* ══ Preço promocional / destaque ══ */
+body[data-theme="world_cup"] .promo-price,
+body[data-theme="world_cup"] [class*="promo_price"],
+body[data-theme="world_cup"] [class*="promoPrice"],
+body[data-theme="world_cup"] .price-highlight {
   color: #009c3b !important;
 }
 
-/* Badge de desconto */
-body[data-season="copa"] .discount-badge,
-body[data-season="copa"] [class*="discount"] {
+/* ══ Badge PROMOÇÃO ══ */
+body[data-theme="world_cup"] .promo-badge,
+body[data-theme="world_cup"] [class*="promoBadge"],
+body[data-theme="world_cup"] [class*="promo-badge"] {
   background: #009c3b !important;
 }
 
-/* Héro carousel border */
-body[data-season="copa"] .hero-carousel {
-  box-shadow: 0 4px 0 0 #009c3b;
+/* ══ Badge de desconto (%-) ══ */
+body[data-theme="world_cup"] .discount-badge,
+body[data-theme="world_cup"] [class*="discount"] {
+  background: #009c3b !important;
+  color: #fff !important;
 }
 
-/* Accents on links/buttons */
-body[data-season="copa"] a:not([class]),
-body[data-season="copa"] .text-accent {
-  color: #009c3b;
+/* ══ Menu inferior mobile — ícone ativo ══ */
+body[data-theme="world_cup"] .bottom-nav-item.active svg,
+body[data-theme="world_cup"] .bottom-nav-active svg {
+  color: #FEDD00 !important;
+  stroke: #FEDD00 !important;
 }
 
-/* ── Natal 🎄 ── */
-body[data-season="natal"] {
-  --season-primary: #cc0000;
-  --season-accent:  #22c55e;
+body[data-theme="world_cup"] .bottom-nav-item.active,
+body[data-theme="world_cup"] .bottom-nav-active {
+  border-top: 2px solid #009c3b;
 }
 
-/* ── São João 🎆 ── */
-body[data-season="sao_joao"] {
-  --season-primary: #f59e0b;
-  --season-accent:  #ef4444;
+/* ══ Hero carousel borda copa ══ */
+body[data-theme="world_cup"] .hero-carousel {
+  box-shadow: 0 0 0 2px rgba(0,156,59,0.3);
+}
+
+/* ══ Natal 🎄 ══ */
+body[data-theme="natal"] {
+  --theme-primary: #cc0000;
+  --theme-accent:  #22c55e;
+}
+
+/* ══ São João 🎆 ══ */
+body[data-theme="sao_joao"] {
+  --theme-primary: #f59e0b;
+  --theme-accent:  #ef4444;
 }

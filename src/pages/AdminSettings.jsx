@@ -15,7 +15,7 @@ import AdminOnboarding from './admin/AdminOnboarding';
 import AdminBBQMaster from '../components/admin/AdminBBQMaster';
 import { generateGoogleMerchantFeed } from '../services/analytics';
 import { getProducts } from '../services/dataService';
-import { getCurrentSeason } from '../services/seasonalService';
+import { useTheme } from '../context/ThemeContext';
 
 /* ─── Helpers ─── */
 const Card = ({ children, icon, color = '#D4AF37', title, style = {}, onSave, saving, disabled }) => (
@@ -91,6 +91,8 @@ const inputStyle = {
 const AdminSettings = () => {
     const { isAdmin, role } = useAuth();
     const isOwner = role === 'owner';
+    const isMaster = role === 'master';
+    const { reloadTheme } = useTheme();
     const [settings, setSettings] = useState({
         whatsapp_number: '',
         whatsapp_message: '*NOVO PEDIDO {pedido} - BASE APP*',
@@ -116,10 +118,15 @@ const AdminSettings = () => {
         show_profit_dashboard: true,
         ai_banner_enabled: true,
         ai_description_enabled: true,
+        active_theme: 'none',
+        world_cup_force_live: false,
         bbq_master_enabled: true,
         bbq_master_name: '',
         bbq_master_system_prompt: '',
-        bbq_master_quick_questions: ''
+        bbq_master_quick_questions: '',
+        bbq_active_sales: true,
+        bbq_recipe_frequency: 'weekly',
+        owner_info: ''
     });
     const [originalSettings, setOriginalSettings] = useState({});
     const [loading, setLoading] = useState(true);
@@ -292,64 +299,143 @@ const AdminSettings = () => {
                     </Card>}
                 </div>
 
-                {/* ══ Sazonalidade — visível para proprietário e master ══ */}
+                {/* ══ Temas Sazonais ══ */}
                 <Card
                     icon={<Sparkles size={22} />}
-                    color="#f59e0b"
-                    title="Temas de Sazonalidade"
+                    color="#a855f7"
+                    title="Temas Sazonais 🏆"
                     style={{ marginBottom: '30px' }}
+                    onSave={async () => {
+                        await handleSaveSection('Temas', ['active_theme', 'world_cup_force_live']);
+                        reloadTheme();
+                    }}
+                    saving={savingSection === 'Temas'}
+                    disabled={!isDirty(['active_theme', 'world_cup_force_live'])}
                 >
-                    {(() => {
-                        const currentSeason = getCurrentSeason();
-                        const SEASONS = [
-                            { id: 'natal',        name: 'Natal',           emoji: '🎄' },
-                            { id: 'carnaval',     name: 'Carnaval',        emoji: '🎉' },
-                            { id: 'dia_dos_pais', name: 'Dia dos Pais',    emoji: '👨' },
-                            { id: 'dia_das_maes', name: 'Dia das Mães',    emoji: '💐' },
-                            { id: 'copa',         name: 'Copa do Mundo',   emoji: '⚽' },
-                            { id: 'sao_joao',     name: 'São João',        emoji: '🎆' },
-                            { id: 'ano_novo',     name: 'Réveillon',       emoji: '🥂' },
-                        ];
-                        return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', color: '#666', lineHeight: 1.6 }}>
-                                    Tema sazonal ativo automaticamente com base na data. Você pode forçar um tema manualmente para adiantar decorações e promoções.
-                                </p>
-                                {currentSeason && (
-                                    <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <span style={{ fontSize: '1.4rem' }}>{currentSeason.emoji}</span>
-                                        <div>
-                                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f59e0b' }}>Tema ativo agora: {currentSeason.name}</div>
-                                            <div style={{ fontSize: '0.68rem', color: '#666' }}>Detectado automaticamente pela data de hoje</div>
-                                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                        {/* Card Copa do Mundo */}
+                        <div style={{
+                            background: settings.active_theme === 'world_cup'
+                                ? 'linear-gradient(135deg, rgba(0,156,59,0.12) 0%, rgba(254,221,0,0.06) 50%, rgba(0,39,118,0.12) 100%)'
+                                : 'rgba(255,255,255,0.02)',
+                            border: `2px solid ${settings.active_theme === 'world_cup' ? '#009c3b' : 'rgba(255,255,255,0.07)'}`,
+                            borderRadius: '20px',
+                            padding: '20px',
+                            transition: 'all 0.4s',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}>
+                            {settings.active_theme === 'world_cup' && (
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #009c3b 33%, #FEDD00 33% 66%, #002776 66%)' }} />
+                            )}
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <span style={{ fontSize: '2rem' }}>⚽🏆</span>
+                                    <div>
+                                        <div style={{ fontWeight: 900, color: '#fff', fontSize: '1rem' }}>Copa do Mundo 2026</div>
+                                        <div style={{ fontSize: '0.72rem', color: '#666' }}>Decora a home com as cores do Brasil</div>
                                     </div>
-                                )}
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                    {SEASONS.map(s => {
-                                        const isActive = settings.active_season === s.id;
-                                        return (
-                                            <button
-                                                key={s.id}
-                                                onClick={() => setSettings(prev => ({ ...prev, active_season: isActive ? null : s.id }))}
-                                                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: `1px solid ${isActive ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.07)'}`, background: isActive ? 'rgba(245,158,11,0.12)' : 'transparent', color: isActive ? '#f59e0b' : '#666', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', transition: '0.2s' }}
-                                            >
-                                                {s.emoji} {s.name}
-                                                {isActive && <span style={{ fontSize: '0.6rem', background: '#f59e0b', color: '#000', borderRadius: '4px', padding: '1px 5px', fontWeight: 900 }}>ATIVO</span>}
-                                            </button>
-                                        );
-                                    })}
                                 </div>
-                                <button
-                                    onClick={() => handleSaveSection('Sazonalidade', ['active_season'])}
-                                    disabled={savingSection === 'Sazonalidade' || !isDirty(['active_season'])}
-                                    style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '10px', background: isDirty(['active_season']) ? '#f59e0b' : 'rgba(255,255,255,0.05)', border: 'none', color: isDirty(['active_season']) ? '#000' : '#444', fontWeight: 900, fontSize: '0.78rem', cursor: isDirty(['active_season']) ? 'pointer' : 'not-allowed', transition: '0.2s' }}
-                                >
-                                    {savingSection === 'Sazonalidade' ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                                    SALVAR TEMA
-                                </button>
+                                <label style={{ position: 'relative', width: '52px', height: '28px', cursor: 'pointer', flexShrink: 0 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.active_theme === 'world_cup'}
+                                        onChange={e => setSettings({ ...settings, active_theme: e.target.checked ? 'world_cup' : 'none' })}
+                                        style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                                    />
+                                    <div style={{ position: 'absolute', inset: 0, background: settings.active_theme === 'world_cup' ? '#009c3b' : '#333', borderRadius: '28px', transition: 'all 0.3s', pointerEvents: 'none' }}>
+                                        <div style={{ position: 'absolute', top: '4px', left: settings.active_theme === 'world_cup' ? '28px' : '4px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }} />
+                                    </div>
+                                </label>
                             </div>
-                        );
-                    })()}
+
+                            {settings.active_theme === 'world_cup' && (
+                                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(254,221,0,0.1)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 800, color: '#FEDD00', fontSize: '0.85rem', marginBottom: '4px' }}>Sincronização de Cronograma</div>
+                                            <div style={{ fontSize: '0.72rem', color: '#888', lineHeight: 1.4 }}>
+                                                Clique no botão ao lado para atualizar os jogos da Copa 2026. O sistema atualizará automaticamente as bandeiras e adversários no site conforme as datas avançarem.
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                const schedule = [
+                                                    { "date": "2026-06-11", "time": "16:00", "team1": "México", "team2": "África do Sul" },
+                                                    { "date": "2026-06-11", "time": "23:00", "team1": "Coreia do Sul", "team2": "República Tcheca" },
+                                                    { "date": "2026-06-12", "time": "16:00", "team1": "Canadá", "team2": "Bósnia" },
+                                                    { "date": "2026-06-13", "time": "16:00", "team1": "Catar", "team2": "Suíça" },
+                                                    { "date": "2026-06-13", "time": "19:00", "team1": "Brasil", "team2": "Marrocos" },
+                                                    { "date": "2026-06-13", "time": "22:00", "team1": "Haiti", "team2": "Escócia" },
+                                                    { "date": "2026-06-19", "time": "19:00", "team1": "Escócia", "team2": "Marrocos" },
+                                                    { "date": "2026-06-19", "time": "21:30", "team1": "Brasil", "team2": "Haiti" },
+                                                    { "date": "2026-06-24", "time": "19:00", "team1": "Marrocos", "team2": "Haiti" },
+                                                    { "date": "2026-06-24", "time": "19:00", "team1": "Escócia", "team2": "Brasil" }
+                                                ];
+                                                setSavingSection('Temas');
+                                                try {
+                                                    await updateSettings('world_cup_schedule', JSON.stringify(schedule));
+                                                    showAlert("Tabela da Copa 2026 sincronizada com sucesso!", "success");
+                                                    reloadTheme();
+                                                } catch {
+                                                    showAlert("Erro ao sincronizar tabela", "error");
+                                                } finally {
+                                                    setSavingSection(null);
+                                                }
+                                            }}
+                                            style={{ background: '#009c3b', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px 20px', fontWeight: 900, cursor: 'pointer', fontSize: '0.7rem', boxShadow: '0 4px 15px rgba(0,156,59,0.3)', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                                        >
+                                            MAPEAR TABELA ⚽
+                                        </button>
+                                    </div>
+
+                                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+                                    {/* Force Live */}
+                                    <div style={{ background: 'rgba(255,0,0,0.05)', border: '1px solid rgba(255,0,0,0.1)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 800, color: '#ff4d4d', fontSize: '0.75rem' }}>🧪 TESTE: FORÇAR MODO AO VIVO</div>
+                                            <div style={{ fontSize: '0.65rem', color: '#666' }}>Ignora o cronograma e ativa o badge piscante agora</div>
+                                        </div>
+                                        <label style={{ position: 'relative', width: '40px', height: '20px', cursor: 'pointer' }}>
+                                            <input type="checkbox" checked={settings.world_cup_force_live} onChange={e => setSettings({ ...settings, world_cup_force_live: e.target.checked })} style={{ opacity: 0, width: 0, height: 0 }} />
+                                            <div style={{ position: 'absolute', inset: 0, background: settings.world_cup_force_live ? '#ff4d4d' : '#333', borderRadius: '20px', transition: '0.3s' }}>
+                                                <div style={{ position: 'absolute', top: '3px', left: settings.world_cup_force_live ? '23px' : '3px', width: '14px', height: '14px', background: '#fff', borderRadius: '50%', transition: '0.3s' }} />
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 Onde este tema se aplica?</div>
+                                        <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.72rem', color: '#aaa', lineHeight: 1.6 }}>
+                                            <li><strong>Banner Principal:</strong> Adiciona uma "tag" vertical inteligente com as bandeiras dos países do próximo jogo.</li>
+                                            <li><strong>Menu Inferior:</strong> Borda superior verde e ícones ativos em amarelo canário.</li>
+                                            <li><strong>Botões de Compra:</strong> Gradiente temático Brasil (Verde/Amarelo) com brilho dinâmico.</li>
+                                            <li><strong>Categorias:</strong> Fundo azul marinho sutil com indicadores em verde.</li>
+                                            <li><strong>Indicador "AO VIVO":</strong> Aparece automaticamente durante o horário dos jogos do Brasil.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tema Original */}
+                        <div
+                            onClick={() => setSettings({ ...settings, active_theme: 'none' })}
+                            style={{ padding: '14px 20px', border: `2px solid ${settings.active_theme === 'none' ? '#D4AF37' : 'rgba(255,255,255,0.05)'}`, borderRadius: '14px', cursor: 'pointer', background: settings.active_theme === 'none' ? 'rgba(212,175,55,0.06)' : 'transparent', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.3s' }}
+                        >
+                            <span style={{ fontSize: '1.5rem' }}>✨</span>
+                            <div>
+                                <div style={{ fontWeight: 800, color: settings.active_theme === 'none' ? '#D4AF37' : '#fff', fontSize: '0.9rem' }}>Original (Padrão)</div>
+                                <div style={{ fontSize: '0.72rem', color: '#555' }}>Tema dark premium padrão do sistema</div>
+                            </div>
+                            {settings.active_theme === 'none' && <span style={{ marginLeft: 'auto', color: '#D4AF37', fontSize: '0.7rem', fontWeight: 900 }}>✓ ATIVO</span>}
+                        </div>
+                    </div>
                 </Card>
 
                 {/* ══ ROW 3–4 + IA + Sistema: visíveis apenas para master ══ */}
