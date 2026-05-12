@@ -52,11 +52,9 @@ export const AuthProvider = ({ children }) => {
                 userId
             );
             setProfile(doc);
-            
-            // [SECURITY/FLEXIBILITY] Se o perfil no banco tiver uma role privilegiada, usamos ela
-            if (doc.role === 'master' || doc.role === 'owner' || doc.role === 'admin') {
-                setRole(doc.role);
-            }
+            // [SECURITY] Role is always set from Appwrite account labels (in checkSession/signIn).
+            // profile.role is stored for display only — never used to grant permissions,
+            // because users have write access to their own profile document.
 
             // Track Last Activity (Login) for Dashboard KPIs
             const now = new Date();
@@ -117,10 +115,10 @@ export const AuthProvider = ({ children }) => {
                 const mappedUser = mapUser(session);
                 setUser(mappedUser);
 
-                // [SECURITY] Set role based on official account labels
+                // [SECURITY] Role is derived exclusively from official account labels — never from profile doc
                 if (mappedUser.labels.includes('master')) setRole('master');
-                else if (mappedUser.labels.includes('admin')) setRole('master');
                 else if (mappedUser.labels.includes('owner')) setRole('owner');
+                else if (mappedUser.labels.includes('admin')) setRole('admin');
                 else setRole('client');
 
                 // Ensure profile document exists
@@ -263,8 +261,8 @@ export const AuthProvider = ({ children }) => {
             setUser(mappedUser);
             
             if (mappedUser.labels.includes('master')) setRole('master');
-            else if (mappedUser.labels.includes('admin')) setRole('admin');
             else if (mappedUser.labels.includes('owner')) setRole('owner');
+            else if (mappedUser.labels.includes('admin')) setRole('admin');
             else setRole('client');
 
             await fetchProfile(acc.$id);
@@ -450,7 +448,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     const authValue = React.useMemo(() => {
-        const isMaster = role === 'master' || profile?.role === 'master';
+        // [SECURITY] Permissions are derived ONLY from the `role` state set by account labels.
+        // profile?.role is intentionally excluded to prevent privilege escalation via profile writes.
+        const isMaster = role === 'master';
         const isOwner  = role === 'owner' || isMaster;
         const isAdmin  = role === 'admin' || isOwner;
 

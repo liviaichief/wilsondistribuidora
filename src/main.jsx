@@ -6,14 +6,8 @@ import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
 import { PlanProvider } from './context/PlanContext.jsx'
 
-// Registra Service Worker para funcionalidade PWA (offline + install prompt)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg  => console.log('SW registrado:', reg))
-      .catch(err => console.log('SW falhou:', err));
-  });
-}
+// Service Worker é gerenciado automaticamente pelo vite-plugin-pwa (registerType: 'autoUpdate')
+// Não registrar manualmente para evitar conflitos de versão
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

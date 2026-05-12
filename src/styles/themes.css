@@ -1,0 +1,381 @@
+/* ═══════════════════════════════════════════════════
+   TEMA: COPA DO MUNDO 🏆⚽
+   Aplica quando body tem classe .theme-world-cup
+   ═══════════════════════════════════════════════════ */
+
+/* ── Variáveis do Tema ── */
+body.theme-world-cup {
+    --theme-primary: #009c3b;   /* Verde Brasil */
+    --theme-secondary: #FEDD00; /* Amarelo Brasil */
+    --theme-accent: #002776;    /* Azul Brasil */
+    --theme-glow: rgba(0, 156, 59, 0.4);
+}
+
+/* ── Fundo da home com gradiente sutil verde ── */
+body.theme-world-cup #root {
+    background: radial-gradient(ellipse at top left, rgba(0, 39, 118, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(0, 156, 59, 0.05) 0%, transparent 50%);
+}
+
+/* ── BottomNav ── */
+body.theme-world-cup .bottom-nav {
+    background: linear-gradient(135deg, #001a4d 0%, #0a0a0a 100%);
+    border-top: 2px solid var(--theme-primary) !important;
+}
+
+body.theme-world-cup .nav-item.active {
+    color: var(--theme-secondary) !important;
+    text-shadow: 0 0 10px rgba(254, 221, 0, 0.5) !important;
+}
+
+body.theme-world-cup .nav-item.active svg {
+    stroke: var(--theme-secondary) !important;
+    filter: drop-shadow(0 0 8px rgba(254, 221, 0, 0.8)) !important;
+}
+
+/* ── Botão Adicionar ao Carrinho ── */
+body.theme-world-cup .add-cart-btn {
+    background: linear-gradient(135deg, #009c3b 0%, #3db84a 40%, #f5d000 100%) !important;
+    box-shadow: 0 4px 20px rgba(0, 156, 59, 0.35), 0 2px 8px rgba(245, 208, 0, 0.25);
+    border: 1px solid rgba(254, 221, 0, 0.4);
+    color: #000 !important; /* Texto preto para contraste no amarelo */
+    text-shadow: none;
+}
+
+/* ── Preço no card ── */
+body.theme-world-cup .inline-price {
+    border-color: var(--theme-primary) !important;
+    background: rgba(0, 156, 59, 0.08) !important;
+}
+
+/* ── Badge Promoção ── */
+body.theme-world-cup .glass-promo-badge {
+    background: linear-gradient(135deg, #009c3b, #FEDD00) !important;
+    color: #000 !important;
+}
+
+/* ── Indicadores do Carousel ── */
+body.theme-world-cup .indicator.active {
+    background: var(--theme-secondary) !important;
+}
+
+/* ── Borda sutil nos cards de produto ── */
+body.theme-world-cup .premium-card {
+    border-color: rgba(0, 156, 59, 0.15) !important;
+}
+body.theme-world-cup .premium-card:hover {
+    border-color: rgba(254, 221, 0, 0.3) !important;
+    box-shadow: 0 20px 40px rgba(0, 156, 59, 0.2) !important;
+}
+
+/* ── Barra de Categorias ── */
+body.theme-world-cup .category-bar-inner {
+    background: rgba(0, 39, 118, 0.1) !important;
+    border: 1px solid rgba(0, 156, 59, 0.2) !important;
+}
+
+body.theme-world-cup .cat-tab-btn {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+body.theme-world-cup .cat-tab-btn.active {
+    color: var(--theme-secondary) !important;
+}
+
+body.theme-world-cup .cat-tab-indicator {
+    background: rgba(0, 156, 59, 0.15) !important;
+    border: 1px solid var(--theme-primary) !important;
+}
+
+body.theme-world-cup .cat-tab-btn.promo-tab {
+    color: #ffcc00 !important; /* Amarelo para promoções na Copa */
+}
+
+body.theme-world-cup .cat-tab-btn.promo-tab.active {
+    color: #fff !important;
+}
+
+body.theme-world-cup .cat-tab-btn.promo-tab .cat-tab-indicator {
+    background: linear-gradient(135deg, rgba(0, 156, 59, 0.2), rgba(254, 221, 0, 0.2)) !important;
+    border-color: var(--theme-secondary) !important;
+}
+
+/* ── Faixa superior da página ── */
+body.theme-world-cup::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px; /* Aumentado em 100% (era 3px) */
+    background: linear-gradient(90deg, #009c3b 33%, #FEDD00 33% 66%, #002776 66%);
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* ── TELA DE DETALHE DO PRODUTO (COPA) ── */
+body.theme-world-cup .product-title-detail {
+    color: var(--theme-secondary) !important;
+    text-shadow: 0 0 15px rgba(254, 221, 0, 0.2);
+}
+
+body.theme-world-cup .btn-add-large {
+    background: linear-gradient(135deg, #009c3b 0%, #3db84a 40%, #f5d000 100%) !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 8px 25px rgba(0, 156, 59, 0.3) !important;
+}
+
+body.theme-world-cup .qty-selector-large {
+    border: 1px solid var(--theme-primary) !important;
+    background: rgba(0, 156, 59, 0.1) !important;
+}
+
+body.theme-world-cup .qty-display-large {
+    color: var(--theme-secondary) !important;
+}
+
+body.theme-world-cup .related-products-section h3 {
+    color: var(--theme-secondary) !important;
+}
+
+body.theme-world-cup .detail-carousel-dots .dot.active {
+    background: var(--theme-secondary) !important;
+    box-shadow: 0 0 8px var(--theme-secondary) !important;
+}
+
+/* Botões de seleção (KG/CAIXA) */
+body.theme-world-cup .product-description-container button {
+    border-color: rgba(0, 156, 59, 0.3) !important;
+}
+
+body.theme-world-cup .product-description-container button[style*="#D4AF37"] {
+    background: rgba(0, 156, 59, 0.15) !important;
+    border-color: var(--theme-primary) !important;
+    color: var(--theme-secondary) !important;
+}
+
+/* ── Faixa VERTICAL do Banner ── */
+.world-cup-ribbon {
+    position: absolute;
+    top: 0;
+    left: 15px;      /* Distância da borda esquerda */
+    width: 140px;    /* Ajustado para 140px */
+    height: auto;
+    z-index: 20;
+    pointer-events: auto; /* Alterado para permitir cliques na faixa recolhível */
+    will-change: transform;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.world-cup-ribbon-inner {
+    background: linear-gradient(180deg, #009c3b 0%, #007a2e 100%);
+    border-left: 5px solid #FEDD00;
+    border-right: 5px solid #FEDD00;
+    border-bottom: 5px solid #FEDD00;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    padding: 26px 8px; /* Aumentado em 40% (era 18px) */
+    text-align: center;
+    box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.world-cup-ribbon-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.world-cup-ribbon-label {
+    font-size: 0.75rem;   /* Ajustado para 140px */
+    font-weight: 900;
+    color: rgba(255,255,255,1);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+/* Layout vertical das bandeiras */
+.world-cup-ribbon-matchup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.world-cup-ribbon-country {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.world-cup-ribbon-flag-img {
+    width: 75px;    /* Ajustado para 140px */
+    height: 50px;
+    object-fit: cover;
+    border-radius: 5px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+    border: 1.5px solid rgba(255,255,255,0.4);
+}
+
+.world-cup-ribbon-country-name {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.world-cup-ribbon-vs {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #FEDD00;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.world-cup-ribbon-date {
+    background: rgba(0, 0, 0, 0.5);
+    color: #FEDD00;
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 9px;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    border: 1.2px solid rgba(254, 221, 0, 0.3);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+}
+
+/* 📱 Ajustes proporcionais para PWA (Mobile) - Redução de ~30% */
+@media (max-width: 768px) {
+    .world-cup-ribbon {
+        width: 98px;
+        left: 10px;
+    }
+    .world-cup-ribbon-inner {
+        padding: 12px 5px;
+        gap: 6px;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+    .world-cup-ribbon-label {
+        font-size: 0.55rem;
+    }
+    .world-cup-ribbon-flag-img {
+        width: 52px;
+        height: 35px;
+    }
+    .world-cup-ribbon-country-name {
+        font-size: 0.6rem;
+    }
+    .world-cup-ribbon-vs {
+        font-size: 0.55rem;
+    }
+    .world-cup-ribbon-date {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+    .live-badge {
+        font-size: 0.5rem;
+        padding: 1px 5px;
+    }
+}
+
+/* Badge AO VIVO piscante */
+.live-badge {
+    background: #ff0000;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 900;
+    animation: pulse-live 1.5s infinite;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 0 12px rgba(255,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes pulse-live {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Estilos para Faixa RECOLHIDA ── */
+.world-cup-ribbon.collapsed {
+    height: 20px !important;
+    top: 0 !important;
+    left: 15px !important;
+    width: 140px !important;
+}
+
+.world-cup-ribbon.collapsed .world-cup-ribbon-inner {
+    padding: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top-width: 0;
+    cursor: pointer;
+    min-height: 20px;
+    justify-content: center;
+}
+
+.ribbon-collapsed-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    animation: pulse-ribbon-arrow 2s infinite;
+}
+
+.ribbon-close-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--theme-secondary);
+    color: var(--theme-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 30;
+    transition: 0.3s;
+}
+
+.ribbon-close-btn:hover {
+    background: var(--theme-secondary);
+    color: #000;
+    transform: scale(1.1);
+}
+
+@keyframes pulse-ribbon-arrow {
+    0% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(3px); opacity: 1; }
+    100% { transform: translateY(0); opacity: 0.7; }
+}
+
+@media (max-width: 768px) {
+    .world-cup-ribbon.collapsed {
+        height: 18px !important;
+        width: 120px !important;
+    }
+}

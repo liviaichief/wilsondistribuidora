@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAlert } from './AlertContext';
 import { getProducts, getCategories, getUserOrderHistory, getSettings } from '../services/dataService';
@@ -12,8 +12,12 @@ export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const { showAlert } = useAlert();
     const [cartItems, setCartItems] = useState(() => {
-        const storedCart = localStorage.getItem('cart');
-        return storedCart ? JSON.parse(storedCart) : [];
+        try {
+            const storedCart = localStorage.getItem('cart');
+            return storedCart ? JSON.parse(storedCart) : [];
+        } catch {
+            return [];
+        }
     });
     const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -26,28 +30,24 @@ export const CartProvider = ({ children }) => {
     const [userHistory, setUserHistory] = useState([]);
     const [upsellRules, setUpsellRules] = useState([]);
 
-    // Pre-fetch products and categories for recommendations
-    useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                const [prodRes, catRes, settings] = await Promise.all([
-                    getProducts(),
-                    getCategories(),
-                    getSettings()
-                ]);
-                console.log("CartContext Loaded Data:", {
-                    products: prodRes.documents?.length || 0,
-                    categories: catRes?.length || 0,
-                    rules: settings.upsell_rules?.length || 0
-                });
-                if (prodRes.documents) setAllProducts(prodRes.documents);
-                if (catRes) setCategories(catRes);
-                if (settings.upsell_rules) setUpsellRules(settings.upsell_rules);
-            } catch (err) {
-                console.error("CartContext Data Load Failed:", err);
-            }
-        };
-        fetchAll();
+    // Lazy-load products/categories/rules only when upsell is first needed
+    const upsellDataLoaded = useRef(false);
+    const loadUpsellData = useCallback(async () => {
+        if (upsellDataLoaded.current) return;
+        upsellDataLoaded.current = true;
+        try {
+            const [prodRes, catRes, settings] = await Promise.all([
+                getProducts(),
+                getCategories(),
+                getSettings()
+            ]);
+            if (prodRes.documents) setAllProducts(prodRes.documents);
+            if (catRes) setCategories(catRes);
+            if (settings.upsell_rules) setUpsellRules(settings.upsell_rules);
+        } catch (err) {
+            console.error("CartContext upsell data load failed:", err);
+            upsellDataLoaded.current = false; // allow retry
+        }
     }, []);
 
     // Load user history when user changes
@@ -130,64 +130,44 @@ export const CartProvider = ({ children }) => {
         });
     };
 
-    const triggerUpsell = (items) => {
-        if (isUpsellOpen || !items || items.length === 0) {
-            console.log("Upsell Aborted: Modal already open or cart empty");
-            return false;
-        }
+    const triggerUpsell = useCallback(async (items) => {
+        if (isUpsellOpen || !items || items.length === 0) return false;
 
-        console.log("--- UPSELL DEBUG START ---");
-        console.log("Items in Cart:", items.map(i => `${i.title} (ID: ${i.id})`));
-        console.log("Available Rules:", upsellRules);
-        
+        // Garante que os dados estejam carregados (lazy, só na primeira chamada)
+        await loadUpsellData();
+
         let baseProduct = null;
         let matchedRule = null;
 
-        // Procura em cada item do carrinho se ele é um gatilho de alguma regra
         for (const item of items) {
             const itemIdStr = item.id?.toString().trim();
-            const rule = upsellRules.find(r => 
+            const rule = upsellRules.find(r =>
                 r.trigger_ids?.some(tid => tid.toString().trim() === itemIdStr)
             );
-
-            if (rule) {
-                console.log(`Match Found! Item "${item.title}" triggers rule "${rule.name}"`);
-                baseProduct = item;
-                matchedRule = rule;
-                break;
-            }
+            if (rule) { baseProduct = item; matchedRule = rule; break; }
         }
 
-        // Se nenhuma regra manual bater, usamos o primeiro item como base para o fallback inteligente
-        if (!baseProduct) {
-            baseProduct = items[0];
-            console.log("No manual rule found. Using first item as base for intelligent fallback:", baseProduct.title);
-        }
+        if (!baseProduct) baseProduct = items[0];
 
         let recommendations = [];
 
-        // 1. Tentar Regras Manuais
         if (matchedRule && matchedRule.recommended_ids?.length > 0) {
             recommendations = allProducts
                 .filter(p => matchedRule.recommended_ids.some(rid => rid.toString().trim() === p.id?.toString().trim()))
                 .sort(() => 0.5 - Math.random());
-            console.log("Manual recommendations found:", recommendations.length);
         }
 
-        // 2. Tentar Fallback Inteligente (History > Category > Promo)
         if (recommendations.length === 0) {
-            console.log("Falling back to intelligent logic...");
             const cartIds = items.map(i => i.id?.toString());
-            let potentialRecs = allProducts.filter(p => !cartIds.includes(p.id?.toString()) && p.active !== false);
+            const potentialRecs = allProducts.filter(p => !cartIds.includes(p.id?.toString()) && p.active !== false);
 
-            // Pontuação por relevância; reason é usado pelo UpsellModal para explicar a sugestão (CRO-8)
             const scoredRecs = potentialRecs.map(p => {
                 const pIdStr = p.id?.toString().trim();
-                let score  = 0;
+                let score = 0;
                 let reason = 'default';
                 if (userHistory.some(hid => hid.toString().trim() === pIdStr)) { score += 100; reason = 'history'; }
-                if (p.category?.toString() === baseProduct.category?.toString())   { score += 50;  if (reason === 'default') reason = 'category'; }
-                if (p.is_promotion)                                                { score += 30;  if (reason === 'default') reason = 'promo'; }
+                if (p.category?.toString() === baseProduct.category?.toString())  { score += 50;  if (reason === 'default') reason = 'category'; }
+                if (p.is_promotion)                                               { score += 30;  if (reason === 'default') reason = 'promo'; }
                 return { ...p, score, reason };
             });
 
@@ -196,32 +176,22 @@ export const CartProvider = ({ children }) => {
                 .sort((a, b) => (b.score - a.score) || (0.5 - Math.random()))
                 .slice(0, 3);
 
-            // Fallback total: aleatório com reason genérico
             if (recommendations.length === 0 && potentialRecs.length > 0) {
-                recommendations = potentialRecs
-                    .sort(() => 0.5 - Math.random())
-                    .slice(0, 3)
-                    .map(p => ({ ...p, reason: 'default' }));
+                recommendations = potentialRecs.sort(() => 0.5 - Math.random()).slice(0, 3).map(p => ({ ...p, reason: 'default' }));
             }
         }
-
-        console.log("Final Recommendations List:", recommendations.map(r => r.title));
 
         if (recommendations.length > 0) {
             const catObj = categories.find(c => c.id?.toString() === baseProduct.category?.toString());
             const categoryName = baseProduct.category_name || (catObj ? catObj.name : null) || 'Wilson Distribuidora';
-
             setUpsellBaseProduct({ ...baseProduct, categoryName: categoryName.toString().toUpperCase() });
             setUpsellRecommendations(recommendations);
-            
-            console.log("DISPATCHING MODAL OPEN");
             setIsUpsellOpen(true);
             return true;
         }
 
-        console.log("--- UPSELL DEBUG END - NO RECS ---");
         return false;
-    };
+    }, [isUpsellOpen, allProducts, categories, upsellRules, userHistory, loadUpsellData]);
 
     const removeFromCart = (id) => {
         setCartItems(prev => prev.filter(item => item.id !== id));

@@ -9,7 +9,9 @@ import { APP_VERSION, BUILD_DATE } from '../version';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../pages/Admin.css';
 
-const orchestratorClient = new AppwriteClient().setEndpoint('https://sfo.cloud.appwrite.io/v1').setProject('69c600d700288be4f750');
+const orchestratorClient = new AppwriteClient()
+    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1')
+    .setProject(import.meta.env.VITE_ORCHESTRATOR_PROJECT_ID || import.meta.env.VITE_APPWRITE_PROJECT_ID || '');
 const orchestratorDb = new AppwriteDatabases(orchestratorClient);
 
 const AdminLayout = () => {
@@ -89,7 +91,8 @@ const AdminLayout = () => {
             } catch (e) {}
         };
         checkBlock();
-        const interval = setInterval(checkBlock, 10000);
+        // 5 min interval — system_blocked rarely changes; 10s was too aggressive for many concurrent admins
+        const interval = setInterval(checkBlock, 5 * 60 * 1000);
         return () => clearInterval(interval);
     }, []);
 

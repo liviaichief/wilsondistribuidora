@@ -148,8 +148,10 @@ function App() {
                 {/* Google Tag Manager Dynamic Loader */}
                 <GoogleTagManagerLoader />
 
-                {/* Chat IA Mestre do Churrasco */}
-                <BBQMasterChat />
+                {/* Chat IA Mestre do Churrasco — disponível apenas no plano Premium */}
+                <FeatureGate feature={FEATURES.BBQ_MASTER_AI}>
+                  <BBQMasterChat />
+                </FeatureGate>
 
               </OrderProvider>
             </CartProvider>
