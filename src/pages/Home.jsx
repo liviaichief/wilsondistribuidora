@@ -4,6 +4,7 @@ import HeroCarousel from '../components/shop/HeroCarousel';
 import Header from '../components/shop/Header';
 import CategoryBar from '../components/shop/CategoryBar';
 import ProductCard from '../components/shop/ProductCard';
+import CopaBanner from '../components/shop/CopaBanner';
 import { getProducts } from '../services/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -144,6 +145,7 @@ const Home = () => {
             )}
 
             <Header />
+            <CopaBanner />
 
             <div className="home-content-wrapper">
                 <CategoryBar 
