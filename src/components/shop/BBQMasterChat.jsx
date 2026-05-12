@@ -119,11 +119,16 @@ export default function BBQMasterChat() {
       const { chatBBQMaster } = await import('../../services/aiService');
       const reply = await chatBBQMaster(newHistory, config.systemPrompt);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, {
-        role:    'assistant',
-        content: 'Desculpe, não consegui responder agora. Verifique se a chave OpenAI está configurada nas settings. 🙏',
-      }]);
+    } catch (err) {
+      console.error('[BBQMasterChat] Erro ao chamar OpenAI:', err);
+      const isKeyMissing = err?.message?.includes('não configurada');
+      const isAuthError  = err?.status === 401 || err?.message?.includes('401') || err?.message?.includes('Incorrect API key');
+      const isQuota      = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('quota');
+      let userMsg = 'Desculpe, não consegui responder agora. Tente novamente em instantes. 🙏';
+      if (isKeyMissing) userMsg = '⚠️ Chave OpenAI não configurada. Acesse o painel admin → Settings para inserir sua chave.';
+      else if (isAuthError) userMsg = '⚠️ Chave OpenAI inválida ou revogada. Verifique nas Settings do admin.';
+      else if (isQuota)  userMsg = '⚠️ Limite de uso OpenAI atingido. Verifique sua conta em platform.openai.com.';
+      setMessages(prev => [...prev, { role: 'assistant', content: userMsg }]);
     } finally {
       setLoading(false);
     }
