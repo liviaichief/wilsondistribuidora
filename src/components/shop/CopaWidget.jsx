@@ -111,7 +111,14 @@ export default function CopaWidget() {
   const dateLabel = `${matchDate.getDate().toString().padStart(2, '0')}/${(matchDate.getMonth() + 1).toString().padStart(2, '0')} · ${match.time}h`;
 
   return (
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .copa-widget { transform: scale(0.7); transform-origin: top left; }
+        }
+      `}</style>
     <motion.div
+      className="copa-widget"
       initial={{ x: -80, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 20, stiffness: 180 }}
@@ -252,5 +259,6 @@ export default function CopaWidget() {
         </AnimatePresence>
       </div>
     </motion.div>
+    </>
   );
 }
