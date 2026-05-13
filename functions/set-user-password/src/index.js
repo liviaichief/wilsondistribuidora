@@ -1,7 +1,6 @@
 import { Client, Users } from 'node-appwrite';
 
 export default async ({ req, res, log, error }) => {
-  // Apenas aceita POST
   if (req.method !== 'POST') {
     return res.json({ ok: false, error: 'Method not allowed' }, 405);
   }
@@ -13,10 +12,10 @@ export default async ({ req, res, log, error }) => {
     return res.json({ ok: false, error: 'Invalid JSON body' }, 400);
   }
 
-  const { userId, password } = body;
+  const { userId, password, apiKey } = body;
 
-  if (!userId || !password) {
-    return res.json({ ok: false, error: 'userId e password são obrigatórios' }, 400);
+  if (!userId || !password || !apiKey) {
+    return res.json({ ok: false, error: 'userId, password e apiKey são obrigatórios' }, 400);
   }
 
   if (password.length < 8) {
@@ -26,7 +25,7 @@ export default async ({ req, res, log, error }) => {
   const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(process.env.APPWRITE_API_KEY);
+    .setKey(apiKey);
 
   const users = new Users(client);
 

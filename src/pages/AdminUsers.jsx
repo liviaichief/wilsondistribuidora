@@ -503,7 +503,11 @@ const AdminUsers = () => {
             const accountId = selectedUser.user_id || selectedUser.$id;
             const execution = await functions.createExecution(
                 funcId,
-                JSON.stringify({ userId: accountId, password: passwordForm.newPassword }),
+                JSON.stringify({
+                    userId: accountId,
+                    password: passwordForm.newPassword,
+                    apiKey: import.meta.env.VITE_APPWRITE_API_KEY,
+                }),
                 false // síncrono
             );
             const result = JSON.parse(execution.responseBody || '{}');
