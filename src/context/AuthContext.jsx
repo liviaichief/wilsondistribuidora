@@ -85,14 +85,14 @@ export const AuthProvider = ({ children }) => {
             if (error.code === 404) {
                 console.log("[Auth] Profile document not found during fetchProfile (user may have been created without reaching profile creation step).");
                 setProfile(null);
-                setRole('client');
-                // DON'T throw the error, just return gracefully so login can succeed.
-                // The later code or the checkSession loop will likely catch that profile is missing and prompt the user.
+                // [SECURITY] Do NOT override role here — role is set from account labels in checkSession.
+                // Only fall back to 'client' if role hasn't been set yet.
+                setRole(prev => prev ?? 'client');
                 return null;
             }
             console.error("Error fetching profile:", error);
             setProfile(null);
-            setRole('client');
+            // [SECURITY] Do NOT override role on generic errors — role comes from account labels.
             throw error;
         }
     };

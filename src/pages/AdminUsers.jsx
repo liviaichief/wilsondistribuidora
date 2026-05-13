@@ -15,8 +15,8 @@ const AdminUsers = () => {
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const { showAlert } = useAlert();
-    const { role: currentRole } = useAuth();
-    const isOwner = currentRole === 'owner';
+    const { role: currentRole, isMaster } = useAuth();
+    const isOwner = currentRole === 'owner' && !isMaster;
     
     // Custom States
     const [deleteModal, setDeleteModal] = useState({ show: false, userId: null, userName: '' });
@@ -821,7 +821,7 @@ const AdminUsers = () => {
                                     </div>
 
                                     {/* Definir Nova Senha — apenas Master */}
-                                    {currentRole === 'master' && (
+                                    {isMaster && (
                                     <div style={{ background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: '12px', padding: '16px' }}>
                                         <button
                                             onClick={() => setPasswordForm(p => ({ ...p, open: !p.open, newPassword: '', confirm: '' }))}
