@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import './Profile.css';
 
 const Profile = () => {
-    const { user, profile, logout, isAdmin, isOwner } = useAuth();
+    const { user, profile, signOut, isAdmin, isOwner, role } = useAuth();
     const navigate = useNavigate();
 
     const getInitials = (name) => {
@@ -195,7 +195,7 @@ const Profile = () => {
 
                 {/* Footer Actions */}
                 <section className="profile-actions-bottom">
-                    {(isAdmin || isOwner || profile?.role === 'owner' || profile?.role === 'master' || profile?.role === 'admin') && (
+                    {(isAdmin || isOwner || role === 'owner' || role === 'master' || profile?.role === 'owner' || profile?.role === 'master' || profile?.role === 'admin') && (
                         <motion.button
                             whileTap={{ scale: 0.98 }}
                             onClick={() => navigate('/admin')}
@@ -207,7 +207,7 @@ const Profile = () => {
                     
                     <motion.button 
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => { logout(); navigate('/'); }} 
+                        onClick={() => { signOut(); navigate('/'); }}
                         className="btn-premium-action btn-logout-luxury"
                     >
                         <LogOut size={20} /> ENCERRAR SESSÃO
