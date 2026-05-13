@@ -4,7 +4,7 @@ import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, ShieldCheck
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { account } from '../lib/appwrite';
+import { account, functions } from '../lib/appwrite';
 import { openWhatsApp } from '../services/whatsappService';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
@@ -485,7 +485,7 @@ const AdminUsers = () => {
         }
     };
 
-    // Define senha diretamente via Appwrite Admin REST API (apenas master)
+    // Define senha via Appwrite Function server-side (apenas master)
     const handleSetPassword = async () => {
         if (passwordForm.newPassword.length < 8) {
             return showAlert('A senha deve ter pelo menos 8 caracteres.', 'warning');
@@ -493,29 +493,21 @@ const AdminUsers = () => {
         if (passwordForm.newPassword !== passwordForm.confirm) {
             return showAlert('As senhas não coincidem.', 'warning');
         }
-        const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
-        if (!apiKey) {
-            return showAlert('Chave de API de administrador não configurada (VITE_APPWRITE_API_KEY).', 'error');
+        const funcId = import.meta.env.VITE_FUNC_SET_PASSWORD;
+        if (!funcId) {
+            return showAlert('Função de definição de senha não configurada (VITE_FUNC_SET_PASSWORD).', 'error');
         }
         secBusy('setPass', true);
         try {
-            const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
-            const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
             // user_id armazena o ID da conta Appwrite vinculada ao perfil
             const accountId = selectedUser.user_id || selectedUser.$id;
-            const res = await fetch(`${endpoint}/v1/users/${accountId}/password`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Appwrite-Project': projectId,
-                    'X-Appwrite-Key': apiKey,
-                },
-                body: JSON.stringify({ password: passwordForm.newPassword }),
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || `HTTP ${res.status}`);
-            }
+            const execution = await functions.createExecution(
+                funcId,
+                JSON.stringify({ userId: accountId, password: passwordForm.newPassword }),
+                false // síncrono
+            );
+            const result = JSON.parse(execution.responseBody || '{}');
+            if (!result.ok) throw new Error(result.error || 'Erro desconhecido');
             showAlert('Senha definida com sucesso! O usuário pode fazer login com a nova senha.', 'success', null, 5000);
             setPasswordForm({ newPassword: '', confirm: '', show: false, showConfirm: false, open: false });
         } catch (err) {
