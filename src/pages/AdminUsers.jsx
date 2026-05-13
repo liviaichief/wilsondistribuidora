@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getProfiles, updateProfile, getOrders, deleteProfile, createProfile, ID } from '../services/dataService';
-import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, ShieldCheck, ShieldOff, ShieldAlert, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, Check, Save, Plus, RefreshCw, Lock, Unlock, KeyRound, MessageSquare, Link, Copy, LogOut, Smartphone } from 'lucide-react';
+import { User, Search, MapPin, Phone, Mail, Calendar, Edit2, Shield, ShieldCheck, ShieldOff, ShieldAlert, Loader2, Clock, ShoppingBag, Cake, Trash2, Pencil, AlertTriangle, X, Eye, EyeOff, Check, Save, Plus, RefreshCw, Lock, Unlock, KeyRound, MessageSquare, Link, Copy, LogOut, Smartphone } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,12 +25,13 @@ const AdminUsers = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({ 
-        full_name: '', whatsapp: '', birthday: '', role: '',
-        address_cep: '', address_street: '', address_number: '', 
-        address_neighborhood: '', address_city: '', address_state: '', 
-        address_complement: '' 
+    const [editForm, setEditForm] = useState({
+        full_name: '', email: '', whatsapp: '', birthday: '', role: '',
+        address_cep: '', address_street: '', address_number: '',
+        address_neighborhood: '', address_city: '', address_state: '',
+        address_complement: ''
     });
+    const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirm: '', show: false, showConfirm: false, open: false });
     const [newUserForm, setNewUserForm] = useState({ 
         full_name: '', email: '', whatsapp: '', role: 'client',
         address_cep: '', address_street: '', address_number: '',
@@ -198,8 +199,10 @@ const AdminUsers = () => {
             address_neighborhood: selectedUser.address_neighborhood || '',
             address_city: selectedUser.address_city || '',
             address_state: selectedUser.address_state || '',
-            address_complement: selectedUser.address_complement || ''
+            address_complement: selectedUser.address_complement || '',
+            email: selectedUser.email || '',
         });
+        setPasswordForm({ newPassword: '', confirm: '', show: false, showConfirm: false, open: false });
         setIsEditing(true);
     };
 
@@ -240,7 +243,6 @@ const AdminUsers = () => {
                 return;
             }
 
-            console.log("Saving profile changes:", dataToSave);
             await updateProfile(selectedUser.$id, dataToSave);
             
             const updatedUser = { ...selectedUser, ...dataToSave };
@@ -483,6 +485,46 @@ const AdminUsers = () => {
         }
     };
 
+    // Define senha diretamente via Appwrite Admin REST API (apenas master)
+    const handleSetPassword = async () => {
+        if (passwordForm.newPassword.length < 8) {
+            return showAlert('A senha deve ter pelo menos 8 caracteres.', 'warning');
+        }
+        if (passwordForm.newPassword !== passwordForm.confirm) {
+            return showAlert('As senhas não coincidem.', 'warning');
+        }
+        const apiKey = import.meta.env.VITE_APPWRITE_API_KEY;
+        if (!apiKey) {
+            return showAlert('Chave de API de administrador não configurada (VITE_APPWRITE_API_KEY).', 'error');
+        }
+        secBusy('setPass', true);
+        try {
+            const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+            const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+            // user_id armazena o ID da conta Appwrite vinculada ao perfil
+            const accountId = selectedUser.user_id || selectedUser.$id;
+            const res = await fetch(`${endpoint}/v1/users/${accountId}/password`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': projectId,
+                    'X-Appwrite-Key': apiKey,
+                },
+                body: JSON.stringify({ password: passwordForm.newPassword }),
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || `HTTP ${res.status}`);
+            }
+            showAlert('Senha definida com sucesso! O usuário pode fazer login com a nova senha.', 'success', null, 5000);
+            setPasswordForm({ newPassword: '', confirm: '', show: false, showConfirm: false, open: false });
+        } catch (err) {
+            showAlert(`Erro ao definir senha: ${err.message}`, 'error');
+        } finally {
+            secBusy('setPass', false);
+        }
+    };
+
     // Copia link de convite para acesso à loja
     const handleCopyInviteLink = (user) => {
         const link = `${window.location.origin}/?ref=${user.$id}`;
@@ -705,9 +747,24 @@ const AdminUsers = () => {
                                         </div>
                                     </div>
                                     {isEditing ? (
-                                        <div style={{ marginBottom: '15px' }}>
-                                            <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>Nome Completo</div>
-                                            <input value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px', borderRadius: '12px', width: '100%', fontSize: '1rem', fontWeight: 900, outline: 'none' }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '5px' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>Nome Completo</div>
+                                                <input value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px', borderRadius: '12px', width: '100%', fontSize: '1rem', fontWeight: 900, outline: 'none' }} />
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '0.6rem', color: currentRole === 'master' ? '#555' : '#333', fontWeight: 900, textTransform: 'uppercase', marginBottom: '5px' }}>
+                                                    E-mail {currentRole !== 'master' && <span style={{ color: '#333', fontWeight: 600 }}>(somente leitura)</span>}
+                                                </div>
+                                                <input
+                                                    type="email"
+                                                    value={editForm.email}
+                                                    onChange={e => currentRole === 'master' ? setEditForm({...editForm, email: e.target.value.toLowerCase().trim()}) : undefined}
+                                                    readOnly={currentRole !== 'master'}
+                                                    placeholder="email@exemplo.com"
+                                                    style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${currentRole === 'master' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)'}`, color: currentRole === 'master' ? '#fff' : '#444', padding: '10px', borderRadius: '12px', width: '100%', fontSize: '0.9rem', outline: 'none', cursor: currentRole === 'master' ? 'text' : 'not-allowed' }}
+                                                />
+                                            </div>
                                         </div>
                                     ) : (
                                         <>
@@ -762,6 +819,67 @@ const AdminUsers = () => {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Definir Nova Senha — apenas Master */}
+                                    {currentRole === 'master' && (
+                                    <div style={{ background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: '12px', padding: '16px' }}>
+                                        <button
+                                            onClick={() => setPasswordForm(p => ({ ...p, open: !p.open, newPassword: '', confirm: '' }))}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <KeyRound size={15} color="#a855f7" />
+                                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#c084fc' }}>Definir Nova Senha</span>
+                                                <span style={{ fontSize: '0.58rem', background: 'rgba(168,85,247,0.15)', color: '#a855f7', borderRadius: '4px', padding: '1px 6px', fontWeight: 700 }}>MASTER</span>
+                                            </div>
+                                            <span style={{ fontSize: '0.7rem', color: '#555' }}>{passwordForm.open ? '▲' : '▼'}</span>
+                                        </button>
+                                        {passwordForm.open && (
+                                            <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div style={{ fontSize: '0.65rem', color: '#666', lineHeight: 1.5 }}>
+                                                    Define uma nova senha diretamente para este usuário. O usuário poderá fazer login imediatamente com a nova senha.
+                                                </div>
+                                                {/* Nova senha */}
+                                                <div style={{ position: 'relative' }}>
+                                                    <label style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '5px' }}>Nova Senha</label>
+                                                    <input
+                                                        type={passwordForm.show ? 'text' : 'password'}
+                                                        value={passwordForm.newPassword}
+                                                        onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                                                        placeholder="Mínimo 8 caracteres"
+                                                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(168,85,247,0.25)', color: '#fff', padding: '9px 36px 9px 12px', borderRadius: '9px', width: '100%', fontSize: '0.82rem', outline: 'none' }}
+                                                    />
+                                                    <button onClick={() => setPasswordForm(p => ({ ...p, show: !p.show }))} style={{ position: 'absolute', right: '10px', top: '28px', background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 0 }}>
+                                                        {passwordForm.show ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                    </button>
+                                                </div>
+                                                {/* Confirmar senha */}
+                                                <div style={{ position: 'relative' }}>
+                                                    <label style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, textTransform: 'uppercase', display: 'block', marginBottom: '5px' }}>Confirmar Senha</label>
+                                                    <input
+                                                        type={passwordForm.showConfirm ? 'text' : 'password'}
+                                                        value={passwordForm.confirm}
+                                                        onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                                                        placeholder="Repita a senha"
+                                                        style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${passwordForm.confirm && passwordForm.confirm !== passwordForm.newPassword ? 'rgba(239,68,68,0.5)' : 'rgba(168,85,247,0.25)'}`, color: '#fff', padding: '9px 36px 9px 12px', borderRadius: '9px', width: '100%', fontSize: '0.82rem', outline: 'none' }}
+                                                    />
+                                                    <button onClick={() => setPasswordForm(p => ({ ...p, showConfirm: !p.showConfirm }))} style={{ position: 'absolute', right: '10px', top: '28px', background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 0 }}>
+                                                        {passwordForm.showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                    </button>
+                                                </div>
+                                                {/* Botão confirmar */}
+                                                <button
+                                                    onClick={handleSetPassword}
+                                                    disabled={securityLoading.setPass || !passwordForm.newPassword || !passwordForm.confirm}
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 14px', borderRadius: '9px', background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.35)', color: '#c084fc', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', opacity: (!passwordForm.newPassword || !passwordForm.confirm) ? 0.4 : 1 }}
+                                                >
+                                                    {securityLoading.setPass ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
+                                                    Definir Senha
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    )}
 
                                     {/* Políticas de senha */}
                                     <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '16px' }}>
