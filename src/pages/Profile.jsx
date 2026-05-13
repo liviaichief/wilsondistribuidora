@@ -195,10 +195,10 @@ const Profile = () => {
 
                 {/* Footer Actions */}
                 <section className="profile-actions-bottom">
-                    {(isAdmin || isOwner) && (
-                        <motion.button 
+                    {(isAdmin || isOwner || profile?.role === 'owner' || profile?.role === 'master' || profile?.role === 'admin') && (
+                        <motion.button
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => navigate('/admin')} 
+                            onClick={() => navigate('/admin')}
                             className="btn-premium-action btn-admin-luxury"
                         >
                             <Shield size={20} /> ACESSAR PAINEL ADMIN

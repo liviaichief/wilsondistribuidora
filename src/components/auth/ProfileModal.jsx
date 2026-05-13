@@ -450,7 +450,7 @@ export default function ProfileModal({ isOpen, onClose, user }) {
                             )}
                         </div>
                         
-                        {isAdmin && (
+                        {(isAdmin || role === 'owner' || role === 'master') && (
                             <div style={{
                                 padding: '20px',
                                 background: 'rgba(147, 85, 247, 0.05)',
