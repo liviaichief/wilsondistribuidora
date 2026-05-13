@@ -505,6 +505,7 @@ const AdminUsers = () => {
                 funcId,
                 JSON.stringify({
                     userId: accountId,
+                    email: selectedUser.email || '',
                     password: passwordForm.newPassword,
                     apiKey: import.meta.env.VITE_APPWRITE_API_KEY,
                 }),
