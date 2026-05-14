@@ -210,12 +210,14 @@ const AdminSettings = () => {
                     ONBOARDING
                 </button>
                 </>}
+                {isMaster && (
                 <button
                     onClick={() => setActiveTab('bbqmaster')}
                     style={{ padding: '12px 30px', borderRadius: '14px', border: 'none', background: activeTab === 'bbqmaster' ? '#800020' : 'transparent', color: activeTab === 'bbqmaster' ? '#fff' : '#888', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', transition: '0.3s', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                     🔥 MESTRE DO CHURRASCO
                 </button>
+                )}
             </div>
 
             {activeTab === 'geral' ? (
