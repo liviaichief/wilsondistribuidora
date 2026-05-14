@@ -18,6 +18,8 @@ export default function CopaBanner() {
   const [isLive, setIsLive]       = useState(false);
   const [timeLeft, setTimeLeft]   = useState('');
   const [isCopaActive, setIsCopaActive] = useState(false);
+  const isPwa = typeof window !== 'undefined' &&
+    (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
 
   useEffect(() => {
     getSettings().then(s => {
@@ -64,6 +66,7 @@ export default function CopaBanner() {
         exit={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.4 }}
         style={{
+          ...(isPwa ? { width: '70%', margin: '0 auto', borderRadius: '0 0 12px 12px' } : {}),
           background: isLive
             ? 'linear-gradient(90deg, #006400 0%, #009c3b 30%, #cc0000 50%, #009c3b 70%, #006400 100%)'
             : 'linear-gradient(90deg, #004d20 0%, #009c3b 50%, #FFDF00 100%)',
@@ -89,9 +92,10 @@ export default function CopaBanner() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '10px',
-          padding: '8px 16px',
-          flexWrap: 'wrap',
+          gap: isPwa ? '6px' : '10px',
+          padding: isPwa ? '4px 10px' : '8px 16px',
+          flexWrap: isPwa ? 'nowrap' : 'wrap',
+          overflow: isPwa ? 'hidden' : 'visible',
           position: 'relative',
         }}>
           {/* LIVE badge */}
@@ -103,8 +107,8 @@ export default function CopaBanner() {
                 background: '#cc0000',
                 color: '#fff',
                 borderRadius: '5px',
-                padding: '2px 7px',
-                fontSize: '0.6rem',
+                padding: isPwa ? '1px 5px' : '2px 7px',
+                fontSize: isPwa ? '0.42rem' : '0.6rem',
                 fontWeight: 900,
                 letterSpacing: '1.5px',
                 textTransform: 'uppercase',
@@ -119,7 +123,7 @@ export default function CopaBanner() {
           <motion.span
             animate={isLive ? { rotate: [0, 360] } : {}}
             transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-            style={{ fontSize: '1rem' }}
+            style={{ fontSize: isPwa ? '0.7rem' : '1rem' }}
           >
             ⚽
           </motion.span>
@@ -128,7 +132,7 @@ export default function CopaBanner() {
           <span style={{
             color: '#fff',
             fontWeight: 800,
-            fontSize: '0.82rem',
+            fontSize: isPwa ? '0.57rem' : '0.82rem',
             textShadow: '0 1px 4px rgba(0,0,0,0.6)',
             textTransform: 'uppercase',
             letterSpacing: '0.3px',
@@ -144,8 +148,8 @@ export default function CopaBanner() {
             <span style={{
               background: 'rgba(0,0,0,0.35)',
               borderRadius: '6px',
-              padding: '2px 9px',
-              fontSize: '0.72rem',
+              padding: isPwa ? '1px 6px' : '2px 9px',
+              fontSize: isPwa ? '0.5rem' : '0.72rem',
               fontWeight: 900,
               color: '#FFDF00',
               letterSpacing: '0.5px',
@@ -154,14 +158,16 @@ export default function CopaBanner() {
             </span>
           )}
 
-          {/* Venue */}
-          <span style={{
-            color: 'rgba(255,255,255,0.65)',
-            fontSize: '0.72rem',
-            fontWeight: 600,
-          }}>
-            📍 {match.venue}
-          </span>
+          {/* Venue — oculto no PWA para evitar quebra de linha */}
+          {!isPwa && (
+            <span style={{
+              color: 'rgba(255,255,255,0.65)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+            }}>
+              📍 {match.venue}
+            </span>
+          )}
         </div>
       </motion.div>
     </AnimatePresence>

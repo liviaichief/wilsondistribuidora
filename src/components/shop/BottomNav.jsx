@@ -55,8 +55,10 @@ const BottomNav = () => {
                 onClick={handleCartClick}
                 style={{ cursor: 'pointer' }}
             >
-                <ShoppingCart size={24} />
-                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShoppingCart size={24} />
+                    {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                </div>
                 <span>Carrinho</span>
             </div>
 
