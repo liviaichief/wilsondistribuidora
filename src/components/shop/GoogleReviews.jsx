@@ -10,9 +10,17 @@ const GoogleReviews = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
+    const [enabled, setEnabled] = useState(true);
+
     useEffect(() => {
         const loadReviews = async () => {
             const settings = await getSettings();
+            // Respeita o toggle "Avaliações Google no Rodapé" (padrão: ativo)
+            if (settings.show_google_reviews === false) {
+                setEnabled(false);
+                setLoading(false);
+                return;
+            }
             const reviewsData = await fetchGoogleReviews(settings.google_api_key, settings.google_place_id);
             setData(reviewsData);
             setLoading(false);
@@ -31,6 +39,7 @@ const GoogleReviews = () => {
     };
 
     if (loading) return null;
+    if (!enabled) return null;
     if (!data || data.reviews.length === 0) return null;
 
     const current = data.reviews[currentIndex];

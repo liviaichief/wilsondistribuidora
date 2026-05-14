@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getSettings, updateSettings } from '../services/dataService';
-import { Save, Loader2, Settings2, Activity, MessageSquare, MapPin, TrendingUp, Gift, Bot, DollarSign, Tag, Sparkles } from 'lucide-react';
+import { Save, Loader2, Settings2, Activity, MessageSquare, MapPin, TrendingUp, Gift, Bot, DollarSign, Tag, Sparkles, Star } from 'lucide-react';
 import { useAlert } from '../context/AlertContext';
 import AdminHealthDashboard from '../components/admin/AdminHealthDashboard';
 import { useAuth } from '../context/AuthContext';
@@ -100,6 +100,7 @@ const AdminSettings = () => {
         instagram_link: '',
         google_api_key: '',
         google_place_id: '',
+        show_google_reviews: true,
         shipping_free_radius: 5,
         shipping_fixed_rate: '',
         shipping_fixed_radius_max: 15,
@@ -281,9 +282,9 @@ const AdminSettings = () => {
                         icon={<Settings2 size={22} />}
                         color="#4285F4"
                         title="Ecossistema Google"
-                        onSave={() => handleSaveSection('Google', ['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id'])}
+                        onSave={() => handleSaveSection('Google', ['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id', 'show_google_reviews'])}
                         saving={savingSection === 'Google'}
-                        disabled={!isDirty(['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id'])}
+                        disabled={!isDirty(['google_api_key', 'google_place_id', 'google_gtm_id', 'google_merchant_id', 'show_google_reviews'])}
                     >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <Field label="Google Cloud API Key">
@@ -298,6 +299,25 @@ const AdminSettings = () => {
                             <Field label="Merchant Center ID">
                                 <input value={settings.google_merchant_id} onChange={e => setSettings({...settings, google_merchant_id: e.target.value})} style={inputStyle} placeholder="123456789" />
                             </Field>
+
+                            {/* Toggle Avaliações Google no Rodapé */}
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '18px 20px', background: settings.show_google_reviews ? 'rgba(66,133,244,0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${settings.show_google_reviews ? 'rgba(66,133,244,0.25)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '16px', transition: 'all 0.3s' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                    <div style={{ background: settings.show_google_reviews ? 'rgba(66,133,244,0.15)' : 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: settings.show_google_reviews ? '#4285F4' : '#555', transition: 'all 0.3s' }}>
+                                        <Star size={18} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 800, color: '#fff', fontSize: '0.9rem', marginBottom: '3px' }}>Avaliações Google no Rodapé</div>
+                                        <div style={{ fontSize: '0.73rem', color: '#555' }}>Exibe o carrossel de avaliações do Google na home da vitrine</div>
+                                    </div>
+                                </div>
+                                <div style={{ position: 'relative', width: '52px', height: '28px', flexShrink: 0 }}>
+                                    <input type="checkbox" checked={!!settings.show_google_reviews} onChange={e => setSettings({...settings, show_google_reviews: e.target.checked})} style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+                                    <div style={{ position: 'absolute', inset: 0, background: settings.show_google_reviews ? '#4285F4' : '#333', borderRadius: '28px', cursor: 'pointer', transition: 'all 0.3s', pointerEvents: 'none' }}>
+                                        <div style={{ position: 'absolute', top: '4px', left: settings.show_google_reviews ? '28px' : '4px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }} />
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </Card>}
                 </div>
