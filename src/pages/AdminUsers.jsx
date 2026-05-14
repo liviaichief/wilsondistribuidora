@@ -264,7 +264,30 @@ const AdminUsers = () => {
         const { userId, newRole } = roleModal;
         setIsSaving(true);
         try {
+            // 1. Atualiza profile.role no banco
             await updateProfile(userId, { role: newRole });
+
+            // 2. Sincroniza labels da conta Appwrite (garante isOwner/isAdmin no AuthContext)
+            const labelFuncId = import.meta.env.VITE_FUNC_SET_LABEL;
+            if (labelFuncId) {
+                try {
+                    const exec = await functions.createExecution(
+                        labelFuncId,
+                        JSON.stringify({
+                            userId,
+                            role: newRole,
+                            apiKey: import.meta.env.VITE_APPWRITE_API_KEY,
+                        }),
+                        false
+                    );
+                    const result = JSON.parse(exec.responseBody || '{}');
+                    if (!result.ok) throw new Error(result.error);
+                } catch (labelErr) {
+                    console.warn('[AdminUsers] Falha ao sincronizar label Appwrite:', labelErr.message);
+                    // Não bloqueia — profile.role já foi salvo
+                }
+            }
+
             const updatedUsers = users.map(u => u.$id === userId ? { ...u, role: newRole } : u);
             setUsers(updatedUsers);
             if (selectedUser?.$id === userId) {
