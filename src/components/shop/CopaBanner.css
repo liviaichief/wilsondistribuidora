@@ -1,0 +1,106 @@
+/* ── CopaBanner — faixa do próximo jogo ── */
+
+.copa-banner-outer {
+  background: linear-gradient(90deg, #004d20 0%, #009c3b 50%, #FFDF00 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.copa-banner-outer.is-live {
+  background: linear-gradient(90deg, #006400 0%, #009c3b 30%, #cc0000 50%, #009c3b 70%, #006400 100%);
+  background-size: 300% 100%;
+}
+
+.copa-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 16px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.copa-live-badge {
+  background: #cc0000;
+  color: #fff;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(204, 0, 0, 0.6);
+}
+
+.copa-ball {
+  font-size: 1rem;
+}
+
+.copa-match-text {
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.copa-countdown {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 2px 9px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #FFDF00;
+  letter-spacing: 0.5px;
+}
+
+.copa-venue {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* ── PWA standalone — 70% menor, sem corte ── */
+@media (display-mode: standalone) {
+  .copa-banner-outer {
+    width: 70%;
+    margin: 0 auto;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .copa-banner-inner {
+    padding: 4px 10px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .copa-live-badge {
+    font-size: 0.42rem;
+    padding: 1px 5px;
+  }
+
+  .copa-ball {
+    font-size: 0.65rem;
+  }
+
+  .copa-match-text {
+    font-size: 0.55rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  .copa-countdown {
+    font-size: 0.48rem;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  .copa-venue {
+    display: none;
+  }
+}
