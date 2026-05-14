@@ -121,7 +121,7 @@ const AdminLayout = () => {
     ];
 
     const adminOnlyPaths = ['/admin', '/admin/catalogo', '/admin/banners', '/admin/pedidos', '/admin/users', '/admin/settings', '/admin/dashboard'];
-    const menuItems = (role === 'master' || role === 'owner')
+    const menuItems = role === 'master'
         ? allMenuItems
         : allMenuItems.filter(item => adminOnlyPaths.includes(item.path));
 
