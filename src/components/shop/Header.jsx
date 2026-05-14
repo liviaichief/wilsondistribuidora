@@ -18,6 +18,7 @@ const Header = () => {
     const [upsellAlreadyShown, setUpsellAlreadyShown] = React.useState(false);
     const [showVersion, setShowVersion] = React.useState(false);
     const [instagramLink, setInstagramLink] = React.useState('');
+    const [whatsappNumber, setWhatsappNumber] = React.useState('');
     const [brands, setBrands] = React.useState([]);
     const [isMobileView, setIsMobileView] = React.useState(window.innerWidth < 768);
     const [currentBrandIndex, setCurrentBrandIndex] = React.useState(0);
@@ -50,6 +51,7 @@ const Header = () => {
         const fetchInsta = async () => {
             const setts = await getSettings();
             if (setts?.instagram_link) setInstagramLink(setts.instagram_link);
+            if (setts?.whatsapp_number) setWhatsappNumber(setts.whatsapp_number);
         };
         const fetchBrandsData = async () => {
             try {
@@ -258,11 +260,26 @@ const Header = () => {
                             <strong>{user ? (user.user_metadata?.full_name?.split(' ')[0] || 'Cliente') : 'Visitante'}</strong>
                         </motion.div>
 
+                        {whatsappNumber && (
+                            <a
+                                href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="action-btn"
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                title="Fale conosco no WhatsApp"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.57A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52zM12 22c-1.85 0-3.66-.5-5.24-1.44l-.37-.22-3.87.98.99-3.77-.24-.38A9.93 9.93 0 0 1 2 12C2 6.48 6.48 2 12 2c2.67 0 5.17 1.04 7.06 2.94A9.93 9.93 0 0 1 22 12c0 5.52-4.48 10-10 10zm5.47-7.28c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.68-.51h-.58c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.54.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35z" fill="#25D366"/>
+                                </svg>
+                            </a>
+                        )}
+
                         {instagramLink && (
-                            <a 
-                                href={getInstagramHref()} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
+                            <a
+                                href={getInstagramHref()}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="action-btn insta-btn"
                                 onClick={handleInstagramClick}
                             >
