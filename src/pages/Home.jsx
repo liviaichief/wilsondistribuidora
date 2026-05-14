@@ -72,10 +72,11 @@ const Home = () => {
         if (activeCategory !== 'all') {
             items = items.filter(d => (d.category || '').toString().trim().toLowerCase() === activeCategory.toString().trim().toLowerCase());
         } else {
-            // Aba "Geral": prefere promoções; se não houver, exibe todos (CRO-1)
+            // Aba "Promoções": promoções no topo, depois todos os outros produtos
             if (!brandFilter) {
-                const promos = items.filter(d => d.is_promotion === true);
-                items = promos.length > 0 ? promos : items;
+                const promos  = items.filter(d => d.is_promotion === true);
+                const others  = items.filter(d => d.is_promotion !== true);
+                items = promos.length > 0 ? [...promos, ...others] : items;
             }
         }
 
