@@ -92,9 +92,10 @@ export default function CopaBanner() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: isPwa ? '7px' : '10px',
-          padding: isPwa ? '5px 11px' : '8px 16px',
-          flexWrap: 'wrap',
+          gap: isPwa ? '6px' : '10px',
+          padding: isPwa ? '4px 10px' : '8px 16px',
+          flexWrap: isPwa ? 'nowrap' : 'wrap',
+          overflow: isPwa ? 'hidden' : 'visible',
           position: 'relative',
         }}>
           {/* LIVE badge */}
@@ -157,14 +158,16 @@ export default function CopaBanner() {
             </span>
           )}
 
-          {/* Venue */}
-          <span style={{
-            color: 'rgba(255,255,255,0.65)',
-            fontSize: isPwa ? '0.5rem' : '0.72rem',
-            fontWeight: 600,
-          }}>
-            📍 {match.venue}
-          </span>
+          {/* Venue — oculto no PWA para evitar quebra de linha */}
+          {!isPwa && (
+            <span style={{
+              color: 'rgba(255,255,255,0.65)',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+            }}>
+              📍 {match.venue}
+            </span>
+          )}
         </div>
       </motion.div>
     </AnimatePresence>

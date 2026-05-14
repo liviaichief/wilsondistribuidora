@@ -114,7 +114,7 @@ export default function CopaWidget() {
     <>
       <style>{`
         @media (max-width: 768px) {
-          .copa-widget { transform: scale(0.7); transform-origin: top left; }
+          .copa-widget { transform: scale(0.65); transform-origin: top left; }
         }
       `}</style>
     <motion.div
@@ -164,7 +164,7 @@ export default function CopaWidget() {
               <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#ff3b3b', letterSpacing: '1px' }}>AO VIVO</span>
             </div>
           ) : (
-            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#009c3b', letterSpacing: '0.5px' }}>PRÓXIMO</span>
+            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#009c3b', letterSpacing: '0.5px' }}>COPA</span>
           )}
           <button
             onClick={() => setCollapsed(c => !c)}
