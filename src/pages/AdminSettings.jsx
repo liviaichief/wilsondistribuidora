@@ -684,8 +684,8 @@ const AdminSettings = () => {
             )}
         </div>
 
-        {/* Google Setup Assistant — floating FAB, always visible in admin */}
-        <GoogleSetupAssistant />
+        {/* Google Setup Assistant — apenas para master */}
+        {isMaster && <GoogleSetupAssistant />}
         </>
     );
 };
