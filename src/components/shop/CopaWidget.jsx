@@ -113,16 +113,15 @@ export default function CopaWidget() {
   return (
     <>
       <style>{`
-        .pwa-mode .copa-widget {
-          transform: scale(0.7) !important;
-          transform-origin: top left !important;
-        }
-        .pwa-mode .copa-widget .copa-flag {
-          width: 50px !important;
-          height: 34px !important;
-        }
-        .pwa-mode .copa-widget .copa-team-code {
-          font-size: 0.6rem !important;
+        @media (max-width: 768px) {
+          .copa-widget-card    { min-width: 82px !important; }
+          .copa-widget-header  { padding: 5px 9px !important; }
+          .copa-widget-body    { padding: 10px 9px !important; gap: 5px !important; }
+          .copa-flag           { width: 50px !important; height: 34px !important; }
+          .copa-team-code      { font-size: 0.6rem !important; }
+          .copa-vs             { font-size: 0.55rem !important; padding: 2px 7px !important; }
+          .copa-date-bar       { padding: 5px 9px !important; font-size: 0.6rem !important; }
+          .copa-header-label   { font-size: 0.55rem !important; }
         }
       `}</style>
     <motion.div
@@ -140,7 +139,7 @@ export default function CopaWidget() {
         alignItems: 'center',
       }}
     >
-      <div style={{
+      <div className="copa-widget-card" style={{
         background: 'rgba(0, 30, 10, 0.92)',
         border: `2px solid ${isLive ? '#ff3b3b' : '#FEDD00'}`,
         borderRadius: '20px',
@@ -153,7 +152,7 @@ export default function CopaWidget() {
         transition: 'border-color 0.3s',
       }}>
         {/* Topo */}
-        <div style={{
+        <div className="copa-widget-header" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -169,10 +168,10 @@ export default function CopaWidget() {
                 transition={{ duration: 1, repeat: Infinity }}
                 style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#ff3b3b', boxShadow: '0 0 8px #ff3b3b' }}
               />
-              <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#ff3b3b', letterSpacing: '1px' }}>AO VIVO</span>
+              <span className="copa-header-label" style={{ fontSize: '0.78rem', fontWeight: 900, color: '#ff3b3b', letterSpacing: '1px' }}>AO VIVO</span>
             </div>
           ) : (
-            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#009c3b', letterSpacing: '0.5px' }}>COPA</span>
+            <span className="copa-header-label" style={{ fontSize: '0.78rem', fontWeight: 900, color: '#009c3b', letterSpacing: '0.5px' }}>COPA</span>
           )}
           <button
             onClick={() => setCollapsed(c => !c)}
@@ -190,7 +189,7 @@ export default function CopaWidget() {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <div style={{
+              <div className="copa-widget-body" style={{
                 padding: '16px 13px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -236,7 +235,7 @@ export default function CopaWidget() {
                     )}
                   </div>
                 ) : (
-                  <span style={{
+                  <span className="copa-vs" style={{
                     fontSize: '0.78rem', fontWeight: 900, color: '#FEDD00',
                     background: 'rgba(254,221,0,0.1)', padding: '3px 10px',
                     borderRadius: '4px', letterSpacing: '1px',
@@ -257,7 +256,7 @@ export default function CopaWidget() {
               </div>
 
               {/* Data/hora */}
-              <div style={{ background: '#FEDD00', padding: '7px 13px', textAlign: 'center' }}>
+              <div className="copa-date-bar" style={{ background: '#FEDD00', padding: '7px 13px', textAlign: 'center' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#000', letterSpacing: '0.5px' }}>
                   {isLive ? '⚽ EM ANDAMENTO' : dateLabel}
                 </span>
