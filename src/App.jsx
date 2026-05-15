@@ -63,10 +63,33 @@ const GoogleTagManagerLoader = () => {
   return null;
 };
 
+// Detecta PWA standalone e injeta classe no body para estilização confiável
+function PwaClassInjector() {
+  React.useEffect(() => {
+    const check = () => {
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://');
+      if (isStandalone) {
+        document.body.classList.add('pwa-mode');
+      } else {
+        document.body.classList.remove('pwa-mode');
+      }
+    };
+    check();
+    const mq = window.matchMedia('(display-mode: standalone)');
+    mq.addEventListener('change', check);
+    return () => mq.removeEventListener('change', check);
+  }, []);
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <PwaClassInjector />
         <AuthProvider>
           <ThemeProvider>
             <CartProvider>

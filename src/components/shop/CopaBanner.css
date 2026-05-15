@@ -35,6 +35,7 @@
 
 .copa-ball {
   font-size: 1rem;
+  display: inline-block;
 }
 
 .copa-match-text {
@@ -62,45 +63,46 @@
   font-weight: 600;
 }
 
-/* ── PWA standalone — 70% menor, sem corte ── */
-@media (display-mode: standalone) {
-  .copa-banner-outer {
-    width: 70%;
-    margin: 0 auto;
-    border-radius: 0 0 12px 12px;
-  }
+/* ══════════════════════════════════════════════
+   PWA — classe injetada pelo PwaClassInjector
+   Reduz 30% largura + 30% altura, sem corte
+   ══════════════════════════════════════════════ */
+.pwa-mode .copa-banner-outer {
+  width: 70% !important;
+  margin: 0 auto !important;
+  border-radius: 0 0 12px 12px !important;
+}
 
-  .copa-banner-inner {
-    padding: 4px 10px;
-    gap: 6px;
-    flex-wrap: nowrap;
-    overflow: hidden;
-  }
+.pwa-mode .copa-banner-inner {
+  padding: 4px 10px !important;
+  gap: 5px !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+}
 
-  .copa-live-badge {
-    font-size: 0.42rem;
-    padding: 1px 5px;
-  }
+.pwa-mode .copa-live-badge {
+  font-size: 0.4rem !important;
+  padding: 1px 4px !important;
+}
 
-  .copa-ball {
-    font-size: 0.65rem;
-  }
+.pwa-mode .copa-ball {
+  font-size: 0.6rem !important;
+}
 
-  .copa-match-text {
-    font-size: 0.55rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 160px;
-  }
+.pwa-mode .copa-match-text {
+  font-size: 0.52rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 150px !important;
+}
 
-  .copa-countdown {
-    font-size: 0.48rem;
-    padding: 1px 5px;
-    white-space: nowrap;
-  }
+.pwa-mode .copa-countdown {
+  font-size: 0.46rem !important;
+  padding: 1px 5px !important;
+  white-space: nowrap !important;
+}
 
-  .copa-venue {
-    display: none;
-  }
+.pwa-mode .copa-venue {
+  display: none !important;
 }
