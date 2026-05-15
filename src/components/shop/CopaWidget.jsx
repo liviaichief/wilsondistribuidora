@@ -113,8 +113,16 @@ export default function CopaWidget() {
   return (
     <>
       <style>{`
-        @media (max-width: 768px) {
-          .copa-widget { transform: scale(0.65); transform-origin: top left; }
+        .pwa-mode .copa-widget {
+          transform: scale(0.7) !important;
+          transform-origin: top left !important;
+        }
+        .pwa-mode .copa-widget .copa-flag {
+          width: 50px !important;
+          height: 34px !important;
+        }
+        .pwa-mode .copa-widget .copa-team-code {
+          font-size: 0.6rem !important;
         }
       `}</style>
     <motion.div
@@ -191,10 +199,10 @@ export default function CopaWidget() {
               }}>
                 {/* Time 1 */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '72px', height: '48px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  <div className="copa-flag" style={{ width: '72px', height: '48px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)' }}>
                     <FlagImage iso={team1.iso} code={team1.code} />
                   </div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fff', letterSpacing: '1px' }}>
+                  <span className="copa-team-code" style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fff', letterSpacing: '1px' }}>
                     {team1.code}
                   </span>
                 </div>
@@ -239,10 +247,10 @@ export default function CopaWidget() {
 
                 {/* Time 2 */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '72px', height: '48px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  <div className="copa-flag" style={{ width: '72px', height: '48px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)' }}>
                     <FlagImage iso={team2.iso} code={team2.code} />
                   </div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fff', letterSpacing: '1px' }}>
+                  <span className="copa-team-code" style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fff', letterSpacing: '1px' }}>
                     {team2.code}
                   </span>
                 </div>
