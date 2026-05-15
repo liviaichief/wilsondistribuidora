@@ -205,7 +205,7 @@ const Header = () => {
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
                                             transition={{ duration: 0.5 }}
-                                            style={{ display: 'flex', gap: '15px', margin: '0 auto' }}
+                                            style={{ display: 'flex', gap: isPwa ? '0' : '15px', margin: '0 auto', justifyContent: 'center', alignItems: 'center' }}
                                         >
                                             {brandsToShow.map((brand, idx) => (
                                                 <div

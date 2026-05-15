@@ -554,13 +554,34 @@
         height: 46px;
         mask-image: none;
     }
-    
+
     .brands-track {
         gap: 30px;
     }
-    
+
     .brand-item {
         width: 72px;
         height: 36px;
     }
+}
+
+/* ── PWA: 1 marca centralizada, sem corte ── */
+.pwa-mode .header-brands-carousel {
+    max-width: 160px !important;
+    flex: 0 0 160px !important;
+    margin: 0 8px !important;
+    height: 52px !important;
+    mask-image: none !important;
+    justify-content: center !important;
+}
+
+.pwa-mode .brand-item {
+    width: 150px !important;
+    height: 50px !important;
+}
+
+.pwa-mode .brand-item img {
+    object-fit: contain !important;
+    width: 100% !important;
+    height: 100% !important;
 }
