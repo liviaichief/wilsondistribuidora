@@ -21,6 +21,11 @@ const Header = () => {
     const [whatsappNumber, setWhatsappNumber] = React.useState('');
     const [brands, setBrands] = React.useState([]);
     const [isMobileView, setIsMobileView] = React.useState(window.innerWidth < 768);
+    const [isPwa, setIsPwa] = React.useState(
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://')
+    );
     const [currentBrandIndex, setCurrentBrandIndex] = React.useState(0);
     const userMenuRef = React.useRef(null);
     const closeTimerRef = React.useRef(null);
@@ -66,22 +71,35 @@ const Header = () => {
 
         const handleResize = () => setIsMobileView(window.innerWidth < 768);
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+
+        const mq = window.matchMedia('(display-mode: standalone)');
+        const checkPwa = () => setIsPwa(
+            mq.matches ||
+            window.navigator.standalone === true ||
+            document.referrer.includes('android-app://')
+        );
+        mq.addEventListener('change', checkPwa);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            mq.removeEventListener('change', checkPwa);
+        };
     }, []);
 
     React.useEffect(() => {
         if (!isMobileView || brands.length === 0) return;
-        
+
         const currentBrand = brands[currentBrandIndex] || brands[0];
         const duration = (parseInt(currentBrand.duration) || 5) * 1000;
-        
+
         const timer = setTimeout(() => {
-            const increment = brands.length > 1 ? 2 : 1;
+            // PWA: avança 1 marca por vez; mobile normal: avança 2
+            const increment = isPwa ? 1 : (brands.length > 1 ? 2 : 1);
             setCurrentBrandIndex((prev) => (prev + increment) % brands.length);
         }, duration);
-        
+
         return () => clearTimeout(timer);
-    }, [brands, currentBrandIndex, isMobileView]);
+    }, [brands, currentBrandIndex, isMobileView, isPwa]);
 
 
     React.useEffect(() => {
@@ -172,12 +190,11 @@ const Header = () => {
                     {/* Brand Carousel (Centralizado) */}
                     {brands.length > 0 && (() => {
                         if (isMobileView) {
-                            // Mobile: 2 static brands, switching on a timer
+                            // Mobile: PWA mostra 1 marca por vez, browser mostra 2
                             const brand1 = brands[currentBrandIndex % brands.length];
                             const brand2 = brands[(currentBrandIndex + 1) % brands.length];
-                            
-                            // Prevent duplicating if there's only 1 brand total
-                            const brandsToShow = brands.length > 1 ? [brand1, brand2] : [brand1];
+
+                            const brandsToShow = isPwa || brands.length === 1 ? [brand1] : [brand1, brand2];
 
                             return (
                                 <div className="header-brands-carousel" style={{ justifyContent: 'center' }}>
