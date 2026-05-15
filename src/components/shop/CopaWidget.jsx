@@ -77,7 +77,7 @@ function getNextMatch(schedule) {
 
 export default function CopaWidget() {
   const { theme, isLive: globalLive, schedule } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [match, setMatch]         = useState(null);
   const [liveScore, setLiveScore] = useState(null);
 
