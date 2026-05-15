@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getNextCopaMatch, isCopaMatchLive, getCurrentSeason } from '../../services/seasonalService';
-import { getSettings } from '../../services/dataService';
+import { useTheme } from '../../context/ThemeContext';
+import { getNextCopaMatch, isCopaMatchLive } from '../../services/seasonalService';
 import './CopaBanner.css';
 
 function formatCountdown(ms) {
@@ -16,39 +16,29 @@ function formatCountdown(ms) {
 }
 
 export default function CopaBanner() {
-  const [match, setMatch]         = useState(null);
-  const [isLive, setIsLive]       = useState(false);
-  const [timeLeft, setTimeLeft]   = useState('');
-  const [isCopaActive, setIsCopaActive] = useState(false);
+  const { theme } = useTheme();
+  const [match, setMatch]     = useState(null);
+  const [isLive, setIsLive]   = useState(false);
+  const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    getSettings().then(s => {
-      const season = s.active_season || getCurrentSeason()?.id || '';
-      setIsCopaActive(season === 'copa');
-    }).catch(() => {
-      setIsCopaActive(getCurrentSeason()?.id === 'copa');
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!isCopaActive) return;
+    if (theme !== 'world_cup') return;
     const tick = () => {
       const next = getNextCopaMatch();
       setMatch(next);
       if (next) {
         const live = isCopaMatchLive(next);
         setIsLive(live);
-        if (!live) {
-          setTimeLeft(formatCountdown(new Date(next.date) - new Date()));
-        }
+        setTimeLeft(live ? '' : formatCountdown(new Date(next.date) - new Date()));
       }
     };
     tick();
     const id = setInterval(tick, 30000);
     return () => clearInterval(id);
-  }, [isCopaActive]);
+  }, [theme]);
 
-  if (!isCopaActive || !match) return null;
+  // Só exibe quando o tema Copa está ativo e há jogo
+  if (theme !== 'world_cup' || !match) return null;
 
   const matchDate = new Date(match.date);
   const dateStr = matchDate.toLocaleDateString('pt-BR', {
@@ -82,7 +72,6 @@ export default function CopaBanner() {
         )}
 
         <div className="copa-banner-inner">
-          {/* LIVE badge */}
           {isLive && (
             <motion.span
               className="copa-live-badge"
@@ -93,7 +82,6 @@ export default function CopaBanner() {
             </motion.span>
           )}
 
-          {/* Ball */}
           <motion.span
             className="copa-ball"
             animate={isLive ? { rotate: [0, 360] } : {}}
@@ -102,7 +90,6 @@ export default function CopaBanner() {
             ⚽
           </motion.span>
 
-          {/* Match info */}
           <span className="copa-match-text">
             {isLive
               ? `${match.home} — Acontecendo agora!`
@@ -110,17 +97,11 @@ export default function CopaBanner() {
             }
           </span>
 
-          {/* Countdown */}
           {!isLive && timeLeft && (
-            <span className="copa-countdown">
-              em {timeLeft}
-            </span>
+            <span className="copa-countdown">em {timeLeft}</span>
           )}
 
-          {/* Venue — oculto no PWA */}
-          <span className="copa-venue">
-            📍 {match.venue}
-          </span>
+          <span className="copa-venue">📍 {match.venue}</span>
         </div>
       </motion.div>
     </AnimatePresence>
