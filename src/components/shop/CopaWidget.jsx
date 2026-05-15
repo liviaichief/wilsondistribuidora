@@ -121,7 +121,7 @@ export default function CopaWidget() {
           .copa-team-code      { font-size: 0.6rem !important; }
           .copa-vs             { font-size: 0.55rem !important; padding: 2px 7px !important; }
           .copa-date-bar       { padding: 5px 9px !important; }
-          .copa-date-bar span  { font-size: 0.5rem !important; }
+          .copa-date-bar span  { font-size: 0.5rem !important; white-space: nowrap !important; }
           .copa-header-label   { font-size: 0.75rem !important; letter-spacing: 1px !important; }
         }
       `}</style>
