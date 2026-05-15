@@ -108,7 +108,7 @@ export default function CopaWidget() {
   const team1     = getTeam(match.team1);
   const team2     = getTeam(match.team2);
   const matchDate = new Date(`${match.date}T${match.time}:00`);
-  const dateLabel = `${matchDate.getDate().toString().padStart(2, '0')}/${(matchDate.getMonth() + 1).toString().padStart(2, '0')} · ${match.time}h`;
+  const dateLabel = `${matchDate.getDate().toString().padStart(2, '0')}/${(matchDate.getMonth() + 1).toString().padStart(2, '0')}·${match.time}h`;
 
   return (
     <>
