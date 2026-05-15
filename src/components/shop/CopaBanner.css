@@ -4,6 +4,17 @@
   background: linear-gradient(90deg, #004d20 0%, #009c3b 50%, #FFDF00 100%);
   overflow: hidden;
   position: relative;
+  /* Quebra o padding lateral do home-content-wrapper para ir de borda a borda */
+  margin-left: -2rem;
+  margin-right: -2rem;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .copa-banner-outer {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
 
 .copa-banner-outer.is-live {

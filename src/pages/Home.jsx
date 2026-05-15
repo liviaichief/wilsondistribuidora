@@ -146,12 +146,12 @@ const Home = () => {
             )}
 
             <Header />
-            <CopaBanner />
 
             <div className="home-content-wrapper">
-                <CategoryBar 
-                    activeCategory={activeCategory} 
-                    onCategoryChange={handleCategoryChange} 
+                <CopaBanner />
+                <CategoryBar
+                    activeCategory={activeCategory}
+                    onCategoryChange={handleCategoryChange}
                 />
                 
                 {activeCategory === 'all' && (
