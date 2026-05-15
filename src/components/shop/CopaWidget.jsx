@@ -120,8 +120,8 @@ export default function CopaWidget() {
           .copa-flag           { width: 50px !important; height: 34px !important; }
           .copa-team-code      { font-size: 0.6rem !important; }
           .copa-vs             { font-size: 0.55rem !important; padding: 2px 7px !important; }
-          .copa-date-bar       { padding: 5px 9px !important; }
-          .copa-date-bar span  { font-size: 0.5rem !important; white-space: nowrap !important; }
+          .copa-date-bar       { padding: 2px 4px !important; }
+          .copa-date-bar span  { font-size: 0.68rem !important; white-space: nowrap !important; overflow: hidden !important; display: block !important; text-overflow: clip !important; }
           .copa-header-label   { font-size: 0.75rem !important; letter-spacing: 1px !important; }
         }
       `}</style>
