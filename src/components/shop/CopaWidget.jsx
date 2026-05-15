@@ -114,14 +114,14 @@ export default function CopaWidget() {
     <>
       <style>{`
         @media (max-width: 768px) {
-          .copa-widget-card    { min-width: 82px !important; }
+          .copa-widget-card    { min-width: 82px !important; max-width: 82px !important; width: 82px !important; }
           .copa-widget-header  { padding: 5px 9px !important; }
           .copa-widget-body    { padding: 10px 9px !important; gap: 5px !important; }
           .copa-flag           { width: 50px !important; height: 34px !important; }
           .copa-team-code      { font-size: 0.6rem !important; }
           .copa-vs             { font-size: 0.55rem !important; padding: 2px 7px !important; }
           .copa-date-bar       { padding: 5px 9px !important; font-size: 0.6rem !important; }
-          .copa-header-label   { font-size: 0.55rem !important; }
+          .copa-header-label   { font-size: 1rem !important; letter-spacing: 1px !important; }
         }
       `}</style>
     <motion.div
@@ -149,6 +149,7 @@ export default function CopaWidget() {
           ? '0 0 26px rgba(255,59,59,0.4), 0 10px 38px rgba(0,0,0,0.6)'
           : '0 0 26px rgba(254,221,0,0.25), 0 10px 38px rgba(0,0,0,0.6)',
         minWidth: '117px',
+        width: '117px',
         transition: 'border-color 0.3s',
       }}>
         {/* Topo */}
