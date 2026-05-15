@@ -354,15 +354,47 @@ const AdminCatalog = () => {
         selectedCategories.length === 0 || selectedCategories.includes(p.category)
     );
 
-    /* ── Helpers to wait for images ── */
+    /* ── Converter URL de imagem para base64 via fetch (resolve CORS) ── */
+    const imgToBase64 = (url) => new Promise((resolve) => {
+        if (!url || url.startsWith('data:')) { resolve(null); return; }
+        // Tenta via fetch com credenciais (sessão Appwrite)
+        fetch(url, { credentials: 'include', mode: 'cors' })
+            .then(r => r.blob())
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onload  = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(blob);
+            })
+            .catch(() => {
+                // Fallback: canvas com crossOrigin
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width  = img.naturalWidth  || 400;
+                        c.height = img.naturalHeight || 300;
+                        c.getContext('2d').drawImage(img, 0, 0);
+                        resolve(c.toDataURL('image/jpeg', 0.9));
+                    } catch { resolve(null); }
+                };
+                img.onerror = () => resolve(null);
+                img.src = url + (url.includes('?') ? '&' : '?') + '_cb=' + Date.now();
+            });
+    });
+
+    /* ── Substitui todos os src por base64 antes de capturar ── */
     const waitForImages = async (element) => {
-        const imgs = element.querySelectorAll('img');
-        await Promise.all(Array.from(imgs).map(img => {
-            if (!img.src) return Promise.resolve();
-            if (!img.src.includes('?t=')) img.src = img.src + (img.src.includes('?') ? '&' : '?') + 't=' + Date.now();
-            return img.complete ? Promise.resolve() : new Promise(res => { img.onload = res; img.onerror = res; });
+        const imgs = Array.from(element.querySelectorAll('img'));
+        await Promise.all(imgs.map(async (img) => {
+            const src = img.getAttribute('src');
+            if (!src || src.startsWith('data:') || src.includes('placehold.co')) return;
+            const b64 = await imgToBase64(src);
+            if (b64) img.src = b64;
         }));
-        await new Promise(res => setTimeout(res, 900));
+        // Pequeno delay para o DOM refletir as trocas
+        await new Promise(res => setTimeout(res, 400));
     };
 
     /* ── PNG ── */
@@ -373,7 +405,7 @@ const AdminCatalog = () => {
             const el = catalogPreviewRef.current;
             if (!el) return;
             await waitForImages(el);
-            const canvas = await html2canvas(el, { useCORS: true, scale: 2, backgroundColor: '#0a0a0a' });
+            const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0a0a0a', useCORS: false, allowTaint: true, logging: false });
             const link = document.createElement('a');
             link.download = `catalogo_${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
@@ -394,7 +426,7 @@ const AdminCatalog = () => {
                 margin:     0,
                 filename:   `catalogo_${Date.now()}.pdf`,
                 image:      { type: 'jpeg', quality: 0.96 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', logging: false },
+                html2canvas: { scale: 2, useCORS: false, allowTaint: true, backgroundColor: '#0a0a0a', logging: false },
                 jsPDF:      { unit: 'px', format: [1200, el.scrollHeight], orientation: 'portrait', compress: true },
             };
             await html2pdf().set(opt).from(el).save();
