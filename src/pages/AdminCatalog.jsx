@@ -10,7 +10,19 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
     const promos  = products.filter(p => p.is_promotion && p.promo_price);
     const regular = products.filter(p => !(p.is_promotion && p.promo_price));
 
-    const ProductCard = ({ p }) => {
+    /* Calcula colunas e altura da imagem com base na quantidade de itens */
+    const getGridConfig = (count) => {
+        if (count === 1) return { cols: 1, imageHeight: 520 };
+        if (count === 2) return { cols: 2, imageHeight: 380 };
+        if (count === 3) return { cols: 3, imageHeight: 280 };
+        if (count === 4) return { cols: 2, imageHeight: 320 };
+        if (count <= 6) return { cols: 3, imageHeight: 230 };
+        if (count <= 8) return { cols: 4, imageHeight: 210 };
+        if (count === 9) return { cols: 3, imageHeight: 210 };
+        return { cols: 5, imageHeight: 170 };
+    };
+
+    const ProductCard = ({ p, imageHeight = 170 }) => {
         const hasPromo   = p.is_promotion && p.promo_price;
         const discount   = hasPromo ? Math.round((1 - parseFloat(p.promo_price) / parseFloat(p.price)) * 100) : 0;
         const finalPrice = hasPromo ? p.promo_price : p.price;
@@ -43,7 +55,7 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                 <a
                     href={`${window.location.origin}/produto/${p.$id || p.id}`}
                     target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'block', height: '170px', background: '#111', overflow: 'hidden', flexShrink: 0 }}
+                    style={{ display: 'block', height: `${imageHeight}px`, background: '#111', overflow: 'hidden', flexShrink: 0 }}
                 >
                     {imgSrc
                         ? <img src={imgSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -97,11 +109,15 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
         </div>
     );
 
-    const Grid5 = ({ items }) => (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
-            {items.map(p => <ProductCard key={p.$id || p.id} p={p} />)}
-        </div>
-    );
+    /* Grid dinâmico: colunas e altura da imagem adaptam à quantidade */
+    const DynamicGrid = ({ items }) => {
+        const { cols, imageHeight } = getGridConfig(items.length);
+        return (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '16px' }}>
+                {items.map(p => <ProductCard key={p.$id || p.id} p={p} imageHeight={imageHeight} />)}
+            </div>
+        );
+    };
 
     const whatsapp = storeSettings?.whatsapp_number || '';
     const storeName = storeSettings?.store_name || 'WD CARNES DISTRIBUIDORA';
@@ -206,7 +222,7 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
             {promos.length > 0 && (
                 <div style={{ padding: '36px 40px', borderBottom: '1px solid #1a1a1a' }}>
                     <SectionHeader emoji="🔥" title={sectionLabel || 'OFERTAS DA SEMANA'} action />
-                    <Grid5 items={promos} />
+                    <DynamicGrid items={promos} />
                 </div>
             )}
 
@@ -214,7 +230,7 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
             {regular.length > 0 && (
                 <div style={{ padding: '36px 40px', borderBottom: '1px solid #1a1a1a' }}>
                     <SectionHeader emoji="⭐" title="MAIS VENDIDOS" action />
-                    <Grid5 items={regular} />
+                    <DynamicGrid items={regular} />
                 </div>
             )}
 
