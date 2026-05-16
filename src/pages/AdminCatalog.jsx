@@ -316,6 +316,7 @@ const AdminCatalog = () => {
     const [selectedCategories,  setSelectedCategories]  = useState([]);
     const [selectedProducts,    setSelectedProducts]    = useState([]);
     const [isGenerating,        setIsGenerating]        = useState(false);
+    const [loadingMsg,          setLoadingMsg]          = useState('');
     const [imageMap,            setImageMap]            = useState({});
     const [catalogTitle,        setCatalogTitle]        = useState('');
     const [sectionLabel,        setSectionLabel]        = useState('');
@@ -390,39 +391,57 @@ const AdminCatalog = () => {
         if (!selectedProducts.length) return;
         setIsGenerating(true);
         try {
-            // 1. Pré-carrega todas as imagens como base64
+            // 1. Converte imagens para base64
+            setLoadingMsg(`Carregando ${selectedProducts.length} imagens...`);
             const map = await preloadImages(selectedProducts);
             setImageMap(map);
 
-            // 2. Aguarda o React re-renderizar o template com as imagens base64
-            await new Promise(res => setTimeout(res, 600));
+            // 2. Aguarda re-render com as imagens base64 já no DOM
+            setLoadingMsg('Montando layout do catálogo...');
+            await new Promise(res => setTimeout(res, 800));
 
             const el = catalogPreviewRef.current;
-            if (!el) return;
+            if (!el) throw new Error('Template não encontrado');
 
             if (format === 'png') {
+                setLoadingMsg('Gerando imagem PNG (isso pode levar alguns segundos)...');
                 const canvas = await html2canvas(el, {
-                    scale: 2, backgroundColor: '#0a0a0a',
-                    allowTaint: true, useCORS: false, logging: false,
+                    scale: 2,
+                    backgroundColor: '#0a0a0a',
+                    allowTaint: true,
+                    useCORS: false,
+                    logging: false,
+                    windowWidth: 1200,
+                    scrollX: 0,
+                    scrollY: 0,
                 });
                 const link = document.createElement('a');
                 link.download = `catalogo_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } else {
+                setLoadingMsg('Gerando PDF (isso pode levar alguns segundos)...');
                 const html2pdf = (await import('html2pdf.js')).default;
                 await html2pdf().set({
                     margin:      0,
                     filename:    `catalogo_${Date.now()}.pdf`,
                     image:       { type: 'jpeg', quality: 0.96 },
-                    html2canvas: { scale: 2, allowTaint: true, useCORS: false, backgroundColor: '#0a0a0a', logging: false },
-                    jsPDF:       { unit: 'px', format: [1200, el.scrollHeight], orientation: 'portrait', compress: true },
+                    html2canvas: {
+                        scale: 2, allowTaint: true, useCORS: false,
+                        backgroundColor: '#0a0a0a', logging: false,
+                        windowWidth: 1200, scrollX: 0, scrollY: 0,
+                    },
+                    jsPDF: { unit: 'px', format: [1200, el.scrollHeight], orientation: 'portrait', compress: true },
                 }).from(el).save();
             }
+            setLoadingMsg('Concluído!');
         } catch (err) {
             console.error('Catalog export error:', err);
+            setLoadingMsg('Erro ao gerar. Tente novamente.');
+            await new Promise(res => setTimeout(res, 2000));
         } finally {
             setIsGenerating(false);
+            setLoadingMsg('');
             setImageMap({});
         }
     };
@@ -431,6 +450,52 @@ const AdminCatalog = () => {
     const generatePdf = () => captureWithImages('pdf');
 
     if (loading) return null;
+
+    /* ── Loading overlay ── */
+    const LoadingOverlay = () => (
+        <AnimatePresence>
+            {isGenerating && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 9999,
+                        background: 'rgba(0,0,0,0.88)',
+                        backdropFilter: 'blur(10px)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: '20px',
+                    }}
+                >
+                    {/* Spinner */}
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                        style={{
+                            width: '56px', height: '56px',
+                            borderRadius: '50%',
+                            border: '4px solid rgba(212,175,55,0.15)',
+                            borderTop: '4px solid #D4AF37',
+                        }}
+                    />
+                    <div style={{ color: '#fff', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.3px' }}>
+                        GERANDO CATÁLOGO
+                    </div>
+                    <motion.div
+                        key={loadingMsg}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ color: '#888', fontSize: '0.82rem', fontWeight: 600, maxWidth: '320px', textAlign: 'center', lineHeight: 1.5 }}
+                    >
+                        {loadingMsg}
+                    </motion.div>
+                    <div style={{ color: '#444', fontSize: '0.7rem', fontWeight: 700, marginTop: '8px' }}>
+                        Não feche esta janela
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 
     /* ── Shared export action bar ── */
     const ExportActions = ({ floating = false }) => (
@@ -553,8 +618,10 @@ const AdminCatalog = () => {
 
             <style>{`.catalog-chips::-webkit-scrollbar{display:none}.catalog-chips{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
-            {/* Hidden export canvas */}
-            <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
+            <LoadingOverlay />
+
+            {/* Hidden export canvas — sem z-index negativo para html2canvas capturar */}
+            <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1200px' }}>
                 <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} imageMap={imageMap} />
             </div>
         </div>
@@ -698,8 +765,10 @@ const AdminCatalog = () => {
                 </div>
             </div>
 
-            {/* Hidden export canvas */}
-            <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
+            <LoadingOverlay />
+
+            {/* Hidden export canvas — sem z-index negativo para html2canvas capturar */}
+            <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1200px' }}>
                 <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} imageMap={imageMap} />
             </div>
         </div>
