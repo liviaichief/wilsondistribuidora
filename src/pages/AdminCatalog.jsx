@@ -6,7 +6,7 @@ import html2canvas from 'html2canvas';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Catalog export template ──────────────────────────────────── */
-const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitle, sectionLabel }, ref) => {
+const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitle, sectionLabel, imageMap = {} }, ref) => {
     const promos  = products.filter(p => p.is_promotion && p.promo_price);
     const regular = products.filter(p => !(p.is_promotion && p.promo_price));
 
@@ -14,6 +14,9 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
         const hasPromo   = p.is_promotion && p.promo_price;
         const discount   = hasPromo ? Math.round((1 - parseFloat(p.promo_price) / parseFloat(p.price)) * 100) : 0;
         const finalPrice = hasPromo ? p.promo_price : p.price;
+        // Usa base64 pré-carregado se disponível, senão URL original
+        const rawUrl  = p.image ? getImageUrl(p.image) : null;
+        const imgSrc  = rawUrl ? (imageMap[rawUrl] || rawUrl) : null;
 
         return (
             <div style={{
@@ -38,8 +41,8 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
 
                 {/* Image */}
                 <div style={{ height: '170px', background: '#111', overflow: 'hidden', flexShrink: 0 }}>
-                    {p.image
-                        ? <img src={getImageUrl(p.image)} alt="" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {imgSrc
+                        ? <img src={imgSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}><ImageIcon size={36} /></div>
                     }
                 </div>
@@ -313,6 +316,7 @@ const AdminCatalog = () => {
     const [selectedCategories,  setSelectedCategories]  = useState([]);
     const [selectedProducts,    setSelectedProducts]    = useState([]);
     const [isGenerating,        setIsGenerating]        = useState(false);
+    const [imageMap,            setImageMap]            = useState({});
     const [catalogTitle,        setCatalogTitle]        = useState('');
     const [sectionLabel,        setSectionLabel]        = useState('');
     const [isMobile,            setIsMobile]            = useState(window.innerWidth < 1024);
@@ -354,84 +358,77 @@ const AdminCatalog = () => {
         selectedCategories.length === 0 || selectedCategories.includes(p.category)
     );
 
-    /* ── Converter URL de imagem para base64 via fetch (resolve CORS) ── */
+    /* ── Converte URL para base64 via fetch (sessão Appwrite) ── */
     const imgToBase64 = (url) => new Promise((resolve) => {
         if (!url || url.startsWith('data:')) { resolve(null); return; }
-        // Tenta via fetch com credenciais (sessão Appwrite)
-        fetch(url, { credentials: 'include', mode: 'cors' })
-            .then(r => r.blob())
+        fetch(url, { credentials: 'include' })
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
             .then(blob => {
                 const reader = new FileReader();
                 reader.onload  = () => resolve(reader.result);
                 reader.onerror = () => resolve(null);
                 reader.readAsDataURL(blob);
             })
-            .catch(() => {
-                // Fallback: canvas com crossOrigin
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    try {
-                        const c = document.createElement('canvas');
-                        c.width  = img.naturalWidth  || 400;
-                        c.height = img.naturalHeight || 300;
-                        c.getContext('2d').drawImage(img, 0, 0);
-                        resolve(c.toDataURL('image/jpeg', 0.9));
-                    } catch { resolve(null); }
-                };
-                img.onerror = () => resolve(null);
-                img.src = url + (url.includes('?') ? '&' : '?') + '_cb=' + Date.now();
-            });
+            .catch(() => resolve(null));
     });
 
-    /* ── Substitui todos os src por base64 antes de capturar ── */
-    const waitForImages = async (element) => {
-        const imgs = Array.from(element.querySelectorAll('img'));
-        await Promise.all(imgs.map(async (img) => {
-            const src = img.getAttribute('src');
-            if (!src || src.startsWith('data:') || src.includes('placehold.co')) return;
-            const b64 = await imgToBase64(src);
-            if (b64) img.src = b64;
-        }));
-        // Pequeno delay para o DOM refletir as trocas
-        await new Promise(res => setTimeout(res, 400));
+    /* ── Pré-carrega TODAS as imagens dos produtos selecionados ── */
+    const preloadImages = async (prods) => {
+        const pairs = await Promise.all(
+            prods.filter(p => p.image).map(async p => {
+                const url = getImageUrl(p.image);
+                const b64 = await imgToBase64(url);
+                return [url, b64];          // b64 pode ser null se falhar
+            })
+        );
+        // Retorna mapa { originalUrl: base64 } apenas para as que funcionaram
+        return Object.fromEntries(pairs.filter(([, b64]) => b64));
     };
 
-    /* ── PNG ── */
-    const generatePng = async () => {
+    /* ── Render com imageMap → captura ── */
+    const captureWithImages = async (format) => {
         if (!selectedProducts.length) return;
         setIsGenerating(true);
         try {
+            // 1. Pré-carrega todas as imagens como base64
+            const map = await preloadImages(selectedProducts);
+            setImageMap(map);
+
+            // 2. Aguarda o React re-renderizar o template com as imagens base64
+            await new Promise(res => setTimeout(res, 600));
+
             const el = catalogPreviewRef.current;
             if (!el) return;
-            await waitForImages(el);
-            const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0a0a0a', useCORS: false, allowTaint: true, logging: false });
-            const link = document.createElement('a');
-            link.download = `catalogo_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch (err) { console.error('PNG Error:', err); } finally { setIsGenerating(false); }
+
+            if (format === 'png') {
+                const canvas = await html2canvas(el, {
+                    scale: 2, backgroundColor: '#0a0a0a',
+                    allowTaint: true, useCORS: false, logging: false,
+                });
+                const link = document.createElement('a');
+                link.download = `catalogo_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } else {
+                const html2pdf = (await import('html2pdf.js')).default;
+                await html2pdf().set({
+                    margin:      0,
+                    filename:    `catalogo_${Date.now()}.pdf`,
+                    image:       { type: 'jpeg', quality: 0.96 },
+                    html2canvas: { scale: 2, allowTaint: true, useCORS: false, backgroundColor: '#0a0a0a', logging: false },
+                    jsPDF:       { unit: 'px', format: [1200, el.scrollHeight], orientation: 'portrait', compress: true },
+                }).from(el).save();
+            }
+        } catch (err) {
+            console.error('Catalog export error:', err);
+        } finally {
+            setIsGenerating(false);
+            setImageMap({});
+        }
     };
 
-    /* ── PDF ── */
-    const generatePdf = async () => {
-        if (!selectedProducts.length) return;
-        setIsGenerating(true);
-        try {
-            const el = catalogPreviewRef.current;
-            if (!el) return;
-            await waitForImages(el);
-            const html2pdf = (await import('html2pdf.js')).default;
-            const opt = {
-                margin:     0,
-                filename:   `catalogo_${Date.now()}.pdf`,
-                image:      { type: 'jpeg', quality: 0.96 },
-                html2canvas: { scale: 2, useCORS: false, allowTaint: true, backgroundColor: '#0a0a0a', logging: false },
-                jsPDF:      { unit: 'px', format: [1200, el.scrollHeight], orientation: 'portrait', compress: true },
-            };
-            await html2pdf().set(opt).from(el).save();
-        } catch (err) { console.error('PDF Error:', err); } finally { setIsGenerating(false); }
-    };
+    const generatePng = () => captureWithImages('png');
+    const generatePdf = () => captureWithImages('pdf');
 
     if (loading) return null;
 
@@ -558,7 +555,7 @@ const AdminCatalog = () => {
 
             {/* Hidden export canvas */}
             <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
-                <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} />
+                <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} imageMap={imageMap} />
             </div>
         </div>
     );
@@ -703,7 +700,7 @@ const AdminCatalog = () => {
 
             {/* Hidden export canvas */}
             <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
-                <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} />
+                <CatalogTemplate ref={catalogPreviewRef} products={selectedProducts} storeSettings={storeSettings} catalogTitle={catalogTitle} sectionLabel={sectionLabel} imageMap={imageMap} />
             </div>
         </div>
     );
