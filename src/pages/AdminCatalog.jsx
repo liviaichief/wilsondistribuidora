@@ -39,13 +39,17 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                     </div>
                 )}
 
-                {/* Image */}
-                <div style={{ height: '170px', background: '#111', overflow: 'hidden', flexShrink: 0 }}>
+                {/* Image — clicável no PDF abre WhatsApp com nome do produto */}
+                <a
+                    href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Quero saber mais sobre: ${p.title}`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'block', height: '170px', background: '#111', overflow: 'hidden', flexShrink: 0 }}
+                >
                     {imgSrc
                         ? <img src={imgSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}><ImageIcon size={36} /></div>
                     }
-                </div>
+                </a>
 
                 {/* Info */}
                 <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -118,9 +122,9 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                 justifyContent: 'space-between',
                 alignItems: 'center',
             }}>
-                {/* Logo + Nome */}
+                {/* Logo + Nome (+30% = 73px) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', background: '#000', border: '2px solid rgba(212,175,55,0.3)', flexShrink: 0 }}>
+                    <div style={{ width: '73px', height: '73px', borderRadius: '50%', overflow: 'hidden', background: '#000', border: '2px solid rgba(212,175,55,0.3)', flexShrink: 0 }}>
                         <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
                     </div>
                     <div>
@@ -136,9 +140,9 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                     ))}
                 </div>
 
-                {/* Contato */}
+                {/* Contato — clicável via WhatsApp */}
                 {whatsapp && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ color: '#888', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>FALE CONOSCO</div>
                             <div style={{ color: '#fff', fontWeight: 900, fontSize: '0.9rem' }}>{whatsapp}</div>
@@ -148,7 +152,7 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                                 <path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.57A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52zM12 22c-1.85 0-3.66-.5-5.24-1.44l-.37-.22-3.87.98.99-3.77-.24-.38A9.93 9.93 0 0 1 2 12C2 6.48 6.48 2 12 2c2.67 0 5.17 1.04 7.06 2.94A9.93 9.93 0 0 1 22 12c0 5.52-4.48 10-10 10z" fill="#fff"/>
                             </svg>
                         </div>
-                    </div>
+                    </a>
                 )}
             </div>
 
@@ -206,35 +210,6 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                 </div>
             )}
 
-            {/* ── BRAND BANNER ── */}
-            <div style={{
-                margin: '0',
-                background: 'linear-gradient(135deg, #0d0d0d 0%, #1a0a00 50%, #0d0d0d 100%)',
-                padding: '36px 40px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '40px',
-                borderTop: '1px solid #1a1a1a',
-                borderBottom: '1px solid #1a1a1a',
-            }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ color: '#888', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>A TRADIÇÃO DA</div>
-                    <div style={{ color: '#D4AF37', fontSize: '3rem', fontWeight: 900, lineHeight: 1, letterSpacing: '-2px', marginBottom: '14px' }}>BRASA</div>
-                    <p style={{ color: '#666', fontSize: '0.82rem', lineHeight: 1.7, margin: 0 }}>
-                        Selecionamos produtos de qualidade para transformar cada churrasco em uma experiência única.
-                    </p>
-                </div>
-                <div style={{ display: 'flex', gap: '32px', flexShrink: 0 }}>
-                    {[['🛡️', 'QUALIDADE', 'GARANTIDA'], ['⭐', 'PRODUTOS', 'SELECIONADOS'], ['🚚', 'ENTREGA', 'RÁPIDA'], ['💬', 'ATENDIMENTO', 'ESPECIALIZADO']].map(([icon, l1, l2]) => (
-                        <div key={l1} style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.6rem', marginBottom: '6px' }}>{icon}</div>
-                            <div style={{ color: '#fff', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.5px' }}>{l1}</div>
-                            <div style={{ color: '#666', fontSize: '0.6rem', fontWeight: 700 }}>{l2}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* ── MAIS VENDIDOS / REGULARES ── */}
             {regular.length > 0 && (
                 <div style={{ padding: '36px 40px', borderBottom: '1px solid #1a1a1a' }}>
@@ -263,12 +238,13 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                             <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem' }}>Fale com nosso time no WhatsApp e receba atendimento rápido!</div>
                         </div>
                     </div>
-                    <div style={{ background: '#fff', borderRadius: '12px', padding: '14px 28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', background: '#fff', borderRadius: '12px', padding: '14px 28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ color: '#800020', fontWeight: 900, fontSize: '0.9rem' }}>FALE AGORA</span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                             <path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.57A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52z" fill="#800020"/>
                         </svg>
-                    </div>
+                    </a>
                 </div>
             )}
 
@@ -436,6 +412,7 @@ const AdminCatalog = () => {
                     margin:      0,
                     filename:    `catalogo_${Date.now()}.pdf`,
                     image:       { type: 'jpeg', quality: 0.96 },
+                    enableLinks: true,
                     html2canvas: {
                         scale: 2, allowTaint: true, useCORS: false,
                         backgroundColor: '#0a0a0a', logging: false,
