@@ -359,10 +359,20 @@ const AdminCatalog = () => {
         selectedCategories.length === 0 || selectedCategories.includes(p.category)
     );
 
-    /* ── Converte URL para base64 via fetch (sessão Appwrite) ── */
+    /* ── Converte URL de imagem para base64 ──────────────────────────
+       Em desenvolvimento: usa proxy Vite (/storage-proxy) → sem CORS
+       Em produção: usa URL direta com credenciais (domínio no Appwrite)
+    ─────────────────────────────────────────────────────────────── */
     const imgToBase64 = (url) => new Promise((resolve) => {
         if (!url || url.startsWith('data:')) { resolve(null); return; }
-        fetch(url, { credentials: 'include' })
+
+        const isDev     = import.meta.env.DEV;
+        const endpoint  = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
+        // Em dev, substitui o endpoint Appwrite pela rota proxy local
+        const fetchUrl  = isDev ? url.replace(endpoint, '/storage-proxy') : url;
+        const fetchOpts = isDev ? {} : { credentials: 'include' };
+
+        fetch(fetchUrl, fetchOpts)
             .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
             .then(blob => {
                 const reader = new FileReader();
