@@ -39,9 +39,9 @@ const CatalogTemplate = React.forwardRef(({ products, storeSettings, catalogTitl
                     </div>
                 )}
 
-                {/* Image — clicável no PDF abre WhatsApp com nome do produto */}
+                {/* Image — clicável no PDF abre a tela de detalhe do produto */}
                 <a
-                    href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Quero saber mais sobre: ${p.title}`)}`}
+                    href={`${window.location.origin}/produto/${p.$id || p.id}`}
                     target="_blank" rel="noopener noreferrer"
                     style={{ display: 'block', height: '170px', background: '#111', overflow: 'hidden', flexShrink: 0 }}
                 >
