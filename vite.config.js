@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',   // SW customizado com suporte a Push
+      srcDir: 'src',
+      filename: 'sw.js',
       includeAssets: ['favicon.png', 'logo.png', 'robots.txt'],
       manifest: {
         name: 'Wilson Distribuidora',
@@ -37,24 +40,8 @@ export default defineConfig(({ mode }) => {
           }
         ]
       },
-      workbox: {
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — necessário pois o bundle atual é ~2.4 MB
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cloud\.appwrite\.io\/v1\/storage\/buckets\/.*\/files\/.*\/(view|preview)/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'appwrite-images-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB
       },
     })
   ],

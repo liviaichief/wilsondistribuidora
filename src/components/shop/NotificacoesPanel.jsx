@@ -5,7 +5,8 @@
  */
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, Megaphone, RefreshCw, Inbox } from 'lucide-react';
+import { X, Bell, Megaphone, RefreshCw, Inbox, BellOff, BellRing, Loader2 } from 'lucide-react';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 const CATEGORIA_META = {
   anuncio:          { label: 'Anúncio',    emoji: '📢', cor: '#D4AF37' },
@@ -29,6 +30,15 @@ function formatDate(iso) {
 }
 
 export default function NotificacoesPanel({ isOpen, onClose, notificacoes, loading, unreadCount, marcarLidas, lastSeen }) {
+  const {
+    isSupported: pushSupported,
+    permission,
+    isSubscribed,
+    isLoading: pushLoading,
+    error: pushError,
+    subscribe,
+    unsubscribe,
+  } = usePushNotifications();
 
   // Marca como lidas ao abrir
   useEffect(() => {
@@ -261,21 +271,92 @@ export default function NotificacoesPanel({ isOpen, onClose, notificacoes, loadi
               )}
             </div>
 
-            {/* ── Rodapé ── */}
-            {notificacoes.length > 0 && (
-              <div style={{
-                padding: '14px 16px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
-                flexShrink: 0,
-              }}>
+            {/* ── Rodapé: Push Notifications ── */}
+            <div style={{
+              padding: '14px 16px',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              flexShrink: 0,
+            }}>
+              {/* Contagem de notificações */}
+              {notificacoes.length > 0 && (
                 <div style={{
                   color: '#333', fontSize: '0.62rem', fontWeight: 700,
-                  textAlign: 'center',
+                  textAlign: 'center', marginBottom: pushSupported ? '12px' : 0,
                 }}>
                   Mostrando os últimos {notificacoes.length} anúncios e comunicados
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Botão de ativar/desativar notificações nativas */}
+              {pushSupported && permission !== 'denied' && (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={isSubscribed ? unsubscribe : subscribe}
+                  disabled={pushLoading}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    border: isSubscribed
+                      ? '1px solid rgba(212,175,55,0.3)'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    background: isSubscribed
+                      ? 'rgba(212,175,55,0.08)'
+                      : 'rgba(255,255,255,0.04)',
+                    color: isSubscribed ? '#D4AF37' : '#888',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: pushLoading ? 'wait' : 'pointer',
+                    transition: '0.2s',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  {pushLoading ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <Loader2 size={14} />
+                    </motion.div>
+                  ) : isSubscribed ? (
+                    <BellRing size={14} />
+                  ) : (
+                    <BellOff size={14} />
+                  )}
+                  {pushLoading
+                    ? 'Ativando...'
+                    : isSubscribed
+                      ? 'Notificações ativadas no celular'
+                      : 'Ativar notificações no celular'}
+                </motion.button>
+              )}
+
+              {/* Permissão bloqueada */}
+              {pushSupported && permission === 'denied' && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  justifyContent: 'center',
+                  color: '#444', fontSize: '0.65rem', fontWeight: 700,
+                }}>
+                  <BellOff size={12} />
+                  Notificações bloqueadas — habilite nas configurações do navegador
+                </div>
+              )}
+
+              {/* Erro de push */}
+              {pushError && (
+                <div style={{
+                  marginTop: '8px',
+                  color: '#e57373', fontSize: '0.65rem', textAlign: 'center',
+                }}>
+                  {pushError}
+                </div>
+              )}
+            </div>
           </motion.div>
         </>
       )}

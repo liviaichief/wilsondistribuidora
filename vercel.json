@@ -23,6 +23,8 @@
     "VITE_COLLECTION_PROFILES": "profiles",
     "VITE_APPWRITE_BUCKET_ID": "images_bucket",
     "VITE_COLLECTION_CAMPANHAS": "campanhas_comunicacao",
-    "VITE_FUNC_SEND_CAMPANHA": "send-campanha"
+    "VITE_FUNC_SEND_CAMPANHA": "send-campanha",
+    "VITE_COLLECTION_PUSH_SUBSCRIPTIONS": "push_subscriptions",
+    "VITE_VAPID_PUBLIC_KEY": "BLNsZOp4Ef9YbYjcXmdJBUmrsEIMPmWChywU5BjUfnn21XIRcF-mO-9paltI5NepUpFmG_RBc6IWftlAm_X78b0"
   }
 }
