@@ -1287,7 +1287,7 @@ table.desktop-only {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 12px;
-    margin-top: 20px;
+    margin-top: 6px;
 }
 @media (max-width: 1200px) {
     .admin-bi-grid { grid-template-columns: repeat(3, 1fr); }
