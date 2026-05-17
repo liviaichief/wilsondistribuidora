@@ -478,9 +478,12 @@ const CartSidebar = () => {
 
 
         // 3. Construct WhatsApp Message
-        const itemsList = cartItems.map(item =>
-            `• ${item.quantity}x ${formatTitleCase(item.title)}${item.external_code ? ` [Ref: ${item.external_code}]` : ''} - R$ ${(item.price * item.quantity).toFixed(2)}`
-        ).join('\n');
+        const isKit = (item) => (item.category || '').toLowerCase().includes('kit');
+        const itemsList = cartItems.map(item => {
+            const linha = `• ${item.quantity}x ${formatTitleCase(item.title)}${item.external_code ? ` [Ref: ${item.external_code}]` : ''} - R$ ${(item.price * item.quantity).toFixed(2)}`;
+            const descricao = isKit(item) && item.description ? `  _↳ ${item.description.trim()}_` : '';
+            return descricao ? `${linha}\n${descricao}` : linha;
+        }).join('\n');
 
         let addressText = '';
         if (deliveryMode === 'pickup') {

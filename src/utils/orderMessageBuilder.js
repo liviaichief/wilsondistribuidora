@@ -39,11 +39,15 @@ export function buildOrderMessage({
   lines.push(`*NOVO PEDIDO #${orderNumber} - ${storeName.toUpperCase()}*\n`);
 
   // Itens
+  const isKit = (item) => (item.category || '').toLowerCase().includes('kit');
   lines.push('*Itens do Pedido:*');
   items.forEach(item => {
     const unitPrice = item.isBox ? (item.boxPrice ?? item.price) : item.price;
     const label     = item.isBox ? `${item.title} (Caixa)` : item.title;
     lines.push(`• ${item.quantity}x ${label} — ${BRL(unitPrice * item.quantity)}`);
+    if (isKit(item) && item.description) {
+      lines.push(`  _↳ ${item.description.trim()}_`);
+    }
   });
 
   lines.push('');
