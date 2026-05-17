@@ -2,11 +2,13 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, ShoppingCart, User, LogOut, ClipboardList, Shield, Beer, Store, Box, Instagram, Sparkles, X, ChevronRight } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, User, LogOut, ClipboardList, Shield, Beer, Store, Box, Instagram, Sparkles, X, ChevronRight, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSettings, getBrands } from '../../services/dataService';
 import { getImageUrl } from '../../lib/imageUtils';
 import { APP_VERSION, BUILD_DATE } from '../../version';
+import { useNotificacoes } from '../../hooks/useNotificacoes';
+import NotificacoesPanel from './NotificacoesPanel';
 import './Header.css';
 
 const Header = () => {
@@ -14,7 +16,9 @@ const Header = () => {
     const navigate = useNavigate();
     const { toggleCart, cartCount, cartItems, triggerUpsell } = useCart();
     const { user, openAuthModal, openProfileModal, isAdmin, isOwner } = useAuth();
-    const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+    const [isUserMenuOpen,   setIsUserMenuOpen]   = React.useState(false);
+    const [isNotifOpen,      setIsNotifOpen]       = React.useState(false);
+    const { notificacoes, loading: notifLoading, unreadCount, marcarLidas } = useNotificacoes();
     const [upsellAlreadyShown, setUpsellAlreadyShown] = React.useState(false);
     const [showVersion, setShowVersion] = React.useState(false);
     const [instagramLink, setInstagramLink] = React.useState('');
@@ -324,6 +328,20 @@ const Header = () => {
                             <button className={`action-btn ${user ? 'active-user' : ''}`} onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
                                 <User size={22} />
                                 {user && <div className="user-dot" />}
+                                {user && unreadCount > 0 && (
+                                    <span style={{
+                                        position: 'absolute', top: '-4px', left: '-4px',
+                                        background: '#D4AF37', color: '#000',
+                                        fontSize: '0.5rem', fontWeight: 900,
+                                        minWidth: '15px', height: '15px',
+                                        borderRadius: '50%',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: '2px solid #0a0a0a',
+                                        pointerEvents: 'none',
+                                    }}>
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </button>
 
                             <AnimatePresence>
@@ -355,6 +373,38 @@ const Header = () => {
                                                 <Link to="/orders" className="menu-item" onClick={() => setIsUserMenuOpen(false)}>
                                                     <ClipboardList size={16} /> <span>Meus Pedidos</span>
                                                 </Link>
+                                                <button className="menu-item" onClick={() => { setIsUserMenuOpen(false); setIsNotifOpen(true); }}>
+                                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                        <Bell size={16} />
+                                                        {unreadCount > 0 && (
+                                                            <span style={{
+                                                                position: 'absolute', top: '-6px', right: '-8px',
+                                                                background: '#D4AF37', color: '#000',
+                                                                fontSize: '0.55rem', fontWeight: 900,
+                                                                minWidth: '16px', height: '16px',
+                                                                borderRadius: '50%',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                padding: '0 3px',
+                                                                border: '2px solid #0a0a0a',
+                                                            }}>
+                                                                {unreadCount > 9 ? '9+' : unreadCount}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span>Notificações</span>
+                                                    {unreadCount > 0 && (
+                                                        <span style={{
+                                                            marginLeft: 'auto',
+                                                            background: 'rgba(212,175,55,0.15)',
+                                                            border: '1px solid rgba(212,175,55,0.3)',
+                                                            color: '#D4AF37',
+                                                            fontSize: '0.6rem', fontWeight: 900,
+                                                            padding: '2px 7px', borderRadius: '100px',
+                                                        }}>
+                                                            {unreadCount} nova{unreadCount > 1 ? 's' : ''}
+                                                        </span>
+                                                    )}
+                                                </button>
                                                 <div className="menu-divider" />
                                                 <button className="menu-item logout" onClick={() => { setIsUserMenuOpen(false); navigate('/logout'); }}>
                                                     <LogOut size={16} /> <span>Sair</span>
@@ -405,6 +455,16 @@ const Header = () => {
                 </div>
 
             </header>
+
+            {/* Painel de Notificações */}
+            <NotificacoesPanel
+                isOpen={isNotifOpen}
+                onClose={() => setIsNotifOpen(false)}
+                notificacoes={notificacoes}
+                loading={notifLoading}
+                unreadCount={unreadCount}
+                marcarLidas={marcarLidas}
+            />
 
             {/* Version Display */}
             <AnimatePresence>
