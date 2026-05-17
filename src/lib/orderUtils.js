@@ -18,9 +18,12 @@ export const generateWhatsAppMessage = (orderData, whatsappMessageTemplate = '*N
         order_number 
     } = orderData;
 
-    const itemsList = items.map(item =>
-        `• ${item.quantity}x ${formatTitleCase(item.title)}${item.external_code ? ` [Ref: ${item.external_code}]` : ''} - R$ ${(item.price * item.quantity).toFixed(2)}`
-    ).join('\n');
+    const isKit = (item) => (item.category || '').toLowerCase().includes('kit');
+    const itemsList = items.map(item => {
+        const linha = `• ${item.quantity}x ${formatTitleCase(item.title)}${item.external_code ? ` [Ref: ${item.external_code}]` : ''} - R$ ${(item.price * item.quantity).toFixed(2)}`;
+        const descricao = isKit(item) && item.description ? `  _↳ ${item.description.trim()}_` : '';
+        return descricao ? `${linha}\n${descricao}` : linha;
+    }).join('\n');
 
     let addressText = '';
     if (delivery_mode === 'pickup') {
