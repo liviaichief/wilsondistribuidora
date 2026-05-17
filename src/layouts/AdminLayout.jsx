@@ -110,17 +110,18 @@ const AdminLayout = () => {
     };
 
     const allMenuItems = [
-        { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/admin', icon: ShoppingBag, label: 'Produtos' },
-        { path: '/admin/catalogo', icon: BookOpen, label: 'Catálogo' },
-        { path: '/admin/banners', icon: ImageIcon, label: 'Banners' },
-        { path: '/admin/pedidos', icon: ClipboardList, label: 'Pedidos' },
-        { path: '/admin/users', icon: Users, label: 'Usuários' },
-        { path: '/admin/settings', icon: Settings, label: 'Configurações' },
-        { path: '/admin/financeiro', icon: Database, label: 'Financeiro' },
+        { path: '/admin/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
+        { path: '/admin',              icon: ShoppingBag,     label: 'Produtos' },
+        { path: '/admin/catalogo',     icon: BookOpen,        label: 'Catálogo' },
+        { path: '/admin/banners',      icon: ImageIcon,       label: 'Banners' },
+        { path: '/admin/pedidos',      icon: ClipboardList,   label: 'Pedidos' },
+        { path: '/admin/comunicacao',  icon: Bell,            label: 'Vitrini' },
+        { path: '/admin/users',        icon: Users,           label: 'Usuários' },
+        { path: '/admin/settings',     icon: Settings,        label: 'Configurações' },
+        { path: '/admin/financeiro',   icon: Database,        label: 'Financeiro' },
     ];
 
-    const adminOnlyPaths = ['/admin', '/admin/catalogo', '/admin/banners', '/admin/pedidos', '/admin/users', '/admin/settings', '/admin/dashboard'];
+    const adminOnlyPaths = ['/admin', '/admin/catalogo', '/admin/banners', '/admin/pedidos', '/admin/comunicacao', '/admin/users', '/admin/settings', '/admin/dashboard'];
     const menuItems = role === 'master'
         ? allMenuItems
         : allMenuItems.filter(item => adminOnlyPaths.includes(item.path));

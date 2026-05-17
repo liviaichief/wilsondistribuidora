@@ -16,8 +16,9 @@ export const functions = new Functions(client);
 export const DATABASE_ID = import.meta.env.VITE_DATABASE_ID || '';
 export const BUCKET_ID = import.meta.env.VITE_APPWRITE_BUCKET_ID || '';
 export const COLLECTIONS = {
-    PRODUCTS: import.meta.env.VITE_COLLECTION_PRODUCTS || 'products',
-    BANNERS: import.meta.env.VITE_COLLECTION_BANNERS || 'banners',
-    ORDERS: import.meta.env.VITE_COLLECTION_ORDERS || 'orders',
-    PROFILES: import.meta.env.VITE_COLLECTION_PROFILES || 'profiles'
+    PRODUCTS:   import.meta.env.VITE_COLLECTION_PRODUCTS   || 'products',
+    BANNERS:    import.meta.env.VITE_COLLECTION_BANNERS    || 'banners',
+    ORDERS:     import.meta.env.VITE_COLLECTION_ORDERS     || 'orders',
+    PROFILES:   import.meta.env.VITE_COLLECTION_PROFILES   || 'profiles',
+    CAMPANHAS:  import.meta.env.VITE_COLLECTION_CAMPANHAS  || 'campanhas_comunicacao',
 };

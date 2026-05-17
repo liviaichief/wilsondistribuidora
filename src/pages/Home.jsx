@@ -9,6 +9,8 @@ import { getProducts } from '../services/dataService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle } from 'lucide-react';
 import GoogleReviews from '../components/shop/GoogleReviews';
+import AnuncioPopup from '../components/shop/AnuncioPopup';
+import { useVitriniAnuncios } from '../hooks/useVitriniAnuncios';
 import './Home.css';
 
 const ITEMS_PER_PAGE = 50; // Increased to show more products instantly
@@ -16,6 +18,7 @@ const ITEMS_PER_PAGE = 50; // Increased to show more products instantly
 const Home = () => {
     const [allProducts, setAllProducts] = useState([]);
     const [isSystemBlocked, setIsSystemBlocked] = useState(false);
+    const [anuncioAtivo, setAnuncioAtivo] = useState(null);
     const [showBlockMessage, setShowBlockMessage] = useState(true);
     const [filteredItems, setFilteredItems] = useState([]);
     const [displayItems, setDisplayItems] = useState([]);
@@ -64,6 +67,12 @@ const Home = () => {
     }, []);
 
     useEffect(() => { loadData(); }, []);
+
+    // ── Vitrini: escuta anúncios em tempo real ──
+    const handleAnuncio = useCallback((doc) => {
+        setAnuncioAtivo(doc);
+    }, []);
+    useVitriniAnuncios({ onAnuncio: handleAnuncio });
 
     useEffect(() => {
         let items = [...allProducts];
@@ -124,6 +133,7 @@ const Home = () => {
     };
 
     return (
+        <>
         <div className="home-container">
             {isSystemBlocked && showBlockMessage && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', padding: '20px' }}>
@@ -213,6 +223,10 @@ const Home = () => {
                 {!loading && !isSystemBlocked && <GoogleReviews />}
             </div>
         </div>
+
+        {/* Vitrini — popup de anúncio em tempo real */}
+        <AnuncioPopup anuncio={anuncioAtivo} onClose={() => setAnuncioAtivo(null)} />
+        </>
     );
 };
 

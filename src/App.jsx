@@ -19,6 +19,7 @@ import AdminFinance from './pages/AdminFinance.jsx';
 import AdminBanners from './pages/AdminBanners.jsx';
 import AdminOrders from './pages/AdminOrders.jsx';
 import AdminCatalog from './pages/AdminCatalog.jsx';
+import AdminComunicacao from './pages/AdminComunicacao.jsx';
 import { getSettings } from './services/dataService';
 
 import { CartProvider } from './context/CartContext';
@@ -151,6 +152,11 @@ function App() {
                     <Route path="financeiro" element={
                       <ProtectedRoute allowedRoles={['master', 'owner']}>
                         <AdminFinance />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="comunicacao" element={
+                      <ProtectedRoute allowedRoles={['master', 'owner', 'admin']}>
+                        <AdminComunicacao />
                       </ProtectedRoute>
                     } />
                   </Route>

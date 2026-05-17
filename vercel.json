@@ -21,6 +21,8 @@
     "VITE_COLLECTION_BANNERS": "banners",
     "VITE_COLLECTION_ORDERS": "orders",
     "VITE_COLLECTION_PROFILES": "profiles",
-    "VITE_APPWRITE_BUCKET_ID": "images_bucket"
+    "VITE_APPWRITE_BUCKET_ID": "images_bucket",
+    "VITE_COLLECTION_CAMPANHAS": "campanhas_comunicacao",
+    "VITE_FUNC_SEND_CAMPANHA": "send-campanha"
   }
 }
