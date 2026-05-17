@@ -115,7 +115,7 @@ const AdminLayout = () => {
         { path: '/admin/catalogo',     icon: BookOpen,        label: 'Catálogo' },
         { path: '/admin/banners',      icon: ImageIcon,       label: 'Banners' },
         { path: '/admin/pedidos',      icon: ClipboardList,   label: 'Pedidos' },
-        { path: '/admin/comunicacao',  icon: Bell,            label: 'Vitrini' },
+        { path: '/admin/comunicacao',  icon: Bell,            label: 'Comunicação' },
         { path: '/admin/users',        icon: Users,           label: 'Usuários' },
         { path: '/admin/settings',     icon: Settings,        label: 'Configurações' },
         { path: '/admin/financeiro',   icon: Database,        label: 'Financeiro' },
