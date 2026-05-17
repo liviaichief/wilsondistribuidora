@@ -1,7 +1,19 @@
 import { Client, Databases, ID, Query } from 'node-appwrite';
 import webpush from 'web-push';
 
-const VALID_CATEGORIAS = ['anuncio', 'comunicado_geral'];
+const VALID_TIPOS = ['promocao', 'lembrete', 'transacional', 'geral', 'sistema'];
+
+/** Mapeia o novo tipo para a categoria legada (usada pelo Realtime do cliente) */
+const TIPO_CATEGORIA = {
+  promocao:     'anuncio',
+  lembrete:     'anuncio',
+  transacional: 'comunicado_geral',
+  geral:        'comunicado_geral',
+  sistema:      'comunicado_geral',
+};
+
+// Para retrocompatibilidade: aceita categoria antiga direto
+const VALID_CATEGORIAS_LEGACY = ['anuncio', 'comunicado_geral'];
 
 export default async ({ req, res, log, error }) => {
   if (req.method !== 'POST') {
@@ -15,14 +27,26 @@ export default async ({ req, res, log, error }) => {
     return res.json({ ok: false, error: 'JSON inválido no body' }, 400);
   }
 
-  const { titulo, conteudo, categoria, midia_url, url, apiKey } = body;
+  const {
+    titulo, conteudo, apiKey,
+    tipo, categoria,        // tipo = novo | categoria = legado
+    canal = 'todos',
+    actions = null,
+    midia_url, url,
+  } = body;
 
-  if (!titulo || !conteudo || !categoria || !apiKey) {
-    return res.json({ ok: false, error: 'titulo, conteudo, categoria e apiKey são obrigatórios' }, 400);
+  if (!titulo || !conteudo || !apiKey) {
+    return res.json({ ok: false, error: 'titulo, conteudo e apiKey são obrigatórios' }, 400);
   }
 
-  if (!VALID_CATEGORIAS.includes(categoria)) {
-    return res.json({ ok: false, error: `Categoria inválida: "${categoria}". Use: ${VALID_CATEGORIAS.join(', ')}` }, 400);
+  // Determina categoria final
+  let categoriaFinal;
+  if (tipo && VALID_TIPOS.includes(tipo)) {
+    categoriaFinal = TIPO_CATEGORIA[tipo];
+  } else if (categoria && VALID_CATEGORIAS_LEGACY.includes(categoria)) {
+    categoriaFinal = categoria;
+  } else {
+    categoriaFinal = 'anuncio'; // fallback
   }
 
   const client = new Client()
@@ -34,21 +58,29 @@ export default async ({ req, res, log, error }) => {
   const DATABASE_ID = process.env.DATABASE_ID || 'main_db';
 
   try {
-    // 1. Cria o documento → dispara evento Realtime para clientes conectados
+    // 1. Cria o documento em campanhas_comunicacao → dispara Realtime
+    const docData = {
+      titulo,
+      conteudo,
+      categoria: categoriaFinal,
+      midia_url: midia_url || null,
+    };
+
+    // Adiciona actions se fornecido (e coleção tiver o campo)
+    if (actions !== null && actions !== undefined) {
+      try { docData.actions = typeof actions === 'string' ? actions : JSON.stringify(actions); }
+      catch { /* ignora */ }
+    }
+
     const doc = await db.createDocument(
       DATABASE_ID,
       'campanhas_comunicacao',
       ID.unique(),
-      {
-        titulo,
-        conteudo,
-        categoria,
-        midia_url: midia_url || null,
-      }
+      docData
     );
-    log(`[send-campanha] Campanha criada: ${doc.$id} — "${titulo}" (${categoria})`);
+    log(`[send-campanha] Campanha criada: ${doc.$id} — "${titulo}" (${categoriaFinal})`);
 
-    // 2. Envia Web Push para todos os dispositivos inscritos
+    // 2. Envia Web Push para todos os dispositivos
     const vapidPublicKey  = process.env.VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     const vapidMailto     = process.env.VAPID_MAILTO || 'mailto:contato@wilsondistribuidora.com.br';
@@ -57,22 +89,18 @@ export default async ({ req, res, log, error }) => {
       webpush.setVapidDetails(vapidMailto, vapidPublicKey, vapidPrivateKey);
 
       const payload = JSON.stringify({
-        titulo,
-        conteudo,
-        categoria,
+        titulo, conteudo,
+        categoria: categoriaFinal,
         url: url || '/',
       });
 
-      let cursor      = null;
-      let totalSent   = 0;
-      let totalFailed = 0;
+      let cursor = null;
+      let totalSent = 0, totalFailed = 0;
       const invalidIds = [];
 
-      // Percorre todas as subscrições em lotes de 100
       do {
         const queries = [Query.limit(100)];
         if (cursor) queries.push(Query.cursorAfter(cursor));
-
         const result = await db.listDocuments(DATABASE_ID, 'push_subscriptions', queries);
 
         for (const sub of result.documents) {
@@ -83,26 +111,19 @@ export default async ({ req, res, log, error }) => {
             );
             totalSent++;
           } catch (pushErr) {
-            // 410 Gone / 404 Not Found → subscription inválida, remover
-            if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-              invalidIds.push(sub.$id);
-            }
+            if (pushErr.statusCode === 410 || pushErr.statusCode === 404) invalidIds.push(sub.$id);
             totalFailed++;
-            log(`[push] Falha ${pushErr.statusCode} para ...${sub.endpoint.slice(-20)}: ${pushErr.message}`);
           }
         }
 
         cursor = result.documents.length === 100
-          ? result.documents[result.documents.length - 1].$id
-          : null;
+          ? result.documents[result.documents.length - 1].$id : null;
       } while (cursor);
 
-      // Limpa subscriptions expiradas (fire-and-forget, não bloqueia a resposta)
       for (const id of invalidIds) {
         db.deleteDocument(DATABASE_ID, 'push_subscriptions', id).catch(() => {});
       }
-
-      log(`[send-campanha] Push: ${totalSent} enviados, ${totalFailed} falhas, ${invalidIds.length} removidas`);
+      log(`[send-campanha] Push: ${totalSent} ok, ${totalFailed} falhas, ${invalidIds.length} removidas`);
     } else {
       log('[send-campanha] VAPID não configurado — push ignorado');
     }

@@ -189,9 +189,70 @@ export const chatGoogleAssistant = async (history, systemPrompt) => {
     return response.choices[0].message.content.trim();
 };
 
+/**
+ * Gera 3 variações de mensagem para a Central de Comunicações.
+ * @param {'promocao'|'lembrete'|'transacional'|'geral'|'sistema'} tipo
+ * @param {string} contexto — detalhes livres (produto, preço, motivo…)
+ * @returns {Promise<Array<{titulo:string, conteudo:string}>|null>}
+ */
+export const generateComunicacaoMessages = async (tipo, contexto) => {
+    const openai = await getClient();
+    if (!openai) {
+        console.warn('[generateComunicacaoMessages] OpenAI não configurada.');
+        return null;
+    }
+
+    const TIPO_LABEL = {
+        promocao:     'Promoção / Oferta relâmpago',
+        lembrete:     'Lembrete de recompra / fidelização',
+        transacional: 'Notificação transacional (status de pedido)',
+        geral:        'Comunicado geral / novidade da loja',
+        sistema:      'Aviso interno do sistema',
+    };
+
+    const systemPrompt = `Você é especialista em marketing digital para açougues e boutiques de carne premium com mais de 15 anos de experiência.
+Seu tom é amigável, direto, persuasivo e com leve informalidade brasileira.
+Use emojis relevantes (🥩🔥✅🎉🔔 etc.) quando apropriado para o tipo.
+
+REGRAS OBRIGATÓRIAS:
+- Título: máximo 60 caracteres
+- Mensagem (conteudo): máximo 200 caracteres
+- Tom condizente com o tipo de comunicação
+- Gere EXATAMENTE 3 variações distintas
+- Retorne SOMENTE um array JSON válido: [{"titulo":"...","conteudo":"..."},{"titulo":"...","conteudo":"..."},{"titulo":"...","conteudo":"..."}]
+- Sem markdown, sem explicações, apenas o JSON puro`;
+
+    const userPrompt = `Tipo: ${TIPO_LABEL[tipo] || tipo}
+Contexto/Detalhes: ${contexto?.trim() || 'Açougue de carnes premium Wilson Distribuidora'}
+
+Gere 3 mensagens persuasivas para este contexto.`;
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user',   content: userPrompt   },
+            ],
+            temperature: 0.82,
+            max_tokens:  500,
+        });
+
+        const raw = response.choices[0].message.content.trim();
+        // Extrai JSON mesmo que venha com ```json``` wrap
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error('Resposta sem JSON válido');
+        return JSON.parse(jsonMatch[0]);
+    } catch (err) {
+        console.error('[generateComunicacaoMessages]', err);
+        return null;
+    }
+};
+
 export default {
     generateProductDescription,
     generateBannerImage,
     chatBBQMaster,
     chatGoogleAssistant,
+    generateComunicacaoMessages,
 };
