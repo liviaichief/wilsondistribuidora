@@ -50,10 +50,18 @@ const CATEGORIA_META = {
   comunicado_geral: { label: '📋 Comunicado', cor: '#6366f1' },
 };
 
+/* Parseia o campo actions (JSON string ou array) com segurança */
+function parseActions(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
 const AUTO_DISMISS_MS = 14000;
 
 export default function AnuncioPopup({ anuncio, onClose }) {
-  const timerRef = useRef(null);
+  const timerRef   = useRef(null);
+  const actionsArr = parseActions(anuncio?.actions);
 
   useEffect(() => {
     if (!anuncio) return;
@@ -196,6 +204,48 @@ export default function AnuncioPopup({ anuncio, onClose }) {
               }}>
                 {anuncio.conteudo}
               </p>
+
+              {/* Quick Actions — botões interativos */}
+              {actionsArr.length > 0 && (
+                <div style={{
+                  display: 'flex', gap: '8px', flexWrap: 'wrap',
+                  marginBottom: '14px',
+                }}>
+                  {actionsArr.map((action, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        onClose?.();
+                        if (action.url) {
+                          if (action.url.startsWith('http')) {
+                            window.open(action.url, '_blank', 'noopener');
+                          } else {
+                            window.location.href = action.url;
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: `1px solid ${meta.cor}55`,
+                        background: i === 0 ? meta.cor : 'transparent',
+                        color: i === 0 ? '#000' : meta.cor,
+                        fontSize: '0.78rem', fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: '0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        if (i !== 0) e.currentTarget.style.background = `${meta.cor}22`;
+                      }}
+                      onMouseLeave={e => {
+                        if (i !== 0) e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Barra de progresso auto-dismiss */}
               <motion.div

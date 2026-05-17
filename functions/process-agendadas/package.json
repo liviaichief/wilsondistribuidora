@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "node-appwrite": "^13.0.0",
+    "web-push": "^3.6.7"
+  }
+}
