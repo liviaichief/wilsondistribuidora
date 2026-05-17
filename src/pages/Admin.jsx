@@ -164,8 +164,121 @@ const Admin = () => {
         return matchTitle && matchCategory;
     });
 
+    // ── KPIs calculados a partir do catálogo ──────────────────────
+    const totalProdutos    = products.length;
+    const ativos           = products.filter(p => p.active !== false).length;
+    const inativos         = totalProdutos - ativos;
+    const emPromocao       = products.filter(p => p.is_promotion && p.promo_price).length;
+    const semImagem        = products.filter(p => !p.image).length;
+    const precoMedio       = totalProdutos > 0
+        ? products.reduce((acc, p) => acc + (parseFloat(p.price) || 0), 0) / totalProdutos
+        : 0;
+    const categoriaCount   = categories.length;
+    const BRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);
+
+    const biCards = [
+        {
+            label: 'Total de Produtos',
+            value: totalProdutos,
+            icon: '📦',
+            color: '#D4AF37',
+            sub: `${ativos} ativos`,
+        },
+        {
+            label: 'Produtos Ativos',
+            value: ativos,
+            icon: '✅',
+            color: '#22c55e',
+            sub: inativos > 0 ? `${inativos} inativos` : 'Todos ativos',
+        },
+        {
+            label: 'Em Promoção',
+            value: emPromocao,
+            icon: '🔥',
+            color: '#f97316',
+            sub: totalProdutos > 0 ? `${Math.round(emPromocao / totalProdutos * 100)}% do catálogo` : '—',
+        },
+        {
+            label: 'Preço Médio',
+            value: BRL(precoMedio),
+            icon: '💰',
+            color: '#a855f7',
+            sub: 'por produto',
+            isText: true,
+        },
+        {
+            label: 'Categorias',
+            value: categoriaCount,
+            icon: '🗂️',
+            color: '#38bdf8',
+            sub: `${filteredProducts.length} exibindo`,
+        },
+        {
+            label: 'Sem Imagem',
+            value: semImagem,
+            icon: '🖼️',
+            color: semImagem > 0 ? '#ef4444' : '#22c55e',
+            sub: semImagem > 0 ? 'Precisam de foto' : 'Todos com foto',
+        },
+    ];
+
     return (
         <div className="admin-page-wrapper" style={{ padding: '0 20px 40px' }}>
+
+            {/* ── BARRA DE BI ─────────────────────────────────────── */}
+            {!loading && (
+                <div className="admin-bi-grid">
+                    {biCards.map((card, i) => (
+                        <div key={i} style={{
+                            background: 'rgba(255,255,255,0.03)',
+                            border: `1px solid ${card.color}22`,
+                            borderRadius: '16px',
+                            padding: '16px 18px',
+                            backdropFilter: 'blur(10px)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            transition: 'border-color 0.2s',
+                        }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = `${card.color}55`}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = `${card.color}22`}
+                        >
+                            {/* Glow de fundo */}
+                            <div style={{
+                                position: 'absolute', bottom: '-10px', right: '-10px',
+                                width: '60px', height: '60px', borderRadius: '50%',
+                                background: `${card.color}18`,
+                                pointerEvents: 'none',
+                            }} />
+
+                            {/* Ícone + Label */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '1rem' }}>{card.icon}</span>
+                                <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#666', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                                    {card.label}
+                                </span>
+                            </div>
+
+                            {/* Valor principal */}
+                            <div style={{
+                                fontSize: card.isText ? '1.15rem' : '1.8rem',
+                                fontWeight: 900,
+                                color: card.color,
+                                letterSpacing: '-0.5px',
+                                lineHeight: 1,
+                                marginBottom: '6px',
+                            }}>
+                                {card.value}
+                            </div>
+
+                            {/* Sub-info */}
+                            <div style={{ fontSize: '0.68rem', color: '#555', fontWeight: 600 }}>
+                                {card.sub}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* DESKTOP VIEW */}
             <div className="desktop-only" style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', marginTop: '20px' }}>
                 <div style={{ marginBottom: '30px', display: 'flex', gap: '15px', alignItems: 'center' }}>
