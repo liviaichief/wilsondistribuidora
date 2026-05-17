@@ -710,17 +710,6 @@ const AdminCatalog = () => {
                         />
                     </div>
 
-                    {/* Section label */}
-                    <div>
-                        <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: '#555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Label da Seção de Promoções</label>
-                        <input
-                            value={sectionLabel}
-                            onChange={e => setSectionLabel(e.target.value)}
-                            placeholder="Ex: OFERTAS DA SEMANA 🔥"
-                            style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 12px', color: '#fff', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
-                        />
-                    </div>
-
                     {/* Export buttons */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <button
