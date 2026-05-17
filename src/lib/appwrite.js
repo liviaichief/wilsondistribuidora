@@ -20,5 +20,6 @@ export const COLLECTIONS = {
     BANNERS:    import.meta.env.VITE_COLLECTION_BANNERS    || 'banners',
     ORDERS:     import.meta.env.VITE_COLLECTION_ORDERS     || 'orders',
     PROFILES:   import.meta.env.VITE_COLLECTION_PROFILES   || 'profiles',
-    CAMPANHAS:  import.meta.env.VITE_COLLECTION_CAMPANHAS  || 'campanhas_comunicacao',
+    CAMPANHAS:          import.meta.env.VITE_COLLECTION_CAMPANHAS          || 'campanhas_comunicacao',
+    PUSH_SUBSCRIPTIONS: import.meta.env.VITE_COLLECTION_PUSH_SUBSCRIPTIONS || 'push_subscriptions',
 };
