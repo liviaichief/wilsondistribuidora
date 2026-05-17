@@ -69,7 +69,7 @@
         margin: 0 10px 1rem;
         width: calc(100% - 20px);
     }
-    
+
     .carousel-image {
         object-fit: contain;
         background: #000;
@@ -78,4 +78,10 @@
     .carousel-overlay h2 {
         font-size: 1.5rem;
     }
+}
+
+/* PWA — imagem preenche o banner sem margens escuras */
+.pwa-mode .carousel-image {
+    object-fit: cover !important;
+    background: transparent !important;
 }
