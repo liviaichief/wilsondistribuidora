@@ -64,21 +64,14 @@ export const AuthProvider = ({ children }) => {
             const shouldUpdateLastLogin = !lastLogin || lastLogin < fifteenMinutesAgo;
 
             if (shouldUpdateLastLogin) {
-                try {
-                    const updateRes = databases.updateDocument(
-                        DATABASE_ID,
-                        COLLECTIONS.PROFILES,
-                        userId,
-                        { last_login: now.toISOString() }
-                    );
-                    if (updateRes && typeof updateRes.catch === 'function') {
-                        updateRes.catch(err => {
-                            console.warn("Could not update last_login:", err);
-                        });
-                    }
-                } catch(err) {
+                databases.updateDocument(
+                    DATABASE_ID,
+                    COLLECTIONS.PROFILES,
+                    userId,
+                    { last_login: now.toISOString() }
+                ).catch(err => {
                     console.warn("Could not update last_login:", err);
-                }
+                });
             }
 
         } catch (error) {

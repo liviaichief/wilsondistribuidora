@@ -115,8 +115,7 @@ export const createOrder = async (orderData) => {
     return { success: true, $id: res.$id, order_number: res.$id, status: res.status };
   } catch (err) {
     console.error('[orderService] createOrder:', err);
-    // Fallback: permite checkout via WhatsApp mesmo se o banco falhou
-    return { success: true, $id: `fallback_${Date.now()}`, order_number: 'WHATSAPP', status: 'fallback' };
+    return { success: false, error: err.message };
   }
 };
 

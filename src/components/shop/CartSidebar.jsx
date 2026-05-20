@@ -161,14 +161,15 @@ const CartSidebar = () => {
     // Auto-fill form if user is logged in
     React.useEffect(() => {
         if (isCartOpen) {
-            if (user) refreshProfile();
-            // Fetch system settings for WhatsApp and Google
-            getSettings().then(data => {
-                setGoogleConfig(data);
-                if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
-                if (data.whatsapp_message) setWhatsappMessage(data.whatsapp_message);
-                if (data.google_api_key) loadGoogleMapsScript(data.google_api_key);
-            });
+            if (user) refreshProfile().catch(err => console.warn("Could not refresh profile:", err));
+            getSettings()
+                .then(data => {
+                    setGoogleConfig(data);
+                    if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
+                    if (data.whatsapp_message) setWhatsappMessage(data.whatsapp_message);
+                    if (data.google_api_key) loadGoogleMapsScript(data.google_api_key);
+                })
+                .catch(err => console.error("Could not load cart settings:", err));
         }
     }, [isCartOpen, user]);
 

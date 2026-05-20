@@ -53,7 +53,9 @@ export const CartProvider = ({ children }) => {
     // Load user history when user changes
     useEffect(() => {
         if (user?.$id) {
-            getUserOrderHistory(user.$id).then(history => setUserHistory(history));
+            getUserOrderHistory(user.$id)
+                .then(history => setUserHistory(history))
+                .catch(() => setUserHistory([]));
         } else {
             setUserHistory([]);
         }
@@ -83,7 +85,7 @@ export const CartProvider = ({ children }) => {
             }
         }
         setPrevUser(user);
-    }, [user, prevUser]);
+    }, [user]); // prevUser removido das deps — é atualizado dentro do effect
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(cartItems));

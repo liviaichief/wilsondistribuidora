@@ -49,7 +49,7 @@ export const updateCategoryGlobal = async (oldId, category) => {
   if (oldId !== category.id) {
     const products = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [
       Query.equal('category', oldId),
-      Query.limit(100),
+      Query.limit(500),
     ]);
     await Promise.all(
       products.documents.map(p =>
@@ -67,7 +67,7 @@ export const deleteCategoryGlobal = async (categoryId) => {
   await saveCategories(current.filter(c => c.id !== categoryId));
   const products = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [
     Query.equal('category', categoryId),
-    Query.limit(100),
+    Query.limit(500),
   ]);
   await Promise.all(
     products.documents.map(p =>
