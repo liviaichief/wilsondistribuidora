@@ -358,13 +358,13 @@ const AdminCatalog = () => {
     const imgToBase64 = (url) => new Promise((resolve) => {
         if (!url || url.startsWith('data:')) { resolve(null); return; }
 
-        const isDev     = import.meta.env.DEV;
-        const endpoint  = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
-        // Em dev, substitui o endpoint Appwrite pela rota proxy local
-        const fetchUrl  = isDev ? url.replace(endpoint, '/storage-proxy') : url;
-        const fetchOpts = isDev ? {} : { credentials: 'include' };
+        const isDev    = import.meta.env.DEV;
+        const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
+        // Em dev usa proxy Vite (sem CORS); em prod fetch simples sem credentials
+        // (bucket é público — credentials: 'include' quebra CORS cross-origin)
+        const fetchUrl = isDev ? url.replace(endpoint, '/storage-proxy') : url;
 
-        fetch(fetchUrl, fetchOpts)
+        fetch(fetchUrl)
             .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
             .then(blob => {
                 const reader = new FileReader();
@@ -410,8 +410,8 @@ const AdminCatalog = () => {
                 const canvas = await html2canvas(el, {
                     scale: 2,
                     backgroundColor: '#0a0a0a',
-                    allowTaint: true,
-                    useCORS: false,
+                    allowTaint: false,
+                    useCORS: true,
                     logging: false,
                     windowWidth: 1200,
                     scrollX: 0,
@@ -430,7 +430,7 @@ const AdminCatalog = () => {
                     image:       { type: 'jpeg', quality: 0.96 },
                     enableLinks: true,
                     html2canvas: {
-                        scale: 2, allowTaint: true, useCORS: false,
+                        scale: 2, allowTaint: false, useCORS: true,
                         backgroundColor: '#0a0a0a', logging: false,
                         windowWidth: 1200, scrollX: 0, scrollY: 0,
                     },
