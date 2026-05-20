@@ -59,6 +59,7 @@ const CartSidebar = () => {
     const { addOrder } = useOrder(); // Moved up
     const [useCashback, setUseCashback] = useState(false);
     const [cashbackAvailable, setCashbackAvailable] = useState(0);
+    const [orderNotes, setOrderNotes] = useState('');
 
     // Helper to format phone
     const formatPhone = (val) => {
@@ -509,13 +510,15 @@ const CartSidebar = () => {
             `WhatsApp: ${customerPhone}\n\n` +
             `*Entrega/Retirada:*\n${addressText}\n` +
             (deliveryMode === 'delivery' ? `Distância: ${deliveryDistance?.toFixed(1)} km\nFrete: R$ ${deliveryFee.toFixed(2)}\n` : '') +
-            `*TOTAL: R$ ${(cartTotal + deliveryFee).toFixed(2)}*`;
+            `*TOTAL: R$ ${(cartTotal + deliveryFee).toFixed(2)}*` +
+            (orderNotes.trim() ? `\n\n*Observações:* ${orderNotes.trim()}` : '');
 
         const phoneNumber = String(whatsappNumber).replace(/\D/g, '');
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
         // 4. Cleanup (Before Redirect)
         clearCart();
+        setOrderNotes('');
         toggleCart(); // Close cart sidebar
         setIsProcessing(false);
 
@@ -773,7 +776,7 @@ const CartSidebar = () => {
                                             </p>
                                         </div>
                                         {parseFloat(cashbackAvailable) > 0 && (
-                                            <button 
+                                            <button
                                                 className={`toggle-btn ${useCashback ? 'active' : ''}`}
                                                 onClick={() => setUseCashback(!useCashback)}
                                                 style={{ fontSize: '0.7rem', padding: '8px 12px' }}
@@ -787,6 +790,20 @@ const CartSidebar = () => {
                                     </p>
                                 </div>
                             )}
+
+                            {/* Observações */}
+                            <div className="cart-section">
+                                <span className="section-title">📝 Observações</span>
+                                <textarea
+                                    placeholder="Alguma observação para o pedido? (opcional)"
+                                    value={orderNotes}
+                                    onChange={(e) => setOrderNotes(e.target.value)}
+                                    maxLength={300}
+                                    rows={3}
+                                    className="checkout-input"
+                                    style={{ resize: 'none', lineHeight: '1.5', paddingTop: '12px' }}
+                                />
+                            </div>
                         </>
                     )}
                 </div>
