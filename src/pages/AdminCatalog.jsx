@@ -358,11 +358,11 @@ const AdminCatalog = () => {
     const imgToBase64 = (url) => new Promise((resolve) => {
         if (!url || url.startsWith('data:')) { resolve(null); return; }
 
-        const isDev    = import.meta.env.DEV;
         const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
-        // Em dev usa proxy Vite (sem CORS); em prod fetch simples sem credentials
-        // (bucket é público — credentials: 'include' quebra CORS cross-origin)
-        const fetchUrl = isDev ? url.replace(endpoint, '/storage-proxy') : url;
+        // Sempre usa /storage-proxy:
+        //   - Dev  → Vite proxy (vite.config.js) repassa para o Appwrite sem CORS
+        //   - Prod → Vercel rewrite (vercel.json) repassa para o Appwrite sem CORS
+        const fetchUrl = url.replace(endpoint, '/storage-proxy');
 
         fetch(fetchUrl)
             .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
