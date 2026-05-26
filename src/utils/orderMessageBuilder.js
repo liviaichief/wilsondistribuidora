@@ -32,6 +32,7 @@ export function buildOrderMessage({
   total,
   cashbackUsed = 0,
   storeName = 'BASE APP',
+  notes = '',
 }) {
   const lines = [];
 
@@ -87,6 +88,11 @@ export function buildOrderMessage({
 
   lines.push('');
   lines.push(`*TOTAL: ${BRL(total)}*`);
+
+  if (notes?.trim()) {
+    lines.push('');
+    lines.push(`*Observações:* ${notes.trim()}`);
+  }
 
   return lines.join('\n');
 }

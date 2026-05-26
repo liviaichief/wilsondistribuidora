@@ -51,7 +51,7 @@ export const getProducts = async (category) => {
   try {
     const [response, blockDoc] = await Promise.all([
       databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [
-        Query.limit(100),
+        Query.limit(500),
         Query.orderDesc('$createdAt'),
       ]),
       databases.getDocument(DATABASE_ID, 'settings', 'system_blocked').catch(() => null),
@@ -172,7 +172,7 @@ export const deleteProduct = async (id) => {
 export const backfillSKUs = async () => {
   try {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PRODUCTS, [
-      Query.limit(100),
+      Query.limit(500),
       Query.orderAsc('$createdAt'),
     ]);
     let nextNum = 100;

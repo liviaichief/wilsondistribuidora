@@ -153,9 +153,13 @@ export default function BBQMasterChat() {
           background: 'linear-gradient(135deg, #800020, #D4AF37)',
           border: 'none', cursor: 'pointer', fontSize: '1.5rem',
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          overflow: 'hidden', padding: 0,
         }}
       >
-        {isOpen ? '✕' : '🔥'}
+        {isOpen
+          ? <span style={{ color: '#fff', fontWeight: 700, fontSize: '1.2rem' }}>✕</span>
+          : <img src="/img/mestre_avatar.png" alt="Mestre" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        }
       </motion.button>
 
       {/* Painel de chat */}
@@ -179,7 +183,7 @@ export default function BBQMasterChat() {
               background: 'linear-gradient(135deg, #800020, #6b0018)',
               display: 'flex', alignItems: 'center', gap: '10px',
             }}>
-              <span style={{ fontSize: '1.4rem' }}>🔥</span>
+              <img src="/img/mestre_avatar.png" alt="Mestre" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               <div>
                 <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{chatName}</div>
                 <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.72rem' }}>Powered by IA</div>
