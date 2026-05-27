@@ -499,6 +499,10 @@
     animation: scroll-brands 30s linear infinite;
 }
 
+.header-brands-carousel:hover .brands-track.is-scrolling {
+    animation-play-state: paused;
+}
+
 .brands-track:not(.is-scrolling) {
     width: 100%;
     justify-content: center;

@@ -114,9 +114,9 @@ const Header = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleFinalizeClick = () => {
+    const handleFinalizeClick = async () => {
         if (!upsellAlreadyShown) {
-            const showed = triggerUpsell(cartItems);
+            const showed = await triggerUpsell(cartItems);
             if (showed) {
                 setUpsellAlreadyShown(true);
                 return;

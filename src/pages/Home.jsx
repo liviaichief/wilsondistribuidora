@@ -91,13 +91,16 @@ const Home = () => {
 
         // 2. Aplicar Reordenação por Marca (Move para o topo)
         if (brandFilter) {
-            const brandItems = items.filter(d => (d.brand || '').toString().trim().toLowerCase() === brandFilter.toLowerCase());
-            const otherItems = items.filter(d => (d.brand || '').toString().trim().toLowerCase() !== brandFilter.toLowerCase());
-            
-            // Combinar: Marca selecionada primeiro, depois o restante
+            const normalize = (s) => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+            const target = normalize(brandFilter);
+            const matches = (d) => {
+                const b = normalize(d.brand);
+                return b === target || b.includes(target) || target.includes(b);
+            };
+            const brandItems = items.filter(matches);
+            const otherItems = items.filter(d => !matches(d));
+
             items = [...brandItems, ...otherItems];
-            
-            // Feedback visual: scroll suave para o topo
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
