@@ -379,14 +379,6 @@ const CartSidebar = () => {
         }
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let popupWindow = null;
-        if (!isMobile) {
-            // Abre sincronicamente para evitar o bloqueador de popups do navegador
-            popupWindow = window.open('about:blank', '_blank', 'noopener,noreferrer');
-            if (popupWindow) {
-                popupWindow.document.write('<body style="background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; text-align: center;"><h2>Aguarde, processando seu pedido<br/>e redirecionando para o WhatsApp...</h2></body>');
-            }
-        }
 
         setIsProcessing(true);
 
@@ -475,7 +467,6 @@ const CartSidebar = () => {
         }
 
         if (!orderResult.success) {
-            if (popupWindow) popupWindow.close();
             setIsProcessing(false);
             return;
         }
@@ -541,20 +532,13 @@ const CartSidebar = () => {
             console.warn("Direct Send failed, will use manual redirect:", apiErr);
         }
 
-        // 6. Open WhatsApp redirect (Always redirect the customer for confirmation)
+        // 6. Open WhatsApp redirect
         if (isMobile) {
             window.location.href = whatsappUrl;
         } else {
-            if (popupWindow) {
-                popupWindow.location.href = whatsappUrl;
-            } else {
-                // Fallback if popup was blocked
-                window.location.href = whatsappUrl;
-            }
-            
-            if (didSendDirectly) {
-                showAlert(`Pedido #${orderNumDisplay} enviado com sucesso! ✅`, 'success');
-            }
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+            showAlert(`Pedido #${orderNumDisplay} enviado com sucesso!`, 'success', null, 3000);
+            setTimeout(() => navigate('/'), 3000);
         }
     };
 
