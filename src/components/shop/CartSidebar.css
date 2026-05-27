@@ -367,7 +367,7 @@
 @media (min-width: 769px) {
     .cart-sidebar {
         right: auto;
-        left: 50%;
+        left: calc(50% + 10px);
         top: 50%;
         transform: translate(-50%, calc(-50% + 24px));
         width: min(500px, 90vw);
@@ -381,6 +381,7 @@
 
     .cart-sidebar.open {
         right: auto;
+        left: calc(50% + 10px);
         transform: translate(-50%, -50%);
         opacity: 1;
         pointer-events: auto;
