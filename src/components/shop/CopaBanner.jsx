@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { getNextCopaMatch, isCopaMatchLive } from '../../services/seasonalService';
+import { getNextCopaMatch, isCopaMatchLive, setDynamicCopaMatches } from '../../services/seasonalService';
+import { getSettings } from '../../services/settingsService';
 import './CopaBanner.css';
 
 function formatCountdown(ms) {
@@ -20,6 +21,16 @@ export default function CopaBanner() {
   const [match, setMatch]     = useState(null);
   const [isLive, setIsLive]   = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
+
+  // Carrega dados dinâmicos do Appwrite (atualizados pela função update-copa-schedule)
+  useEffect(() => {
+    if (theme !== 'world_cup') return;
+    getSettings().then(s => {
+      if (s.copa_matches) {
+        try { setDynamicCopaMatches(JSON.parse(s.copa_matches)); } catch (_) {}
+      }
+    }).catch(() => {});
+  }, [theme]);
 
   useEffect(() => {
     if (theme !== 'world_cup') return;

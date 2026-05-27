@@ -16,41 +16,51 @@ const SEASONAL_EVENTS = [
   { id: 'ano_novo',      name: 'Réveillon',           startMonth: 12, startDay: 26, endMonth: 1,  endDay: 2,  emoji: '🥂' },
 ];
 
-// Copa do Mundo 2026 — Jogos do Brasil (atualizar conforme sorteio oficial)
+// Copa do Mundo 2026 — Jogos do Brasil — Grupo C
+// Horários em BRT (UTC-3). Atualizado via ESPN API diariamente a partir de 11/06.
 export const COPA_MATCHES = [
   {
     id: 1,
     home: 'Brasil 🇧🇷',
-    away: 'Grupo A — Jogo 1',
-    date: '2026-06-14T18:00:00-03:00',
-    venue: 'MetLife Stadium, NJ',
-    group: 'Fase de Grupos'
+    away: 'Marrocos 🇲🇦',
+    date: '2026-06-13T19:00:00-03:00',
+    venue: 'MetLife Stadium, Nova Jersey',
+    group: 'Fase de Grupos — Grupo C'
   },
   {
     id: 2,
     home: 'Brasil 🇧🇷',
-    away: 'Grupo A — Jogo 2',
-    date: '2026-06-20T15:00:00-03:00',
-    venue: 'AT&T Stadium, TX',
-    group: 'Fase de Grupos'
+    away: 'Haiti 🇭🇹',
+    date: '2026-06-19T21:30:00-03:00',
+    venue: 'Lincoln Financial Field, Filadélfia',
+    group: 'Fase de Grupos — Grupo C'
   },
   {
     id: 3,
-    home: 'Brasil 🇧🇷',
-    away: 'Grupo A — Jogo 3',
-    date: '2026-06-26T12:00:00-03:00',
-    venue: 'SoFi Stadium, CA',
-    group: 'Fase de Grupos'
+    home: 'Escócia 🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+    away: 'Brasil 🇧🇷',
+    date: '2026-06-24T19:00:00-03:00',
+    venue: 'Hard Rock Stadium, Miami',
+    group: 'Fase de Grupos — Grupo C'
   },
 ];
 
+// Cache em memória para sobrescrever com dados vindos do Appwrite (via update-copa-schedule)
+let _dynamicMatches = null;
+
+export function setDynamicCopaMatches(matches) {
+  if (Array.isArray(matches) && matches.length > 0) _dynamicMatches = matches;
+}
+
 /**
- * Retorna o próximo jogo da Copa do Brasil
+ * Retorna o próximo jogo do Brasil.
+ * Usa dados dinâmicos do Appwrite se disponíveis, senão usa array estático.
  * @param {Date} [now=new Date()]
  * @returns {object|null}
  */
 export function getNextCopaMatch(now = new Date()) {
-  return COPA_MATCHES.find(m => new Date(m.date) > now) ?? null;
+  const source = _dynamicMatches ?? COPA_MATCHES;
+  return source.find(m => new Date(m.date) > now) ?? null;
 }
 
 /**
