@@ -51,6 +51,7 @@ const CartSidebar = () => {
     });
     const [isFetchingCep, setIsFetchingCep] = useState(false);
     const [googleConfig, setGoogleConfig] = useState(null);
+    const [deliveryEnabled, setDeliveryEnabled] = useState(true);
     const [deliveryDistance, setDeliveryDistance] = useState(null); // in KM
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
@@ -168,6 +169,7 @@ const CartSidebar = () => {
                     if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number);
                     if (data.whatsapp_message) setWhatsappMessage(data.whatsapp_message);
                     if (data.google_api_key) loadGoogleMapsScript(data.google_api_key);
+                    if (data.delivery_enabled !== undefined) setDeliveryEnabled(!!data.delivery_enabled);
                 })
                 .catch(err => console.error("Could not load cart settings:", err));
         }
@@ -364,12 +366,12 @@ const CartSidebar = () => {
             return;
         }
 
-        if (!deliveryMode) {
+        if (deliveryEnabled && !deliveryMode) {
             showAlert('Por favor, selecione "Retirar na Loja" ou "Entrega".', 'warning', 'Opção Inválida');
             return;
         }
 
-        if (deliveryMode === 'delivery') {
+        if (deliveryEnabled && deliveryMode === 'delivery') {
             if (!address.cep || !address.street || !address.number || !address.neighborhood || !address.city) {
                 showAlert('Por favor, preencha todos os campos obrigatórios do endereço de entrega.', 'warning', 'Dados Incompletos');
                 return;
@@ -505,13 +507,14 @@ const CartSidebar = () => {
             headerText = `${headerText} #${orderNumDisplay}`;
         }
 
+        const freteAtivo = deliveryEnabled && deliveryMode === 'delivery';
         const message = `${headerText}\n\n` +
             `*Itens do Pedido:*\n${itemsList}\n\n` +
             `Nome: ${customerName}\n` +
             `WhatsApp: ${customerPhone}\n\n` +
-            `*Entrega/Retirada:*\n${addressText}\n` +
-            (deliveryMode === 'delivery' ? `Distância: ${deliveryDistance?.toFixed(1)} km\nFrete: R$ ${deliveryFee.toFixed(2)}\n` : '') +
-            `*TOTAL: R$ ${(cartTotal + deliveryFee).toFixed(2)}*` +
+            (deliveryEnabled ? `*Entrega/Retirada:*\n${addressText}\n` : '') +
+            (freteAtivo ? `Distância: ${deliveryDistance?.toFixed(1)} km\nFrete: R$ ${deliveryFee.toFixed(2)}\n` : '') +
+            `*TOTAL: R$ ${(cartTotal + (freteAtivo ? deliveryFee : 0)).toFixed(2)}*` +
             (orderNotes.trim() ? `\n\n*Observações:* ${orderNotes.trim()}` : '');
 
         const phoneNumber = String(whatsappNumber).replace(/\D/g, '');
@@ -660,7 +663,7 @@ const CartSidebar = () => {
                             </div>
 
                             {/* Entrega */}
-                            <div className="cart-section">
+                            {deliveryEnabled && <div className="cart-section">
                                 <span className="section-title"><CreditCard size={14} /> Como deseja receber?</span>
                                 <div className="delivery-toggle">
                                     <button
@@ -763,7 +766,7 @@ const CartSidebar = () => {
                                         )}
                                     </div>
                                 )}
-                            </div>
+                            </div>}
 
                             {/* Cashback / Fidelidade */}
                             {googleConfig?.cashback_enabled && user && (

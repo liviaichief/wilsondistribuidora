@@ -101,6 +101,7 @@ const AdminSettings = () => {
         google_api_key: '',
         google_place_id: '',
         show_google_reviews: true,
+        delivery_enabled: true,
         shipping_free_radius: 5,
         shipping_fixed_rate: '',
         shipping_fixed_radius_max: 15,
@@ -489,11 +490,30 @@ const AdminSettings = () => {
                         icon={<MapPin size={22} />} 
                         color="#f59e0b" 
                         title="Logística & Frete Inteligente"
-                        onSave={() => handleSaveSection('Logística', ['shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
+                        onSave={() => handleSaveSection('Logística', ['delivery_enabled', 'shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
                         saving={savingSection === 'Logística'}
-                        disabled={!isDirty(['shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
+                        disabled={!isDirty(['delivery_enabled', 'shipping_free_radius', 'shipping_fixed_rate', 'shipping_fixed_radius_max', 'shipping_per_km_rate', 'store_latitude', 'store_longitude'])}
                     >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Toggle habilitar/desabilitar */}
+                            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '18px 20px', background: settings.delivery_enabled ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)', border: `1px solid ${settings.delivery_enabled ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '16px', transition: 'all 0.3s' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                    <div style={{ background: settings.delivery_enabled ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '12px', color: settings.delivery_enabled ? '#f59e0b' : '#555', transition: 'all 0.3s' }}>
+                                        <MapPin size={18} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 800, fontSize: '0.85rem', color: settings.delivery_enabled ? '#fff' : '#555' }}>Frete Inteligente</div>
+                                        <div style={{ fontSize: '0.72rem', color: '#555', marginTop: '2px' }}>{settings.delivery_enabled ? 'Cálculo de frete e endereço ativos no carrinho' : 'Desabilitado — frete não aparece no pedido WhatsApp'}</div>
+                                    </div>
+                                </div>
+                                <div style={{ position: 'relative', width: '52px', height: '28px', flexShrink: 0 }}>
+                                    <input type="checkbox" checked={!!settings.delivery_enabled} onChange={e => setSettings({...settings, delivery_enabled: e.target.checked})} style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+                                    <div style={{ position: 'absolute', inset: 0, background: settings.delivery_enabled ? '#f59e0b' : '#333', borderRadius: '28px', cursor: 'pointer', transition: 'all 0.3s', pointerEvents: 'none' }}>
+                                        <div style={{ position: 'absolute', top: '4px', left: settings.delivery_enabled ? '28px' : '4px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', transition: 'left 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }} />
+                                    </div>
+                                </div>
+                            </label>
+
                             <div className="admin-grid-2col" style={{ gap: '15px' }}>
                                 <Field label="Frete Grátis até (km)">
                                     <input type="number" value={settings.shipping_free_radius} onChange={e => setSettings({...settings, shipping_free_radius: e.target.value})} style={inputStyle} />
