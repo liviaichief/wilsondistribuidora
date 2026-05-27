@@ -663,7 +663,7 @@ const CartSidebar = () => {
                             </div>
 
                             {/* Entrega */}
-                            {deliveryEnabled && <div className="cart-section">
+                            <div className="cart-section">
                                 <span className="section-title"><CreditCard size={14} /> Como deseja receber?</span>
                                 <div className="delivery-toggle">
                                     <button
@@ -766,7 +766,7 @@ const CartSidebar = () => {
                                         )}
                                     </div>
                                 )}
-                            </div>}
+                            </div>
 
                             {/* Cashback / Fidelidade */}
                             {googleConfig?.cashback_enabled && user && (
