@@ -514,7 +514,7 @@ const CartSidebar = () => {
             `WhatsApp: ${customerPhone}\n\n` +
             (deliveryEnabled ? `*Entrega/Retirada:*\n${addressText}\n` : '') +
             (freteAtivo && deliveryDistance != null ? `Distância: ${deliveryDistance.toFixed(1)} km\n` : '') +
-            (freteAtivo ? `Frete: R$ ${deliveryFee.toFixed(2)}\n` : '') +
+            (freteAtivo ? `Frete: R$ ${deliveryFee.toFixed(2)}\n` : (!deliveryEnabled ? `Frete: A combinar\n` : '')) +
             `*TOTAL: R$ ${(cartTotal + (freteAtivo ? deliveryFee : 0)).toFixed(2)}*` +
             (orderNotes.trim() ? `\n\n*Observações:* ${orderNotes.trim()}` : '');
 
@@ -759,12 +759,6 @@ const CartSidebar = () => {
                                             style={{ marginTop: '10px' }}
                                         />
                                         
-                                        {!deliveryEnabled && (
-                                            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '12px', borderRadius: '12px', marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.8rem', color: '#888' }}>Taxa de entrega</span>
-                                                <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 900 }}>A combinar</span>
-                                            </div>
-                                        )}
                                         {deliveryEnabled && deliveryDistance && (
                                             <div style={{ background: 'rgba(66, 133, 244, 0.1)', padding: '12px', borderRadius: '12px', marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <span style={{ fontSize: '0.8rem', color: '#4285F4', fontWeight: 'bold' }}>Distância estimada: {deliveryDistance.toFixed(1)} km</span>
